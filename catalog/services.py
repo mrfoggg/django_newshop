@@ -55,13 +55,6 @@ def get_changes_in_groups_fs(formset):
     return deleted_groups_list, [pl[0] for pl in sorted(added_group_placement_list, key=lambda x: x[1])]
 
 
-def get_added_addict_attr_in_fs(formset):
-    added_addict_attr = [(addict_attr.id, addict_attr.position) for addict_attr in formset.new_objects]
-    for form in formset.form:
-        pass
-        # if all([form.initial !={}, ])
-
-
 def get_changes_in_categories_fs(formset):
     # deleted_categories = [cat_placement.category for cat_placement in formset.deleted_objects] работает некорректно
     # если поле пометить на удаление и поставить новое значениe
