@@ -136,12 +136,11 @@ def set_prod_pos_to_end(formset, added_categories):
             new_placement.save()
 
 
-def create_group_placement_at_end_combination(category, sorted_added_group_placement_id_list):
-    cc_with_max_position_group_placement = CombinationOfCategory.objects.filter(categories=category).annotate(
-        max_group_position=Max('group_position__position')).values('id', 'max_group_position')
+def create_group_placement_at_end_combination(combinations_with_annotates, sorted_added_group_placement_id_list):
+    cc_list_id_with_max_position_group_placement = combinations_with_annotates.values('id', 'max_group_position')
     group_placement_update_list = []
     added_placement_items_with_position_offset = enumerate(sorted_added_group_placement_id_list)
-    for cc in cc_with_max_position_group_placement:
+    for cc in cc_list_id_with_max_position_group_placement:
         max_gr_position = cc['max_group_position']
         for pos_offset, group_placement_id in added_placement_items_with_position_offset:
             if not GroupPositionInCombinationOfCategory.objects.filter(

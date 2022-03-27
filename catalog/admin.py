@@ -207,25 +207,27 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin):
 
         main_attr_fs = formsets[1]
         main_attr_fs.save()
-        added_main_attr_placement_id_list = [fs.id for fs in main_attr_fs.new_objects]
+        added_main_attr_placement_id_list = [fs.id for fs in sorted(main_attr_fs.new_objects, key=lambda x: x.position)]
 
         shot_attr_fs = formsets[2]
         shot_attr_fs.save()
-        added_shot_attr_placement_id_list = [fs.id for fs in shot_attr_fs.new_objects]
+        added_shot_attr_placement_id_list = [fs.id for fs in sorted(shot_attr_fs.new_objects, key=lambda x: x.position)]
 
         formsets[3].save()
 
-        combination = CombinationOfCategory.objects.filter(categories=(category := groups_fs.instance))
+        combinations = CombinationOfCategory.objects.filter(categories=(category := groups_fs.instance))
         if sorted_added_group_placement_id_list:
-            combination = combination.annotate(max_group_position=Max('group_position__position'))
+            combinations = combinations.annotate(max_group_position=Max('group_position__position'))
         if added_main_attr_placement_id_list:
-            pass
+            combinations = combinations.annotate(max_main_attr_position=Max('main_attr_positions__position'))
+        if added_shot_attr_placement_id_list:
+            combinations = combinations.annotate(max_shot_attr_position=Max('shot_attr_positions_position'))
+        comb = combinations.first()
 
         if sorted_added_group_placement_id_list:
-            create_group_placement_at_end_combination(category, sorted_added_group_placement_id_list)
+            create_group_placement_at_end_combination(combinations, sorted_added_group_placement_id_list)
 
         # create_main_attr_placement_at_end_combination(main_attr_fs)
-
 
         if deleted_groups_list:
             products_to_update = remove_characteristics_keys(category=groups_fs.instance, group=deleted_groups_list)

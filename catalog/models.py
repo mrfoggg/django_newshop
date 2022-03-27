@@ -268,7 +268,7 @@ class MainAttribute(models.Model):
     position = models.PositiveIntegerField("Порядок", null=True, blank=True)
 
     def __str__(self) -> str:
-        return self.attribute.name
+        return f'{self.attribute.name} из категории {self.category}'
 
     class Meta:
         verbose_name = 'Атрибут для отображения в блоке главных характеристик товара'

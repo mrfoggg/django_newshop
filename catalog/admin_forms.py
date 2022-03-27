@@ -105,12 +105,12 @@ class ProductPlacementInlineForProductFS(forms.models.BaseInlineFormSet):
 
 class GroupPlacementInlineFS(forms.models.BaseInlineFormSet):
     def clean(self):
-        pass
         if check_change_field_in_fs(self, "group"):
             groups = []
             for form in self.forms:
                 if self.can_delete and self._should_delete_form(form):
                     continue
+                print(form.cleaned_data)
                 if (group := form.cleaned_data["group"]) in groups:
                     raise ValidationError(f'Группа {group} дублируется')
                 groups.append(group)
