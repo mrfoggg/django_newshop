@@ -141,7 +141,7 @@ def create_group_placement_at_end_combination(combinations_with_annotates, sorte
     group_placement_update_list = []
     added_placement_items_with_position_offset = enumerate(sorted_added_group_placement_id_list)
     for cc in cc_list_id_with_max_position_group_placement:
-        max_gr_position = cc['max_group_position']
+        max_gr_position = 0 if cc['max_group_position'] is None else cc['max_group_position']
         for pos_offset, group_placement_id in added_placement_items_with_position_offset:
             group_placement_placement_in_cc_list_to_create = GroupPositionInCombinationOfCategory(
                 combination_of_category_id=cc['id'], group_placement_id=group_placement_id,
