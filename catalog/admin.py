@@ -229,6 +229,8 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin):
         if deleted_groups_list:
             products_to_update = remove_characteristics_keys(category=groups_fs.instance, group=deleted_groups_list)
             Product.objects.bulk_update(products_to_update, ['characteristics'])
+            MainAttribute.objects.filter(attribute__group_id__in=deleted_groups_list).delete()
+            ShotAttribute.objects.filter(attribute__group_id__in=deleted_groups_list).delete()
 
 
 @admin.register(Product)
