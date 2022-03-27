@@ -1,0 +1,68 @@
+{% for subwidget in widget.subwidgets %}
+{% if subwidget.attrs.group_begin == 'yes' %}
+        <h4>Группа атрибутов "{{subwidget.attrs.group_name}}" категории товаров "{{subwidget.attrs.category_name}}" </h4>
+        <br />
+        <table id = "multiwidget">
+    {% endif %}
+	<tr>
+	    <td><label for="{{ subwidget.attrs.id }}">{{ subwidget.attrs.label }}:</label></td>
+	    <td>{% include subwidget.template_name with widget=subwidget %}</td>
+	</tr>
+    {% if subwidget.attrs.group_end == 'yes' %}
+        </table>
+        <br />
+        <br />
+    {% endif %}
+{% endfor %}
+
+<style>
+#multiwidget label {
+    min-width: 415px;
+}
+
+#multiwidget tr:nth-child(odd) {
+    background-color: #D8EBF5;
+}
+
+#multiwidget td:nth-child(even) {
+    float: right;
+}
+
+#multiwidget tr:nth-child(even) {
+    background-color: #F4F3E5;
+}
+
+div >label[for="id_parameters_0"] {
+    display: none;
+}
+#multiwidget tbody tr td, #multiwidget tbody tr td select {
+    padding: 4px 10px;
+}
+
+#multiwidget tbody tr td select {
+    margin: 0px;
+}
+
+h1 {
+    margin-bottom: 3px;
+}
+#multiwidget {
+    width:680px
+}
+h4 {
+    font-size: 13px;
+}
+
+input[type='number'] {
+width: 70px;
+}
+
+@media (prefers-color-scheme: dark) {
+    #multiwidget tr:nth-child(odd) {
+        background-color: #545159;
+    }
+
+    #multiwidget tr:nth-child(even) {
+        background-color: #3c4048;
+    }
+</style>

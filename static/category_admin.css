@@ -1,0 +1,5 @@
+
+#productplacement_set-group .djn-delete-handler,
+#productplacement_set-group .add-handler {
+   display: none;
+}
