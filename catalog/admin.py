@@ -20,7 +20,7 @@ from .services import (clean_combination_of_category, remove_characteristics_key
                        get_changes_in_categories_fs, get_changes_in_groups_fs,
                        update_combination_in_fs_product, set_prod_pos_to_end, create_group_placement_at_end_combination,
                        DeleteQSMixin, create_main_attr_placement_at_end_combination,
-                       create_main_attr_placement_at_end_combination)
+                       create_main_attr_placement_at_end_combination, create_shot_attr_placement_at_end_combination)
 
 from django.core import serializers
 from django.http import HttpResponse
@@ -194,13 +194,6 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin):
         return products_to_update
 
     def save_related(self, request, form, formsets, change):
-        # for fs_with_order in enumerate(formsets):
-        #     fs_with_order[1].save()
-        #     if fs_with_order[0] == 0:
-        #         group_fs = fs_with_order[1]
-        #         deleted_groups_list, added_group_placement_list = get_changes_in_groups_fs(group_fs)
-        #         if added_group_placement_list:
-        #             create_group_placement_at_end_combination(group_fs.instance, added_group_placement_list)
 
         groups_fs = formsets[0]
         groups_fs.save()
@@ -222,8 +215,7 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin):
         if added_main_attr_placement_id_list:
             combinations = combinations.annotate(max_main_attr_position=Max('main_attr_positions__position'))
         if added_shot_attr_placement_id_list:
-            combinations = combinations.annotate(max_shot_attr_position=Max('shot_attr_positions_position'))
-        comb = combinations.first()
+            combinations = combinations.annotate(max_shot_attr_position=Max('shot_attr_positions__position'))
 
         if sorted_added_group_placement_id_list:
             create_group_placement_at_end_combination(combinations, sorted_added_group_placement_id_list)
@@ -231,7 +223,8 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin):
         if added_main_attr_placement_id_list:
             create_main_attr_placement_at_end_combination(combinations, added_main_attr_placement_id_list)
 
-        # create_main_attr_placement_at_end_combination(main_attr_fs)
+        if added_shot_attr_placement_id_list:
+            create_shot_attr_placement_at_end_combination(combinations, added_shot_attr_placement_id_list)
 
         if deleted_groups_list:
             products_to_update = remove_characteristics_keys(category=groups_fs.instance, group=deleted_groups_list)

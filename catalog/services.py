@@ -4,7 +4,7 @@ from django.db.models import Count, Max
 from django.utils.encoding import force_str
 
 from .models import Attribute, Category, CombinationOfCategory, Group, Product, GroupPositionInCombinationOfCategory, \
-    GroupPlacement, MainAttrPositionInCombinationOfCategory
+    GroupPlacement, MainAttrPositionInCombinationOfCategory, ShotAttrPositionInCombinationOfCategory
 
 
 def check_doubles_groups(items: list):
@@ -164,24 +164,18 @@ def create_main_attr_placement_at_end_combination(combinations_with_annotates, a
     MainAttrPositionInCombinationOfCategory.objects.bulk_create(main_attr_placement_update_list)
 
 
-def create_main_attr_placement_at_end_combination(category, main_attributes_fs):
-    pass
-    added_main_attr_placement_id_list = [fs.id for fs in main_attributes_fs.new_objects]
-    for form in main_attributes_fs.forms:
-        if all(form.initial != {}, not (main_attributes_fs.can_delete and main_attributes_fs._should_delete_form(form)),
-               form.has_changed and 'main_attribute' in form.changed_data):
-            added_main_attr_placement_id_list.append(form.save().id)
-            cc_with_max_position_main_attr_placement = CombinationOfCategory.objects.filter(
-                categories=category).annotate(
-                max_main_attr_position=Max('main_attr_positions__position')).values('id', 'max_main_attr_position')
-            sorted_added_main_attr_placement = enumerate(
-                MainAttrPositionInCombinationOfCategory.objects.filter(
-                    id__in=added_main_attr_placement_id_list).order_by('position'), 1)
-            main_attr_placement_update_list = []
-            for cc in cc_with_max_position_main_attr_placement:
-                max_gr_position = cc['max_main_attr_position']
-                for position, main_attr_placement_in_cat in sorted_added_main_attr_placement:
-                    pass
+def create_shot_attr_placement_at_end_combination(combinations_with_annotates, added_shot_attr_placement_id_list):
+    cc_list_id_with_max_position_shot_attr = combinations_with_annotates.values('id', 'max_shot_attr_position')
+    shot_attr_placement_update_list = []
+    added_shot_attr_placement_id_list_with_position_offset = enumerate(added_shot_attr_placement_id_list)
+    for cc in cc_list_id_with_max_position_shot_attr:
+        max_shot_attr_position = 0 if cc['max_shot_attr_position'] is None else cc['max_shot_attr_position']
+        for pos_offset, shot_attr_placement_id in added_shot_attr_placement_id_list_with_position_offset:
+            group_placement_placement_in_cc_list_to_create = ShotAttrPositionInCombinationOfCategory(
+                combination_of_category_id=cc['id'], shot_attribute_id=shot_attr_placement_id,
+                position=max_shot_attr_position + pos_offset)
+            shot_attr_placement_update_list.append(group_placement_placement_in_cc_list_to_create)
+    ShotAttrPositionInCombinationOfCategory.objects.bulk_create(shot_attr_placement_update_list)
 
 
 def update_combination_in_fs_product(formset):
