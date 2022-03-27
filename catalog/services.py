@@ -52,8 +52,6 @@ def get_changes_in_groups_fs(formset):
                 if all([form.has_changed, 'group' in form.changed_data,
                         Attribute.objects.filter(group_id=form.initial["group"]).exists()]):
                     deleted_groups_list.append(Group.objects.get(id=form.initial["group"]))
-                    this_placement = form.save()
-                    added_group_placement_list.append((this_placement.id, this_placement.position))
     return deleted_groups_list, [pl[0] for pl in sorted(added_group_placement_list, key=lambda x: x[1])]
 
 
