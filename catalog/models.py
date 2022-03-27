@@ -312,7 +312,7 @@ class GroupPositionInCombinationOfCategory(models.Model):
     combination_of_category = models.ForeignKey(
         CombinationOfCategory, on_delete=models.CASCADE, related_name='group_position',)
     group_placement = models.ForeignKey(
-        GroupPlacement, blank=True, null=True, default=None, on_delete=models.CASCADE, verbose_name='Группы атрибутов')
+        GroupPlacement, on_delete=models.CASCADE, verbose_name='Группы атрибутов')
     position = models.PositiveIntegerField("Порядок", null=True, blank=True)
 
     def __str__(self):

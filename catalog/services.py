@@ -143,15 +143,25 @@ def create_group_placement_at_end_combination(combinations_with_annotates, sorte
     for cc in cc_list_id_with_max_position_group_placement:
         max_gr_position = cc['max_group_position']
         for pos_offset, group_placement_id in added_placement_items_with_position_offset:
-            if not GroupPositionInCombinationOfCategory.objects.filter(
-                    group_placement_id=group_placement_id,
-                    combination_of_category_id=(cc_id := cc['id'])
-            ).exists():
-                group_placement_placement_in_cc_list_to_create = GroupPositionInCombinationOfCategory(
-                    combination_of_category_id=cc_id, group_placement_id=group_placement_id,
-                    position=max_gr_position + pos_offset)
-                group_placement_update_list.append(group_placement_placement_in_cc_list_to_create)
+            group_placement_placement_in_cc_list_to_create = GroupPositionInCombinationOfCategory(
+                combination_of_category_id=cc['id'], group_placement_id=group_placement_id,
+                position=max_gr_position + pos_offset)
+            group_placement_update_list.append(group_placement_placement_in_cc_list_to_create)
     GroupPositionInCombinationOfCategory.objects.bulk_create(group_placement_update_list)
+
+
+def create_main_attr_placement_at_end_combination(combinations_with_annotates, added_main_attr_placement_id_list):
+    cc_list_id_with_max_position_main_attr = combinations_with_annotates.values('id', 'max_main_attr_position')
+    main_attr_placement_update_list = []
+    added_main_attr_placement_id_list_with_position_offset = enumerate(added_main_attr_placement_id_list)
+    for cc in cc_list_id_with_max_position_main_attr:
+        max_main_attr_position = 0 if cc['max_main_attr_position'] is None else cc['max_main_attr_position']
+        for pos_offset, main_attr_placement_id in added_main_attr_placement_id_list_with_position_offset:
+            group_placement_placement_in_cc_list_to_create = MainAttrPositionInCombinationOfCategory(
+                combination_of_category_id=cc['id'], main_attribute_id=main_attr_placement_id,
+                position=max_main_attr_position + pos_offset)
+            main_attr_placement_update_list.append(group_placement_placement_in_cc_list_to_create)
+    MainAttrPositionInCombinationOfCategory.objects.bulk_create(main_attr_placement_update_list)
 
 
 def create_main_attr_placement_at_end_combination(category, main_attributes_fs):
@@ -166,7 +176,7 @@ def create_main_attr_placement_at_end_combination(category, main_attributes_fs):
                 max_main_attr_position=Max('main_attr_positions__position')).values('id', 'max_main_attr_position')
             sorted_added_main_attr_placement = enumerate(
                 MainAttrPositionInCombinationOfCategory.objects.filter(
-                id__in=added_main_attr_placement_id_list).order_by('position'), 1)
+                    id__in=added_main_attr_placement_id_list).order_by('position'), 1)
             main_attr_placement_update_list = []
             for cc in cc_with_max_position_main_attr_placement:
                 max_gr_position = cc['max_main_attr_position']

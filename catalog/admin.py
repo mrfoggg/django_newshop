@@ -19,7 +19,8 @@ from .models import (Attribute, Category, CombinationOfCategory, FixedTextValue,
 from .services import (clean_combination_of_category, remove_characteristics_keys,
                        get_changes_in_categories_fs, get_changes_in_groups_fs,
                        update_combination_in_fs_product, set_prod_pos_to_end, create_group_placement_at_end_combination,
-                       DeleteQSMixin, create_main_attr_placement_at_end_combination)
+                       DeleteQSMixin, create_main_attr_placement_at_end_combination,
+                       create_main_attr_placement_at_end_combination)
 
 from django.core import serializers
 from django.http import HttpResponse
@@ -226,6 +227,9 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin):
 
         if sorted_added_group_placement_id_list:
             create_group_placement_at_end_combination(combinations, sorted_added_group_placement_id_list)
+
+        if added_main_attr_placement_id_list:
+            create_main_attr_placement_at_end_combination(combinations, added_main_attr_placement_id_list)
 
         # create_main_attr_placement_at_end_combination(main_attr_fs)
 
