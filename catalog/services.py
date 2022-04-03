@@ -81,47 +81,19 @@ def remove_keys_in_products(keys_del, products):
     return products
 
 
-def remove_characteristics_keys(product=None, category=None, group=None, attribute=None) -> Product:
-    products = []
-
-    # def remove_keys_in_products(keys_del, prods):
-    #     for prod in prods:
-    #         print(f'{prod=}')
-    #         print(f'{keys_del=}, {prod.characteristics.keys()=} ')
-    #         total_keys_to_del = set(prod.characteristics.keys()).intersection(set(keys_del))
-    #         if total_keys_to_del:
-    #             list(map(prod.characteristics.pop, total_keys_to_del))
-    #             print('{prod.characteristics=}')
-    #     return prods
-
-    # вариант для случая отвязки товара от категории или замены категории для товара
-    if all([product, category, not group]):
-        keys_to_del = Attribute.objects.filter(group__categories__in=category).values_list('slug', flat=True)
-        remove_keys_in_products(keys_to_del, [products])
-
-    # вариант для случая полного удаления одной или нескольких категорий
-    elif all([not product, category, not group]):
-        products = list(Product.objects.filter(categories=category))
-        keys_to_del = Attribute.objects.filter(group__categories=category).values_list('slug', flat=True)
-        remove_keys_in_products(keys_to_del, products)
-
-    # вариант для случая смены групп атрибутов в категории товаров
-    elif all([not product, category, group]):
-        products = Product.objects.filter(categories=category)
-        keys_to_del = Attribute.objects.filter(group__in=group).values_list('slug', flat=True)
-        remove_keys_in_products(keys_to_del, products)
-
-    # вариант для случая удаления группы или нескольких групп атрибутов
-    elif all([not product, not category, group]):
-        print('вариант для случая удаления группы илинескольких групп атрибутов')
-        # keys_to_del = Attribute.objects.filter(group=group).values_list('slug', flat=True)
-        products.extend(remove_keys_in_products(Attribute.objects.filter(group=group).values_list('slug', flat=True),
-                                                list(Product.objects.filter(categories__groups=group))))
+def remove_keys_in_products_in_qs_deleted_attr(keys_to_del, products_to_update, updated_product_dict, first_iter):
+    if first_iter:
+        updated_product_dict |= {
+            p.id: p for p in remove_keys_in_products(keys_to_del, products_to_update)
+        }
     else:
-        products.extend(remove_keys_in_products(
-            [attribute.slug], list(Product.objects.filter(categories__groups__attributes=attribute))))
-
-    return products
+        for product in products_to_update:
+            if product.id in updated_product_dict:
+                remove_keys_in_products(keys_to_del, [updated_product_dict[product.id]])
+            else:
+                updated_product_dict |= {
+                    p.id: p for p in remove_keys_in_products(keys_to_del, [product])
+                }
 
 
 def set_prod_pos_to_end(formset, added_categories):

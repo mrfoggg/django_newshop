@@ -16,12 +16,12 @@ from .admin_forms import (CombinationOfCategoryAdminForm, GroupPlacementInlineFS
 from .models import (Attribute, Category, CombinationOfCategory, FixedTextValue, Group, GroupPlacement,
                      GroupPositionInCombinationOfCategory, MainAttribute, MainAttrPositionInCombinationOfCategory,
                      Product, ProductPlacement, ShotAttribute, ShotAttrPositionInCombinationOfCategory, UnitOfMeasure)
-from .services import (clean_combination_of_category, remove_characteristics_keys,
+from .services import (clean_combination_of_category,
                        get_changes_in_categories_fs, get_changes_in_groups_fs,
                        update_combination_in_fs_product, set_prod_pos_to_end, create_group_placement_at_end_combination,
-                       DeleteQSMixin, create_main_attr_placement_at_end_combination,
+                       DeleteQSMixin,
                        create_main_attr_placement_at_end_combination, create_shot_attr_placement_at_end_combination,
-                       remove_keys_in_products)
+                       remove_keys_in_products, remove_keys_in_products_in_qs_deleted_attr)
 
 from django.core import serializers
 from django.http import HttpResponse
@@ -184,7 +184,9 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin):
         products_to_update = None
         clean_combination_of_category(obj)
         if obj.productplacement_set.exists() and obj.groups.attributes.exists():
-            products_to_update = remove_characteristics_keys(category=obj)
+            products = list(Product.objects.filter(categories=obj))
+            keys_to_del = Attribute.objects.filter(group__categories=obj).values_list('slug', flat=True)
+            products_to_update = remove_keys_in_products(keys_to_del, products)
             if once_del:
                 count_prod = Product.objects.bulk_update(products_to_update, ['characteristics'])
                 self.message_user(
@@ -227,8 +229,10 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin):
             create_shot_attr_placement_at_end_combination(combinations, added_shot_attr_placement_id_list)
 
         if deleted_groups_list:
-            products_to_update = remove_characteristics_keys(category=groups_fs.instance, group=deleted_groups_list)
-            Product.objects.bulk_update(products_to_update, ['characteristics'])
+            # products_to_update = remove_characteristics_keys(category=groups_fs.instance, group=deleted_groups_list)
+            products = Product.objects.filter(categories=groups_fs.instance)
+            keys_to_del = Attribute.objects.filter(group__in=deleted_groups_list).values_list('slug', flat=True)
+            Product.objects.bulk_update(remove_keys_in_products(keys_to_del, products), ['characteristics'])
             MainAttribute.objects.filter(attribute__group_id__in=deleted_groups_list).delete()
             ShotAttribute.objects.filter(attribute__group_id__in=deleted_groups_list).delete()
 
@@ -259,7 +263,10 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
             set_prod_pos_to_end(category_fs, added_categories_id_list)
 
         if deleted_categories_list:
-            remove_characteristics_keys(product=category_fs.instance, category=deleted_categories_list)
+            # remove_characteristics_keys(product=category_fs.instance, category=deleted_categories_list)
+            keys_to_del = Attribute.objects.filter(
+                group__categories__in=deleted_categories_list).values_list('slug', flat=True)
+            remove_keys_in_products(keys_to_del, [category_fs.instance])
 
         # проверить работу
         if deleted_categories_list or added_categories_id_list:
@@ -310,18 +317,8 @@ class GroupAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin, ):
         for obj in queryset:
             keys_to_del = Attribute.objects.filter(group=obj).values_list('slug', flat=True)
             products_to_update = list(Product.objects.filter(categories__groups=obj))
-            if first_iter:
-                updated_product_dict |= {
-                    p.id: p for p in remove_keys_in_products(keys_to_del, products_to_update)
-                }
-            else:
-                for product in products_to_update:
-                    if product.id in updated_product_dict:
-                        remove_keys_in_products(keys_to_del, [updated_product_dict[product.id]])
-                    else:
-                        updated_product_dict |= {
-                            p.id: p for p in remove_keys_in_products(keys_to_del, [product])
-                        }
+            remove_keys_in_products_in_qs_deleted_attr(
+                keys_to_del, products_to_update, updated_product_dict, first_iter)
             first_iter = False
         Product.objects.bulk_update(updated_product_dict.values(), ['characteristics'])
         queryset.delete()
@@ -376,17 +373,29 @@ class AttributeAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin):
             if not isinstance(inline, FixedTextValueInline) or obj is not None and obj.type_of_value in (4, 5):
                 yield inline.get_formset(request, obj), inline
 
-    def delete_model(self, request, obj, once_del=True):
-        products_to_update = None
+    def delete_queryset(self, request, queryset):
+        print(f'{queryset=}')
+        updated_product_dict = {}
+        first_iter = True
+        for obj in queryset:
+            keys_to_del = [obj.slug]
+            products_to_update = list(Product.objects.filter(categories__groups__attributes=obj))
+            remove_keys_in_products_in_qs_deleted_attr(
+                keys_to_del, products_to_update, updated_product_dict, first_iter)
+            first_iter = False
+        Product.objects.bulk_update(updated_product_dict.values(), ['characteristics'])
+        queryset.delete()
+
+    def delete_model(self, request, obj):
         if Product.objects.filter(categories__groups__attributes=obj).exists():
-            products_to_update = remove_characteristics_keys(attribute=obj)
-            if once_del:
-                count_prod = Product.objects.bulk_update(products_to_update, ['characteristics'])
-                self.message_user(
-                    request, f"Удалены некоторые характеристики для {count_prod} товаров"
-                )
+            keys_to_del = [obj.slug]
+            products_to_update = list(Product.objects.filter(categories__groups__attributes=obj))
+            updated_products = remove_keys_in_products(keys_to_del, products_to_update)
+            count_prod = Product.objects.bulk_update(updated_products, ['characteristics'])
+            self.message_user(
+                request, f"Удалены некоторые характеристики для {count_prod} товаров"
+            )
         obj.delete()
-        return products_to_update
 
 
 @admin.register(UnitOfMeasure)
