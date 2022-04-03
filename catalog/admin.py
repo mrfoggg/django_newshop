@@ -20,7 +20,8 @@ from .services import (clean_combination_of_category, remove_characteristics_key
                        get_changes_in_categories_fs, get_changes_in_groups_fs,
                        update_combination_in_fs_product, set_prod_pos_to_end, create_group_placement_at_end_combination,
                        DeleteQSMixin, create_main_attr_placement_at_end_combination,
-                       create_main_attr_placement_at_end_combination, create_shot_attr_placement_at_end_combination)
+                       create_main_attr_placement_at_end_combination, create_shot_attr_placement_at_end_combination,
+                       remove_keys_in_products)
 
 from django.core import serializers
 from django.http import HttpResponse
@@ -185,7 +186,6 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin):
         if obj.productplacement_set.exists() and obj.groups.attributes.exists():
             products_to_update = remove_characteristics_keys(category=obj)
             if once_del:
-                print(f'{products_to_update=}')
                 count_prod = Product.objects.bulk_update(products_to_update, ['characteristics'])
                 self.message_user(
                     request, f"Удалены некоторые характеристики для {count_prod} товаров"
@@ -303,17 +303,39 @@ class GroupAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin, ):
             "all": ("hide_inline_action_admin.css",)
         }
 
-    def delete_model(self, request, obj, once_del=True):
-        products_to_update = None
+    def delete_queryset(self, request, queryset):
+        print(f'{queryset=}')
+        updated_product_dict = {}
+        first_iter = True
+        for obj in queryset:
+            keys_to_del = Attribute.objects.filter(group=obj).values_list('slug', flat=True)
+            products_to_update = list(Product.objects.filter(categories__groups=obj))
+            if first_iter:
+                updated_product_dict |= {
+                    p.id: p for p in remove_keys_in_products(keys_to_del, products_to_update)
+                }
+            else:
+                for product in products_to_update:
+                    if product.id in updated_product_dict:
+                        remove_keys_in_products(keys_to_del, [updated_product_dict[product.id]])
+                    else:
+                        updated_product_dict |= {
+                            p.id: p for p in remove_keys_in_products(keys_to_del, [product])
+                        }
+            first_iter = False
+        Product.objects.bulk_update(updated_product_dict.values(), ['characteristics'])
+        queryset.delete()
+
+    def delete_model(self, request, obj):
         if obj.attributes.exists() and Product.objects.filter(categories__groups=obj).exists():
-            products_to_update = remove_characteristics_keys(group=obj)
-            if once_del:
-                count_prod = Product.objects.bulk_update(products_to_update, ['characteristics'])
-                self.message_user(
-                    request, f"Удалены некоторые характеристики для {count_prod} товаров"
-                )
+            keys_to_del = Attribute.objects.filter(group=obj).values_list('slug', flat=True)
+            products_to_update = list(Product.objects.filter(categories__groups=obj))
+            updated_products = remove_keys_in_products(keys_to_del, products_to_update)
+            count_prod = Product.objects.bulk_update(updated_products, ['characteristics'])
+            self.message_user(
+                request, f"Удалены некоторые характеристики для {count_prod} товаров"
+            )
         obj.delete()
-        return products_to_update
 
 
 @admin.register(Attribute)

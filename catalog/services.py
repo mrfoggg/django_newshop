@@ -73,18 +73,26 @@ def get_changes_in_categories_fs(formset):
     return deleted_categories, added_categories_id_list
 
 
+def remove_keys_in_products(keys_del, products):
+    for product in products:
+        total_keys_to_del = set(product.characteristics.keys()).intersection(set(keys_del))
+        if total_keys_to_del:
+            list(map(product.characteristics.pop, total_keys_to_del))
+    return products
+
+
 def remove_characteristics_keys(product=None, category=None, group=None, attribute=None) -> Product:
     products = []
 
-    def remove_keys_in_products(keys_del, prods):
-        for prod in prods:
-            print(f'{prod=}')
-            print(f'{keys_del=}, {prod.characteristics.keys()=} ')
-            total_keys_to_del = set(prod.characteristics.keys()).intersection(set(keys_del))
-            if total_keys_to_del:
-                list(map(prod.characteristics.pop, total_keys_to_del))
-                print('{prod.characteristics=}')
-        return prods
+    # def remove_keys_in_products(keys_del, prods):
+    #     for prod in prods:
+    #         print(f'{prod=}')
+    #         print(f'{keys_del=}, {prod.characteristics.keys()=} ')
+    #         total_keys_to_del = set(prod.characteristics.keys()).intersection(set(keys_del))
+    #         if total_keys_to_del:
+    #             list(map(prod.characteristics.pop, total_keys_to_del))
+    #             print('{prod.characteristics=}')
+    #     return prods
 
     # вариант для случая отвязки товара от категории или замены категории для товара
     if all([product, category, not group]):
@@ -106,7 +114,7 @@ def remove_characteristics_keys(product=None, category=None, group=None, attribu
     # вариант для случая удаления группы или нескольких групп атрибутов
     elif all([not product, not category, group]):
         print('вариант для случая удаления группы илинескольких групп атрибутов')
-        keys_to_del = Attribute.objects.filter(group=group).values_list('slug', flat=True)
+        # keys_to_del = Attribute.objects.filter(group=group).values_list('slug', flat=True)
         products.extend(remove_keys_in_products(Attribute.objects.filter(group=group).values_list('slug', flat=True),
                                                 list(Product.objects.filter(categories__groups=group))))
     else:
