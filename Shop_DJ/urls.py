@@ -17,15 +17,19 @@ Including another URLconf
 
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib import admin
+# from django.contrib import admin
 from django.urls import include, path
+from baton.autodiscover import admin
+from django.urls import path, include
 
 admin.site.site_header = 'Интернет магазин "Барыги""'
 admin.site.site_title = "Барыги"
 admin.site.index_title = "Админка"
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('baton/', include('baton.urls')),
     path('summernote/', include('django_summernote.urls')),
     path('_nested_admin/', include('nested_admin.urls')),
 ]

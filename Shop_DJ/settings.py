@@ -34,6 +34,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'baton',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,7 +45,8 @@ INSTALLED_APPS = [
     # 'django_json_widget',
     'django_summernote',
     'nested_admin',
-    'catalog'
+    'catalog',
+    'baton.autodiscover',
 ]
 
 MIDDLEWARE = [
@@ -154,3 +156,104 @@ INTERNAL_IPS = [
     # ...
 ]
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+BATON = {
+    'SITE_HEADER': 'Baton',
+    'SITE_TITLE': 'Baton',
+    'INDEX_TITLE': 'Site administration',
+    'SUPPORT_HREF': 'https://github.com/otto-torino/django-baton/issues',
+    'COPYRIGHT': 'copyright © 2020 <a href="https://www.otto.to.it">Otto srl</a>', # noqa
+    'POWERED_BY': '<a href="https://www.otto.to.it">Otto srl</a>',
+    'CONFIRM_UNSAVED_CHANGES': True,
+    'SHOW_MULTIPART_UPLOADING': True,
+    'ENABLE_IMAGES_PREVIEW': True,
+    'CHANGELIST_FILTERS_IN_MODAL': True,
+    'CHANGELIST_FILTERS_ALWAYS_OPEN': False,
+    'CHANGELIST_FILTERS_FORM': True,
+    'MENU_ALWAYS_COLLAPSED': False,
+    'MENU_TITLE': 'Menu',
+    'MESSAGES_TOASTS': False,
+    'GRAVATAR_DEFAULT_IMG': 'retro',
+    'LOGIN_SPLASH': '/static/core/img/login-splash.png',
+    'SEARCH_FIELD': {
+        'label': 'Search contents...',
+        'url': '/search/',
+    },
+    'MENU': (
+        {
+            'type': 'app',
+            'name': 'auth',
+            'label': 'Учетные записи админки',
+            'icon': 'fa fa-lock',
+            # 'default_open': True,
+            'models': (
+                {
+                    'name': 'user',
+                    'label': 'Users'
+                },
+                {
+                    'name': 'group',
+                    'label': 'Groups'
+                },
+            )
+        },
+
+        {
+            'type': 'app',
+            'name': 'catalog',
+            'label': 'Товары и их основные свойства',
+            'default_open': True,
+            'models': (
+                {
+                    'name': 'product',
+                    'label': 'Товары'
+                },
+                {
+                    'name': 'country',
+                    'label': 'Страны'
+                },
+                {
+                    'name': 'brand',
+                    'label': 'Бренды'
+                },
+                {
+                    'name': 'productseries',
+                    'label': 'Линейки товаров'
+                },
+
+
+            )
+        },
+        {
+            'type': 'app',
+            'name': 'catalog',
+            'label': 'Категории и расширенные характеристики',
+            'default_open': True,
+            'models': (
+                {
+                    'name': 'category',
+                    'label': 'Категории товаров'
+                },
+                {
+                    'name': 'group',
+                    'label': 'Группы атрибутов'
+                },
+                {
+                    'name': 'attribute',
+                    'label': 'Атрибуты'
+                },
+
+                {
+                    'name': 'unitofmeasure',
+                    'label': 'Еденицы измерения'
+                },
+                {
+                    'name': 'combinationofcategory',
+                    'label': 'Сочетания категорий'
+                },
+
+            )
+        },
+
+    ),
+}

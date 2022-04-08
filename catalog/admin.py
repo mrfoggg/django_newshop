@@ -15,7 +15,8 @@ from .admin_forms import (CombinationOfCategoryAdminForm, GroupPlacementInlineFS
                           ProductPlacementInlineForProductFS, ShotAttrPositionInCombinationOfCategoryInLineFS)
 from .models import (Attribute, Category, CombinationOfCategory, FixedTextValue, Group, GroupPlacement,
                      GroupPositionInCombinationOfCategory, MainAttribute, MainAttrPositionInCombinationOfCategory,
-                     Product, ProductPlacement, ShotAttribute, ShotAttrPositionInCombinationOfCategory, UnitOfMeasure)
+                     Product, ProductPlacement, ShotAttribute, ShotAttrPositionInCombinationOfCategory, UnitOfMeasure,
+                     Country, Brand, ProductSeries, PricesOtherShop, OtherShop)
 from .services import (clean_combination_of_category,
                        get_changes_in_categories_fs, get_changes_in_groups_fs,
                        update_combination_in_fs_product, set_prod_pos_to_end, create_group_placement_at_end_combination,
@@ -135,6 +136,10 @@ class ShotAttrPositionInCombinationOfCategoryInLine(nested_admin.SortableHiddenM
     formset = ShotAttrPositionInCombinationOfCategoryInLineFS
 
 
+class PricesOtherShopInline(nested_admin.NestedTabularInline):
+    model = PricesOtherShop
+
+
 @admin.register(Category)
 class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin):
     list_display = ('tree_actions', 'indented_title', 'groups_list',)
@@ -240,11 +245,11 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin):
 @admin.register(Product)
 class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     form = ProductForm
-    fields = ['name', 'slug', 'admin_category', 'characteristics', 'combination_of_categories']
+    # fields = ['name', 'slug', 'admin_category', 'characteristics', 'combination_of_categories']
     list_display = ('name', 'category_placement')
     prepopulated_fields = {"slug": ("name",)}
     save_on_top = True
-    inlines = (ProductPlacementInlineForProduct,)
+    inlines = (ProductPlacementInlineForProduct, PricesOtherShopInline)
     # formfield_overrides = {
     #     models.JSONField: {'widget': JSONEditorWidget},
     # }
@@ -252,12 +257,46 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     summernote_fields = ('description',)
     change_form_template = "product_changeform.html"
     actions = [export_as_json]
+    fieldsets = (
+        ("Основное", {
+            'fields': (
+                ('name', 'sku', 'sku_manufacturer'), ('slug', 'admin_category'),
+                ('brand', 'is_active',),
+            ),
+            'classes': ('tab-fs-none',),
+        }),
+
+        ("Габбариты и вес",
+         {'fields': (
+         ('length', 'width', 'height',), ('package_length', 'package_width', 'package_height'), ('weight',)),
+          'classes': ('tab-fs-none',),
+          }),
+        #
+        # ("Разное", {
+        #     'fields': (('warranty', 'url',),),
+        #     'classes': ('tab-fs-none',),
+        # }),
+        #
+        ("Характеристики", {
+            # 'classes': ('collapse',),
+            'fields': (
+                ('characteristics',),
+                ('description',),
+            ),
+            'classes': (
+                'order-0', 'baton-tabs-init', 'baton-tab-inline-productplacement', 'baton-tab-inline-pricesothershop'
+            ),
+        })
+
+    )
 
     def save_related(self, request, form, formsets, change):
         # сохраняем FormSet иначе 'ProductPlacementFormFormSet' object has no attribute 'deleted_objects'
         category_fs = formsets[0]
         category_fs.save()
         deleted_categories_list, added_categories_id_list = get_changes_in_categories_fs(category_fs)
+
+        formsets[1].save()
 
         if added_categories_id_list:
             set_prod_pos_to_end(category_fs, added_categories_id_list)
@@ -413,3 +452,9 @@ class CombinationOfCategoryAdmin(nested_admin.NestedModelAdmin):
         css = {
             "all": ("hide_inline_action_admin.css",)
         }
+
+
+admin.site.register(Country)
+admin.site.register(Brand)
+admin.site.register(ProductSeries)
+admin.site.register(OtherShop)

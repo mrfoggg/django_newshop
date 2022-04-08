@@ -262,6 +262,7 @@ class FixedTextValue(models.Model):
 
 
 class MainAttribute(models.Model):
+    name = models.CharField(max_length=128, default=None, verbose_name='Краткое название')
     category = TreeForeignKey(Category, on_delete=models.CASCADE)
     attribute = models.ForeignKey(
         Attribute, on_delete=models.CASCADE, verbose_name='Атрибут основных характеристик')
@@ -310,7 +311,7 @@ class CombinationOfCategory(models.Model):
 
 class GroupPositionInCombinationOfCategory(models.Model):
     combination_of_category = models.ForeignKey(
-        CombinationOfCategory, on_delete=models.CASCADE, related_name='group_position',)
+        CombinationOfCategory, on_delete=models.CASCADE, related_name='group_position', )
     group_placement = models.ForeignKey(
         GroupPlacement, on_delete=models.CASCADE, verbose_name='Группы атрибутов')
     position = models.PositiveIntegerField("Порядок", null=True, blank=True)
@@ -358,3 +359,35 @@ class ShotAttrPositionInCombinationOfCategory(models.Model):
         verbose_name = 'Позиция атрибута кратких характеристик (для данного сочетания категорий) '
         verbose_name_plural = 'Порядок атрибутов кратких характеристик (для данного сочетания категорий) '
         ordering = ['position']
+
+
+class OtherShop(models.Model):
+    name = models.CharField(max_length=128, default=None, unique=True, db_index=True, verbose_name='Название')
+    url = models.URLField(max_length=128, blank=True, null=True, default=None, unique=True,
+                          verbose_name='Ссылка на сайт конкурента)')
+
+    def __str__(self):
+        return self.name
+
+
+class PricesOtherShop(models.Model):
+    created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name='Добавлено')
+    product = models.ForeignKey('Product', blank=True, null=True, default=None, on_delete=models.CASCADE,
+                                verbose_name='Товар')
+    shop = models.ForeignKey(OtherShop, blank=True, null=True, default=None, on_delete=models.CASCADE,
+                             verbose_name='Магазин')
+    price = models.DecimalField(max_digits=8, decimal_places=2)
+    updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
+    url = models.URLField(max_length=128, blank=True, null=True, default=None, unique=True,
+                          verbose_name='Ссылка на товар)')
+    info = models.CharField(max_length=128, blank=True, null=True, default=None,
+                            verbose_name='Краткое описание)')
+
+    def __str__(self):
+        return f'{self.shop.name}: {self.price}, грн'
+
+    class Meta:
+        verbose_name = "Цена конкурента"
+        verbose_name_plural = "Цены конкурентов"
+        ordering = ['updated']
+
