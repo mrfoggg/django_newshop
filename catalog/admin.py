@@ -16,7 +16,7 @@ from .admin_forms import (CombinationOfCategoryAdminForm, GroupPlacementInlineFS
 from .models import (Attribute, Category, CombinationOfCategory, FixedTextValue, Group, GroupPlacement,
                      GroupPositionInCombinationOfCategory, MainAttribute, MainAttrPositionInCombinationOfCategory,
                      Product, ProductPlacement, ShotAttribute, ShotAttrPositionInCombinationOfCategory, UnitOfMeasure,
-                     Country, Brand, ProductSeries, PricesOtherShop, OtherShop)
+                     Country, Brand, ProductSeries, PricesOtherShop, OtherShop, ProductImage)
 from .services import (clean_combination_of_category,
                        get_changes_in_categories_fs, get_changes_in_groups_fs,
                        update_combination_in_fs_product, set_prod_pos_to_end, create_group_placement_at_end_combination,
@@ -140,6 +140,13 @@ class PricesOtherShopInline(nested_admin.NestedTabularInline):
     model = PricesOtherShop
 
 
+class ProductImageInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+    fields = ['position', ('image', 'name', 'is_main_1', 'on_focus')]
+    model = ProductImage
+    sortable_field_name = "position"
+    extra = 0
+
+
 @admin.register(Category)
 class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin):
     list_display = ('tree_actions', 'indented_title', 'groups_list',)
@@ -249,7 +256,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     list_display = ('name', 'category_placement')
     prepopulated_fields = {"slug": ("name",)}
     save_on_top = True
-    inlines = (ProductPlacementInlineForProduct, PricesOtherShopInline)
+    inlines = (ProductPlacementInlineForProduct, PricesOtherShopInline, ProductImageInline)
     # formfield_overrides = {
     #     models.JSONField: {'widget': JSONEditorWidget},
     # }
@@ -260,8 +267,8 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     fieldsets = (
         ("Основное", {
             'fields': (
-                ('name', 'sku', 'sku_manufacturer'), ('slug', 'admin_category'),
-                ('brand', 'is_active',),
+                ('name', 'sku', 'sku_manufacturer', 'rating','is_active',), ('slug', 'admin_category'),
+                ('brand', 'country_of_manufacture', 'url'),
             ),
             'classes': ('tab-fs-none',),
         }),
@@ -271,12 +278,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
          ('length', 'width', 'height',), ('package_length', 'package_width', 'package_height'), ('weight',)),
           'classes': ('tab-fs-none',),
           }),
-        #
-        # ("Разное", {
-        #     'fields': (('warranty', 'url',),),
-        #     'classes': ('tab-fs-none',),
-        # }),
-        #
+
         ("Характеристики", {
             # 'classes': ('collapse',),
             'fields': (
@@ -284,7 +286,8 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
                 ('description',),
             ),
             'classes': (
-                'order-0', 'baton-tabs-init', 'baton-tab-inline-productplacement', 'baton-tab-inline-pricesothershop'
+                'order-0', 'baton-tabs-init', 'baton-tab-inline-productplacement', 'baton-tab-inline-pricesothershop',
+                'baton-tab-inline-related_image'
             ),
         })
 
@@ -297,6 +300,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
         deleted_categories_list, added_categories_id_list = get_changes_in_categories_fs(category_fs)
 
         formsets[1].save()
+        formsets[2].save()
 
         if added_categories_id_list:
             set_prod_pos_to_end(category_fs, added_categories_id_list)
@@ -329,7 +333,6 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
             related_categories_product_pos = {x[0]: x[1] for x in Category.objects.annotate(last_product_position=Max(
                 'productplacement__product_position')).filter(
                 productplacement__product=obj).values_list('id', 'last_product_position')}
-            print(related_categories_product_pos)
             placements_to_create = [
                 ProductPlacement(
                     product=product_copy, category_id=cat, product_position=related_categories_product_pos[cat] + 1)
@@ -458,3 +461,4 @@ admin.site.register(Country)
 admin.site.register(Brand)
 admin.site.register(ProductSeries)
 admin.site.register(OtherShop)
+admin.site.register(ProductImage)

@@ -391,3 +391,23 @@ class PricesOtherShop(models.Model):
         verbose_name_plural = "Цены конкурентов"
         ordering = ['updated']
 
+
+class ProductImage(models.Model):
+    name = models.CharField(max_length=128, blank=True, default='', db_index=True, verbose_name='Название')
+    is_active = models.BooleanField(default=True, verbose_name='Активно')
+    created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name='Добавлено')
+    updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
+    product = models.ForeignKey('Product', blank=True, null=True, default=None, on_delete=models.CASCADE,
+                                verbose_name='Товар', related_name='related_image')
+    image = models.ImageField(upload_to='product_images/', blank=True, null=True, verbose_name='Фото товара')
+    is_main_1 = models.BooleanField(default=True, verbose_name='Главное фото')
+    on_focus = models.BooleanField(default=True, verbose_name='Главное фото при наведении')
+    position = models.PositiveIntegerField("Position", null=True)
+
+    class Meta:
+        ordering = ('position',)
+        verbose_name = "Фотография товара"
+        verbose_name_plural = "Фотографии товаров"
+
+    def __str__(self):
+        return self.name
