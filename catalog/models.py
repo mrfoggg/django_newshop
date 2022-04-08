@@ -38,6 +38,7 @@ class Category(MPTTModel):
     slug = models.SlugField(max_length=128, blank=True, null=True, default=None, unique=True)
     description = models.TextField(blank=True, null=True, default=None, verbose_name='Описание категории')
     groups = models.ManyToManyField('Group', through='GroupPlacement', related_name='categories')
+    image = models.ImageField(upload_to='product_images/', blank=True, null=True, verbose_name='Фото категории')
 
     class Meta:
         verbose_name = "Категория товаров"
