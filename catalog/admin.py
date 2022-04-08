@@ -268,7 +268,8 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
         ("Основное", {
             'fields': (
                 ('name', 'sku', 'sku_manufacturer', 'rating','is_active',), ('slug', 'admin_category'),
-                ('brand', 'country_of_manufacture', 'url'),
+                ('brand', 'country_of_manufacture',),
+                ('series', 'url'),
             ),
             'classes': ('tab-fs-none',),
         }),

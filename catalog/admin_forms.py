@@ -43,6 +43,8 @@ class ProductAttributesField(forms.MultiValueField):
                         field = forms.CharField(required=False)
                     elif atr_type == 2:
                         field = forms.FloatField(required=False)
+                        if attribute.unit_of_measure is not None:
+                            attribute.name = f'{attribute.name} ({attribute.unit_of_measure.designation})'
                     elif atr_type == 3:
                         field = forms.BooleanField(required=False)
                     elif atr_type == 4:
@@ -54,7 +56,7 @@ class ProductAttributesField(forms.MultiValueField):
                         field = forms.MultipleChoiceField(choices=ch, required=False)
                     list_fields.append(field)
                     # field.widget.attrs.update({'label': attribute.name})
-                    field.widget.attrs.update({'label': attribute.name, })
+                    field.widget.attrs.update({'label': attribute.name,})
                     if len(attributes_of_group) - atr_count == 0:
                         field.widget.attrs.update({'group_end': 'yes'})
                     else:

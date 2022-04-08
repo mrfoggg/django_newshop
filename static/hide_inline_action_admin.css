@@ -1,4 +1,3 @@
-.djn-delete-handler, .add-handler {
+.djn-delete-handler, .add-handler , .djn-add-handler-handler, djn-model-catalog-attribute{
    display: none;
 }
-

@@ -64,6 +64,13 @@ class ProductSeries(models.Model):
                                                                                                    'товаров')
     description = models.TextField(blank=True, null=True, default=None, verbose_name='Описание линейки товаров')
 
+    class Meta:
+        verbose_name = "Линейка товара"
+        verbose_name_plural = "Линейки товаров"
+
+    def __str__(self):
+        return self.name
+
 
 class Product(models.Model):
     RATING = (
@@ -401,8 +408,8 @@ class ProductImage(models.Model):
     product = models.ForeignKey('Product', blank=True, null=True, default=None, on_delete=models.CASCADE,
                                 verbose_name='Товар', related_name='related_image')
     image = models.ImageField(upload_to='product_images/', blank=True, null=True, verbose_name='Фото товара')
-    is_main_1 = models.BooleanField(default=True, verbose_name='Главное фото')
-    on_focus = models.BooleanField(default=True, verbose_name='Главное фото при наведении')
+    is_main_1 = models.BooleanField(default=False, verbose_name='Главное фото')
+    on_focus = models.BooleanField(default=False, verbose_name='Главное фото при наведении')
     position = models.PositiveIntegerField("Position", null=True)
 
     class Meta:
