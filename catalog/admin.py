@@ -330,7 +330,8 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
             if Product.objects.filter(name=product_copy.name).exists():
                 raise ValidationError("Копия с таким названием уже существует")
             product_copy.save()
-            related_categories_product_pos = {x[0]: x[1] for x in Category.objects.annotate(last_product_position=Max(
+            related_categories_product_pos = {x[0]: (0 if x[1] is None else x[1])
+                                              for x in Category.objects.annotate(last_product_position=Max(
                 'productplacement__product_position')).filter(
                 productplacement__product=obj).values_list('id', 'last_product_position')}
             placements_to_create = [
@@ -338,6 +339,10 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
                     product=product_copy, category_id=cat, product_position=related_categories_product_pos[cat] + 1)
                 for cat, pos in related_categories_product_pos.items()]
             ProductPlacement.objects.bulk_create(placements_to_create)
+            ProductImage.objects.bulk_create([
+                ProductImage(product=product_copy, image=pr_pl[0], position=pr_pl[1])
+                for pr_pl in ProductImage.objects.filter(product=obj).values_list('image', 'position')
+            ])
             return HttpResponseRedirect(reverse('admin:catalog_product_change', args=(product_copy.id,)))
         return super().response_change(request, obj)
 
