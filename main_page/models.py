@@ -1,4 +1,4 @@
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from mptt.fields import TreeForeignKey
@@ -24,18 +24,22 @@ class StaticPage(models.Model):
         verbose_name = "Текстовая страница"
         verbose_name_plural = "Текстовые страницы"
 
+    def get_absolute_url(self):
+        return f'/pages/{self.slug}'
+
 
 class Menu(MPTTModel):
     TYPE_OF_ITEM_MENU = (
         (1, "Категория товаров"),
         (2, "Статическая страница"),
         (3, "Произвольный UPL"),
+        (4, "Пункт меню без ссылки"),
     )
 
     title = models.CharField(max_length=128, default=None, unique=True, db_index=True,
                              verbose_name='Название пункта меню')
     type_of_item = models.SmallIntegerField(
-        choices=TYPE_OF_ITEM_MENU, default=1, db_index=True, verbose_name='Тип пункта меню')
+        choices=TYPE_OF_ITEM_MENU, default=4, db_index=True, verbose_name='Тип пункта меню')
     parent = TreeForeignKey('self', blank=True, null=True, default=None, on_delete=models.SET_NULL,
                             related_name='children', db_index=True, verbose_name='Родительский пункт меню')
     link = models.URLField(max_length=128, blank=True, null=True, default=None, unique=True,
@@ -52,6 +56,20 @@ class Menu(MPTTModel):
 
     def __str__(self):
         return f'{self.title} ({self.get_type_of_item_display()})'
+
+    @property
+    @admin.display(description='Целевая ссылка')
+    def get_link(self):
+        match self.type_of_item:
+            case 3:
+                url = self.link
+            case 4:
+                url = None
+            case 1:
+                url = self.category.get_absolute_url
+            case 2:
+                url = self.page.get_absolute_url
+        return 'без ссылки' if url is None else url
 
 
 class Banner(models.Model):

@@ -2,15 +2,13 @@ from adminsortable2.admin import SortableAdminMixin
 from django.contrib import admin
 from django_summernote.admin import SummernoteModelAdmin
 from mptt.admin import DraggableMPTTAdmin
-
 from main_page.models import StaticPage, Menu, Banner, PopularCategory, PopularProduct, NewProduct
-
-import nested_admin
 
 
 @admin.register(Menu)
 class MenuAdmin(DraggableMPTTAdmin):
-    fields = ('title', 'type_of_item', 'parent', 'description')
+    fields = ('title', 'type_of_item', 'parent', 'description', 'get_link')
+    readonly_fields = ('get_link',)
 
     def get_fields(self, request, obj=None):
         if obj is not None:
@@ -20,7 +18,9 @@ class MenuAdmin(DraggableMPTTAdmin):
                 case 2:
                     return self.fields + ('page',)
                 case 3:
-                    return self.fields + ('url',)
+                    return self.fields + ('link',)
+                case 4:
+                    return self.fields
         else:
             return self.fields
 

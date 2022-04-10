@@ -58,6 +58,9 @@ class Category(MPTTModel):
             )
         )
 
+    def get_absolute_url(self):
+        return f'/category/{self.slug}'
+
 
 class ProductSeries(models.Model):
     name = models.CharField(max_length=128, default=None, unique=True, db_index=True, verbose_name='Название линейки '
