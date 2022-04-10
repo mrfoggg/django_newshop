@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django_summernote',
     'nested_admin',
     'catalog',
+    'main_page',
     'baton.autodiscover',
 ]
 
@@ -200,8 +201,27 @@ BATON = {
 
         {
             'type': 'app',
+            'name': 'main_page',
+            'label': 'Главная страница',
+            'icon': 'fa fa-home',
+            # 'default_open': True,
+            'models': (
+                {
+                    'name': 'menu',
+                    'label': 'Конструктор меню'
+                },
+                {
+                    'name': 'staticpage',
+                    'label': 'Текстовые страницы'
+                },
+            )
+        },
+
+        {
+            'type': 'app',
             'name': 'catalog',
             'label': 'Товары и их основные свойства',
+            'icon': 'fa fa-plug',
             'default_open': True,
             'models': (
                 {
@@ -228,6 +248,7 @@ BATON = {
             'type': 'app',
             'name': 'catalog',
             'label': 'Категории и расширенные характеристики',
+            'icon': 'fa fa-sitemap',
             'default_open': True,
             'models': (
                 {

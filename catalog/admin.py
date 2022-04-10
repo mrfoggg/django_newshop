@@ -148,9 +148,10 @@ class ProductImageInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTa
 
 
 @admin.register(Category)
-class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin):
+class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     list_display = ('tree_actions', 'indented_title', 'groups_list',)
     prepopulated_fields = {"slug": ("name",)}
+    summernote_fields = ('description',)
     save_as = True
     save_as_continue = False
     inlines = (GroupPlacementInline, MainAttributeInLine, ShotAttributeInLine, ProductPlacementInlineForCategory)
