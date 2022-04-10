@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     # 'django_json_widget',
     'django_summernote',
     'nested_admin',
+    'adminsortable2',
     'catalog',
     'main_page',
     'baton.autodiscover',
@@ -204,7 +205,7 @@ BATON = {
             'name': 'main_page',
             'label': 'Главная страница',
             'icon': 'fa fa-home',
-            # 'default_open': True,
+            'default_open': True,
             'models': (
                 {
                     'name': 'menu',
@@ -213,6 +214,22 @@ BATON = {
                 {
                     'name': 'staticpage',
                     'label': 'Текстовые страницы'
+                },
+                {
+                    'name': 'banner',
+                    'label': 'Баннер'
+                },
+                {
+                    'name': 'popularcategory',
+                    'label': 'Актуальные категории'
+                },
+                {
+                    'name': 'popularproduct',
+                    'label': 'Популярные товары'
+                },
+                {
+                    'name': 'newproduct',
+                    'label': 'Новые поступления'
                 },
             )
         },

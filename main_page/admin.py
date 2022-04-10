@@ -1,8 +1,9 @@
+from adminsortable2.admin import SortableAdminMixin
 from django.contrib import admin
 from django_summernote.admin import SummernoteModelAdmin
 from mptt.admin import DraggableMPTTAdmin
 
-from main_page.models import StaticPage, Menu
+from main_page.models import StaticPage, Menu, Banner, PopularCategory, PopularProduct, NewProduct
 
 import nested_admin
 
@@ -27,4 +28,28 @@ class MenuAdmin(DraggableMPTTAdmin):
 @admin.register(StaticPage)
 class StaticPageAdmin(SummernoteModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
-    summernote_fields = ('text', )
+    summernote_fields = ('text',)
+
+
+@admin.register(Banner)
+class BannerAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ('title', 'date_from', 'date_to', 'position')
+    list_editable = ('date_from', 'date_to', 'position')
+
+
+@admin.register(PopularCategory)
+class PopularCategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ('category', 'date_from', 'date_to', 'position')
+    list_editable = ('date_from', 'date_to', 'position')
+
+
+@admin.register(PopularProduct)
+class PopularProductAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ('product', 'date_from', 'date_to', 'position')
+    list_editable = ('date_from', 'date_to', 'position')
+
+
+@admin.register(NewProduct)
+class NewProductAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ('product', 'date_from', 'date_to', 'position')
+    list_editable = ('date_from', 'date_to', 'position')

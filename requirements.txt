@@ -22,3 +22,4 @@ types-pytz==2021.3.1
 types-PyYAML==6.0.1
 typing_extensions==4.0.1
 webencodings==0.5.1
+django-admin-sortable2
