@@ -141,7 +141,7 @@ class PricesOtherShopInline(nested_admin.NestedTabularInline):
 
 
 class ProductImageInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
-    fields = ['position', ('image', 'name', 'is_main_1', 'on_focus')]
+    fields = ['position', ('image', 'name', 'is_main_1', 'on_focus', 'is_active')]
     model = ProductImage
     sortable_field_name = "position"
     extra = 0
@@ -296,6 +296,9 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     )
 
     class Media:
+        css = {
+            "all": ("test.css",)
+        }
         js = ('checkbox_one.js',)
 
     def save_related(self, request, form, formsets, change):
