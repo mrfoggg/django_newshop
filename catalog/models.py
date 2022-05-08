@@ -405,7 +405,7 @@ class PricesOtherShop(models.Model):
 
 class ProductImage(models.Model):
     name = models.CharField(max_length=128, blank=True, default='', db_index=True, verbose_name='Название')
-    is_active = models.BooleanField(default=True, verbose_name='Активно')
+    is_hidden = models.BooleanField(default=False, verbose_name='Скрыто')
     created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name='Добавлено')
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
     product = models.ForeignKey('Product', blank=True, null=True, default=None, on_delete=models.CASCADE,

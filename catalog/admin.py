@@ -141,7 +141,7 @@ class PricesOtherShopInline(nested_admin.NestedTabularInline):
 
 
 class ProductImageInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
-    fields = ['position', ('image', 'name', 'is_main_1', 'on_focus', 'is_active')]
+    fields = ['position', ('image', 'name', 'is_main_1', 'on_focus', 'is_hidden')]
     model = ProductImage
     sortable_field_name = "position"
     extra = 0
@@ -268,7 +268,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     fieldsets = (
         ("Основное", {
             'fields': (
-                ('name', 'sku', 'sku_manufacturer', 'rating','is_active',), ('slug', 'admin_category'),
+                ('name', 'sku', 'sku_manufacturer', 'rating', 'is_active'), ('slug', 'admin_category'),
                 ('brand', 'country_of_manufacture',),
                 ('series', 'url'),
             ),
