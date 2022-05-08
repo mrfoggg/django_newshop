@@ -295,6 +295,9 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
 
     )
 
+    class Media:
+        js = ('checkbox_one.js',)
+
     def save_related(self, request, form, formsets, change):
         # сохраняем FormSet иначе 'ProductPlacementFormFormSet' object has no attribute 'deleted_objects'
         category_fs = formsets[0]
