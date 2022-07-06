@@ -22,9 +22,9 @@ from django.urls import include, path
 from baton.autodiscover import admin
 from django.urls import path, include
 
-admin.site.site_header = 'Интернет магазин "Барыги""'
-admin.site.site_title = "Барыги"
-admin.site.index_title = "Админка"
+admin.site.site_header = 'Снип-Сноп'
+admin.site.site_title = "Главная страница"
+admin.site.index_title = 'Панель администрирования интернет-магазина "Снип-Сноп"'
 
 
 urlpatterns = [

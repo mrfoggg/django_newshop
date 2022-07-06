@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'catalog',
     'main_page',
     'baton.autodiscover',
+    'django_svg_image_form_field'
 ]
 
 MIDDLEWARE = [
@@ -175,8 +176,8 @@ BATON = {
     'MENU_ALWAYS_COLLAPSED': False,
     'MENU_TITLE': 'Menu',
     'MESSAGES_TOASTS': False,
-    'GRAVATAR_DEFAULT_IMG': 'retro',
-    'LOGIN_SPLASH': '/static/core/img/login-splash.png',
+    'GRAVATAR_DEFAULT_IMG': 'https://ru.gravatar.com/userimage/223686757/923cc17186456a164107fc1f0eb66dca.png',
+    'LOGIN_SPLASH': '/static/core/img/byrka.jpg',
     'SEARCH_FIELD': {
         'label': 'Search contents...',
         'url': '/search/',

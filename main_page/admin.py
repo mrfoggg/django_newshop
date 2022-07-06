@@ -1,14 +1,24 @@
 from adminsortable2.admin import SortableAdminMixin
+from django import forms
 from django.contrib import admin
 from django_summernote.admin import SummernoteModelAdmin
 from mptt.admin import DraggableMPTTAdmin
 from main_page.models import StaticPage, Menu, Banner, PopularCategory, PopularProduct, NewProduct
+from django_svg_image_form_field import SvgAndImageFormField
 
 
+class MenuAdminForm(forms.ModelForm):
+    class Meta:
+        model = Menu
+        exclude = []
+        field_classes = {
+            'image': SvgAndImageFormField,
+        }
 @admin.register(Menu)
 class MenuAdmin(DraggableMPTTAdmin):
-    fields = ('title', 'type_of_item', 'parent', 'description', 'get_link')
+    fields = ('title', 'type_of_item', 'parent', 'description', 'get_link', 'image')
     readonly_fields = ('get_link',)
+    form = MenuAdminForm
 
     def get_fields(self, request, obj=None):
         if obj is not None:

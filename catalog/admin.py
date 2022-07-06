@@ -141,7 +141,7 @@ class PricesOtherShopInline(nested_admin.NestedTabularInline):
 
 
 class ProductImageInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
-    fields = ['position', ('image', 'name', 'is_main_1', 'on_focus', 'is_hidden')]
+    fields = ['position', ('image', 'name', 'is_main_1', 'on_focus',)]
     model = ProductImage
     sortable_field_name = "position"
     extra = 0
@@ -196,7 +196,7 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin, Summernot
     def delete_model(self, request, obj, once_del=True):
         products_to_update = None
         clean_combination_of_category(obj)
-        if obj.productplacement_set.exists() and obj.groups.attributes.exists():
+        if obj.productplacement_set.exists() and Attribute.objects.filter(group__categories=obj):
             products = list(Product.objects.filter(categories=obj))
             keys_to_del = Attribute.objects.filter(group__categories=obj).values_list('slug', flat=True)
             products_to_update = remove_keys_in_products(keys_to_del, products)

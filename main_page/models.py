@@ -49,6 +49,7 @@ class Menu(MPTTModel):
                               verbose_name='Целевая категория товаров')
     page = models.ForeignKey(StaticPage, blank=True, null=True, default=None, on_delete=models.SET_NULL,
                              verbose_name='Целевая статическая страница')
+    image = models.ImageField(upload_to='product_images/', blank=True, null=True, verbose_name='Логотип')
 
     class Meta:
         verbose_name = "Пункт меню"
