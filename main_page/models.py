@@ -25,7 +25,7 @@ class StaticPage(models.Model):
         verbose_name_plural = "Текстовые страницы"
 
     def get_absolute_url(self):
-        return f'/pages/{self.slug}'
+        return f'{self.slug}'
 
 
 class Menu(MPTTModel):
@@ -43,34 +43,44 @@ class Menu(MPTTModel):
     parent = TreeForeignKey('self', blank=True, null=True, default=None, on_delete=models.SET_NULL,
                             related_name='children', db_index=True, verbose_name='Родительский пункт меню')
     link = models.URLField(max_length=128, blank=True, null=True, default=None, unique=True,
-                           verbose_name='Ссылка на отфильрованую выдачу')
+                           verbose_name='Ссылка на которую указывает пункт меню')
     description = models.TextField(blank=True, null=True, default=None, verbose_name='Статический СЕО трэш')
     category = TreeForeignKey(Category, blank=True, null=True, default=None, on_delete=models.SET_NULL,
                               verbose_name='Целевая категория товаров')
     page = models.ForeignKey(StaticPage, blank=True, null=True, default=None, on_delete=models.SET_NULL,
                              verbose_name='Целевая статическая страница')
-    image = models.ImageField(upload_to='product_images/', blank=True, null=True, verbose_name='Логотип')
+    image = models.ImageField(upload_to='main_page/top_menu-images', blank=True, null=True, verbose_name='Логотип')
 
     class Meta:
         verbose_name = "Пункт меню"
-        verbose_name_plural = "Пункты меню"
+        verbose_name_plural = "Конструктор меню"
 
     def __str__(self):
         return f'{self.title} ({self.get_type_of_item_display()})'
 
     @property
-    @admin.display(description='Целевая ссылка')
+    @admin.display(description='Текущая ссылка')
     def get_link(self):
         match self.type_of_item:
             case 3:
-                url = self.link
+                if self.link:
+                    url = self.link
+                else:
+                    url = None
             case 4:
                 url = None
             case 1:
-                url = self.category.get_absolute_url
+                if self.category:
+                    url = self.category.get_absolute_url
+                else:
+                    url = None
             case 2:
-                url = self.page.get_absolute_url
-        return 'без ссылки' if url is None else url
+                if self.page:
+                    url = self.page.get_absolute_url
+                else:
+                    url = None
+        # return 'без ссылки' if url is None else url
+        return url
 
 
 class Banner(models.Model):
@@ -83,13 +93,13 @@ class Banner(models.Model):
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
     date_from = models.DateTimeField(auto_now_add=False, auto_now=False, verbose_name='Отображать с даты')
     date_to = models.DateTimeField(auto_now_add=False, auto_now=False, verbose_name='Отображать до даты')
-    image = models.ImageField(upload_to='product_images/', blank=True, null=True, verbose_name='Фото товара')
+    image = models.ImageField(upload_to='main_page/banner', blank=True, null=True, verbose_name='Фото товара')
     position = models.PositiveIntegerField("Position", null=True)
 
     class Meta:
         ordering = ('position',)
         verbose_name = "Баннер"
-        verbose_name_plural = "Фотографии баннеров"
+        verbose_name_plural = "Слайдер с баннерами"
 
     def __str__(self):
         return self.title
@@ -105,8 +115,8 @@ class PopularCategory(models.Model):
 
     class Meta:
         ordering = ('position',)
-        verbose_name = "Поулярная сейчас категория"
-        verbose_name_plural = "Поулярные сейчас категории"
+        verbose_name = "Популярная категория"
+        verbose_name_plural = "Популярные категории"
 
     def __str__(self):
         return self.category.name
@@ -122,8 +132,8 @@ class PopularProduct(models.Model):
 
     class Meta:
         ordering = ('position',)
-        verbose_name = "Поулярный товар"
-        verbose_name_plural = "Поулярные товары"
+        verbose_name = "Популярный товар"
+        verbose_name_plural = "Популярные товары"
 
     def __str__(self):
         return self.product.name
@@ -140,7 +150,7 @@ class NewProduct(models.Model):
     class Meta:
         ordering = ('position',)
         verbose_name = "Новый товар"
-        verbose_name_plural = "Новые постаупления"
+        verbose_name_plural = "Новые поступления"
 
     def __str__(self):
         return self.product.name

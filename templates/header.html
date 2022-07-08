@@ -1,0 +1,141 @@
+<header>
+    <div class="main-header">
+        <div class="content-wrapper main-header__content-wrapper">
+            <div class="main-header__item">
+                <div class="main-header__logo">
+                    <a href="/">
+                        <img src="../media/main_page/header/logo_Snip_Snop.svg" alt="">
+                    </a>
+                </div>
+                <div class="main-header__logo-text">
+                    <h1>Сучасне обладнання для домашніх господарств</h1>
+                </div>
+            </div>
+            <div class="main-header__item">
+                <ul>
+                    <li>
+                        <span>telegram</span>
+                        <span class="main-header__phone">067-777-1234</span>
+                    </li>
+                    <li>
+                        <span>viber</span>
+                        <span class="main-header__phone">066-666-4943</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="main-header__item">
+                <ul class="schedule">
+                    <li>
+                        <span>ПН-ПТ</span>
+                        <span class="main-header__hours">з 8:00</span>
+                        <span class="main-header__hours">до 19:00</span>
+                    </li>
+                    <li>
+                        <span>СБ</span>
+                        <span class="main-header__hours">з 10:00</span>
+                        <span class="main-header__hours">до 15:00</span>
+                    </li>
+                    <li>
+                        <span>НД</span>
+                        <span class="main-header__hours">вихідний</span>
+                    </li>
+                </ul>
+            </div>   <!-- main-header__item -->
+        </div> <!-- main-header__content -->
+    </div> <!-- main-header -->
+    
+    <div class="sub-header">
+        <div class="content-wrapper sub-header__content-wrapper">
+            <div class="sub-header__search">
+                <form action="/">
+                    <input class="sub-header__input" type="text" name="search" placeholder="шукати тут" value="">
+                    <button class="sub-header__submit" type="submit">
+                        <img src="../media/main_page/header/search.svg" alt="Шукати">
+                    </button>
+                </form>
+            </div>
+            <div class="sub-header__nav">
+                <ul>
+                    <li><a href="#">доставка</a></li>
+                    <li><a href="#">оплата</a></li>
+                    <li><a href="old.html">повернення</a></li>
+                </ul>
+            </div>
+            <div class="sub-header__userlinks">
+                <ul >
+                    <li>
+                        <a href="#">
+                            <img src="../media/main_page/header/user.svg" alt="кабінет">
+                            <span>кабінет</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <img src="../media/main_page/header/basket.svg" alt="кошик">
+                            <span>кошик</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div> <!-- sub-header__content -->
+    </div> <!-- sub-header -->
+
+    <nav class="top-catalog">
+        <div class="top-catalog__100w-bg"></div>
+        <div class="content-wrapper top-catalog__content-wrapper">
+            <ul class="top-catalog__first-level-list">
+                {% for menu_item_1 in menu_items %}
+                    <li class="top-catalog__first-level-item">
+                        {% if  menu_item_1.get_link %}
+                            <a class="top-catalog__first-level-link-wrapper" href={{ menu_item_1.get_link }}>
+                                {% if menu_item_1.image %}
+                                    <img src={{menu_item_1.image.url}} alt="alt">
+                                {% endif %}
+                                <h2>{{ menu_item_1.title }}</h2>
+                            </a>
+                        {% else %}
+                            <div class="top-catalog__first-level-link-wrapper">
+                                {% if menu_item_1.image %}
+                                    <img src={{menu_item_1.image.url}} alt="alt">
+                                {% endif %}
+                                <h2>{{ menu_item_1.title }}</h2>
+                            </div>
+                        {% endif %}
+                        <div class="top-catalog__second-level-list-wrapper--w100">
+                            <ul class="top-catalog__second-level-list">
+                                {% for menu_item_2 in menu_item_1.get_children %}
+                                    <li class="top-catalog__second-level-item">
+                                        {% if  menu_item_2.get_link %}
+                                            <a href={{ menu_item_2.get_link }}>{{ menu_item_2.title }}</a>
+                                        {% else %}
+                                            {{ menu_item_2.title }}
+                                        {% endif %}
+                                        <ul class="top-catalog__third-level-list">
+                                            {% for menu_item_3 in menu_item_2.get_children %}
+                                                <li class="top-catalog__third-level-item top-catalog__third-level-item">
+                                                    {% if  menu_item_3.get_link %}
+                                                        <a href={{ menu_item_3.get_link }}>{{ menu_item_3.title }}</a>
+                                                    {% else %}
+                                                        {{ menu_item_3.title }}
+                                                    {% endif %}
+                                                    <ul class="top-catalog__last-level-list">
+                                                        {% for menu_item_4 in menu_item_3.get_children %}
+                                                            <li><a href="/">{{ menu_item_4.title }}</a></li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>  <!-- top-catalog content-wrapper -->
+    </nav>
+</header>
+
+<!-- <div class="margin-header"></div> -->
+<div class="darker-out-topmenu"></div>

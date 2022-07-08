@@ -49,7 +49,9 @@ INSTALLED_APPS = [
     'catalog',
     'main_page',
     'baton.autodiscover',
-    'django_svg_image_form_field'
+    'django_svg_image_form_field',
+    'solo',
+    'site_settings'
 ]
 
 MIDDLEWARE = [
@@ -70,7 +72,7 @@ TEMPLATE_DIR = BASE_DIR / 'templates'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates',],
+        'DIRS': [TEMPLATE_DIR,],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

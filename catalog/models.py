@@ -149,9 +149,11 @@ class Product(models.Model):
             for gr_pl in cc.group_position.all():
                 group_sorted_list.append([gr_pl.group_placement.category.name, gr_pl.group_placement.group])
         else:
-            for cat_placement in self.productplacement_set.order_by('category_position'):
-                for group_placement in cat_placement.category.groupplacement_set.order_by('position'):
-                    group_sorted_list.append([cat_placement.category.name, group_placement.group])
+            # фиксил 6.07.2022
+            if not self.id is None:
+                for cat_placement in self.productplacement_set.order_by('category_position'):
+                    for group_placement in cat_placement.category.groupplacement_set.order_by('position'):
+                        group_sorted_list.append([cat_placement.category.name, group_placement.group])
         return group_sorted_list
 
 

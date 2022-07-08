@@ -5,15 +5,35 @@ from django_summernote.admin import SummernoteModelAdmin
 from mptt.admin import DraggableMPTTAdmin
 from main_page.models import StaticPage, Menu, Banner, PopularCategory, PopularProduct, NewProduct
 from django_svg_image_form_field import SvgAndImageFormField
+from django_summernote.utils import get_attachment_model
+
+admin.site.unregister(get_attachment_model())
 
 
 class MenuAdminForm(forms.ModelForm):
+    def clean(self):
+        super(MenuAdminForm, self).clean()
+
+        if self.cleaned_data['type_of_item'] == 1 and 'category' in self.cleaned_data.keys():
+            if self.cleaned_data['category'] is None:
+                raise forms.ValidationError('Выберите категорию на которую ссылается пункт меню')
+
+        if self.cleaned_data['type_of_item'] == 2 and 'page' in self.cleaned_data.keys():
+            if self.cleaned_data['page'] is None:
+                raise forms.ValidationError('Выберите текстовую старницу на которую ссылается пункт меню')
+
+        if self.cleaned_data['type_of_item'] == 3 and 'link' in self.cleaned_data.keys():
+            if self.cleaned_data['link'] is None:
+                raise forms.ValidationError('Укажите ссылку на которую указывает пункт меню')
+
     class Meta:
         model = Menu
         exclude = []
         field_classes = {
             'image': SvgAndImageFormField,
         }
+
+
 @admin.register(Menu)
 class MenuAdmin(DraggableMPTTAdmin):
     fields = ('title', 'type_of_item', 'parent', 'description', 'get_link', 'image')

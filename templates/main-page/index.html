@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title> {{ title }}</title>
+{% endblock title %}
+
+{% block content %}
+    <div class="content-wrapper wrapper-slider">
+        <div class="slider" data-slick='{"autoplay": {% if slider_config.autoplay %} true  {% else %} false {% endif %},
+         "autoplaySpeed": {{ slider_config.autoplay_speed }}}'>
+            {% for banner in banners %}
+                <div class="slider__item">
+                    <img src={{banner.image.url}} alt="">
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock content %}
