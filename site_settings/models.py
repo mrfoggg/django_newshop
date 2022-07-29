@@ -12,3 +12,18 @@ class SliderConfiguration(SingletonModel):
 
     class Meta:
         verbose_name = "Настройки слайдера"
+
+
+class HeaderConfiguration(SingletonModel):
+    header_height = models.CharField(max_length=128, blank=True, null=True, unique=True, db_index=True,
+                                     verbose_name='Высота верхней шапки')
+    sub_header_height = models.CharField(max_length=128, blank=True, null=True, unique=True, db_index=True,
+                                         verbose_name='Высота нижней шапки')
+    menu_height = models.CharField(max_length=128, blank=True, null=True, unique=True, db_index=True,
+                                   verbose_name='Высота нижней шапки')
+
+    def __str__(self):
+        return "HeaderConfiguration"
+
+    class Meta:
+        verbose_name = "Настройки шапки"

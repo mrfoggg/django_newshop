@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.db import models
+from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.utils.html import format_html_join
+from django.utils.html import format_html_join, format_html
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
@@ -35,6 +36,7 @@ class Category(MPTTModel):
     name = models.CharField(max_length=128, default=None, unique=True, db_index=True, verbose_name='Название')
     parent = TreeForeignKey('self', blank=True, null=True, default=None, on_delete=models.SET_NULL,
                             related_name='children', db_index=True, verbose_name='Родительская категория')
+    display_in_parent = models.BooleanField(default=True, verbose_name='Отображать в родительской категории')
     slug = models.SlugField(max_length=128, blank=True, null=True, default=None, unique=True)
     description = models.TextField(blank=True, null=True, default=None, verbose_name='Описание категории')
     groups = models.ManyToManyField('Group', through='GroupPlacement', related_name='categories')
@@ -59,7 +61,38 @@ class Category(MPTTModel):
         )
 
     def get_absolute_url(self):
-        return f'/category/{self.slug}'
+        # return f'/category/{self.slug}'
+        return reverse('category:index', args=(self.slug,))
+
+    @property
+    def link(self):
+        return format_html(f'<a href="{self.get_absolute_url()}">{self.name}</a>')
+
+    @property
+    def parents(self):
+        parents = []
+        current = self
+        parent = self.parent
+        while parent:
+            if current.display_in_parent:
+                parents.append([parent.get_absolute_url, parent])
+            current = current.parent
+            parent = parent.parent
+        parents.reverse()
+        return parents
+
+    @property
+    def children_to_display(self):
+        return self.children.filter(display_in_parent=True)
+
+    @property
+    def bro_categories(self):
+        return self.parent.children.exclude(id=self.id)
+
+    @property
+    def listing(self):
+        # print(self.name)
+        return self.productplacement_set.order_by('product_position')
 
 
 class ProductSeries(models.Model):
@@ -75,14 +108,14 @@ class ProductSeries(models.Model):
         return self.name
 
 
+def get_shot_attr_name(shot_attribute):
+    print(shot_attribute.name)
+    return shot_attribute.name if shot_attribute.name else shot_attribute.attribute.name
+
+
 class Product(models.Model):
-    RATING = (
-        (1, " * "),
-        (2, " * * "),
-        (3, " * * * "),
-        (4, " * * * * "),
-        (5, " * * * * * ")
-    )
+    RATING = [(i, i) for i in range(0, 100, 5)]
+
     WARRANTY = (
         (1, "12 мес."),
         (2, "6 мес."),
@@ -150,11 +183,42 @@ class Product(models.Model):
                 group_sorted_list.append([gr_pl.group_placement.category.name, gr_pl.group_placement.group])
         else:
             # фиксил 6.07.2022
-            if not self.id is None:
+            if self.id is not None:
                 for cat_placement in self.productplacement_set.order_by('category_position'):
                     for group_placement in cat_placement.category.groupplacement_set.order_by('position'):
                         group_sorted_list.append([cat_placement.category.name, group_placement.group])
         return group_sorted_list
+
+    def get_attr_string_val(self, attr):
+        characteristics = self.characteristics
+        slug = attr.slug
+        def check_key(chasratreristics, slug):
+            pass
+
+
+        match attr.type_of_value:
+            case 1:
+                return self.characteristics[attr.slug]
+            case 2:
+                return self.characteristics[attr.slug]
+            case 3:
+                return 'так' if self.characteristics[attr.slug] else 'ні'
+            case 4:
+                return FixedTextValue.objects.get(slug=characteristics[slug]).name
+            case 5:
+                return [FixedTextValue.objects.get(slug=i) for i in characteristics[slug]]
+
+    @property
+    def shot_attributes(self):
+        shot_attr_list = []
+        if (cc := self.combination_of_categories) and cc.is_active_custom_order_mini_parameters:
+            for shot_pl in cc.shot_attr_positions.all():
+                shot_attr_list.append([get_shot_attr_name(shot_pl.shot_attribute),
+                                       self.get_attr_string_val(shot_pl.attribute)])
+        else:
+            for cat_placement in self.productplacement_set.order_by('category_position'):
+                return [[get_shot_attr_name(i), self.get_attr_string_val(i.attribute)]
+                        for i in cat_placement.category.shot_attributes.all()]
 
 
 class ProductPlacement(models.Model):
@@ -241,7 +305,8 @@ class Attribute(models.Model):
     type_of_value = models.SmallIntegerField(choices=TYPE_OF_VALUE, default=1, verbose_name='Тип данных')
     unit_of_measure = models.ForeignKey(UnitOfMeasure, blank=True, null=True, on_delete=models.SET_NULL,
                                         verbose_name='Еденица измерения')
-    display_when_value_none = models.BooleanField('Отображать пустое поле', default=True)
+    default_str_value = models.CharField(
+        max_length=128, blank=True, null=True, default='Не вказано', verbose_name='Строка для отображения если значение не указано')
 
     class Meta:
         verbose_name = "Атрибут"
@@ -275,7 +340,7 @@ class FixedTextValue(models.Model):
 
 
 class MainAttribute(models.Model):
-    name = models.CharField(max_length=128, default=None, verbose_name='Краткое название')
+    # name = models.CharField(max_length=128, default=None, verbose_name='Краткое название')
     category = TreeForeignKey(Category, on_delete=models.CASCADE)
     attribute = models.ForeignKey(
         Attribute, on_delete=models.CASCADE, verbose_name='Атрибут основных характеристик')
@@ -291,7 +356,8 @@ class MainAttribute(models.Model):
 
 
 class ShotAttribute(models.Model):
-    category = TreeForeignKey(Category, on_delete=models.CASCADE)
+    name = models.CharField(max_length=128, blank=True, null=True, default=None, verbose_name='Краткое название')
+    category = TreeForeignKey(Category, on_delete=models.CASCADE, related_name='shot_attributes')
     attribute = models.ForeignKey(
         Attribute, on_delete=models.CASCADE, verbose_name='Атрибут кратких характеристик')
     position = models.PositiveIntegerField("Порядок", null=True, blank=True)
@@ -410,10 +476,8 @@ class ProductImage(models.Model):
     created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name='Добавлено')
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
     product = models.ForeignKey('Product', blank=True, null=True, default=None, on_delete=models.CASCADE,
-                                verbose_name='Товар', related_name='related_image')
+                                verbose_name='Товар', related_name='images')
     image = models.ImageField(upload_to='product_images/', blank=True, null=True, verbose_name='Фото товара')
-    is_main_1 = models.BooleanField(default=False, verbose_name='Главное фото')
-    on_focus = models.BooleanField(default=False, verbose_name='Главное фото при наведении')
     position = models.PositiveIntegerField("Position", null=True)
 
     class Meta:

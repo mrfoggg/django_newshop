@@ -1,0 +1,146 @@
+<aside class="category-sidebar" data-max-height-section="26rem">
+
+    {% if category.level != 0 %}
+        <div class="category-sidebar__bro-categories category-sidebar__section" >
+
+            <div class="category-sidebar__title">
+                Інше в категорії {{ category.parent }}
+                <div class="category-sidebar__title-checkbox">
+                    <label>
+                        <input type="checkbox" value="bro-categories" name="sections-status"><span></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="category-sidebar__section-content-wrapper" id="bro-categories">
+                <ul class="category-sidebar__section-content" >
+                    {% for bro in category.bro_categories %}
+                        <li>{{ bro.link }}</li>
+                    {% endfor %}
+                </ul>
+                <div class="category-sidebar__section-overflow-indicator">Показати всі</div>
+                <div class="category-sidebar__section-overflow-indicator">Згорнути</div>
+            </div>
+        </div>
+    {% endif %}
+    <div class="category-sidebar__section">
+        <div class="category-sidebar__title">Ціна
+            <div class="category-sidebar__title-checkbox">
+                <label>
+                    <input type="checkbox" checked value="tsyna" name="sections-status"><span></span>
+                </label>
+            </div>
+        </div>
+        <div class="category-sidebar__section-content-wrapper" id="tsyna">
+            <div class="category-sidebar__section-content category-sidebar__section-content--slider">
+                <div id="slider"></div>
+                <div class="category-sidebar__section-digital-inputs">
+                    <input id="input-number-from" type="number">
+                    <input id="input-number-to" type="number">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="category-sidebar__section">
+        <div class="category-sidebar__title">Наявність
+            <div class="category-sidebar__title-checkbox">
+                <label>
+                    <input type="checkbox" checked value="nayavnist" name="sections-status"><span></span>
+                </label>
+            </div>
+        </div>
+        <div class="category-sidebar__section-content-wrapper" id="nayavnist">
+            <ul class="category-sidebar__section-content">
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> В наявності
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> Очікується надходження
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> Немає в наявності
+                </label></li>
+            </ul>
+            <div class="category-sidebar__section-overflow-indicator">Показати всі</div>
+            <div class="category-sidebar__section-overflow-indicator">Згорнути</div>
+        </div>
+    </div>
+    <div class="category-sidebar__section">
+        <div class="category-sidebar__title">Бренд
+            <div class="category-sidebar__title-checkbox">
+                <label>
+                    <input type="checkbox" checked value="brend" name="sections-status"><span></span>
+                </label>
+            </div>
+        </div>
+        <div class="category-sidebar__section-content-wrapper" id="brend">
+            <ul class="category-sidebar__section-content">
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> РКС Пром
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> ЛАН
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> Урожай-М
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> Master Craft
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> РКС Пром
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> ЛАН
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> Урожай-М
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> Master Craft
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> РКС Пром
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> ЛАН
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> Урожай-М
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> Master Craft
+                </label></li>
+            </ul>
+            <div class="category-sidebar__section-overflow-indicator">Показати всі</div>
+            <div class="category-sidebar__section-overflow-indicator">Згорнути</div>
+        </div>
+
+    </div>
+    <div class="category-sidebar__section">
+        <div class="category-sidebar__title">Подрібнює
+            <div class="category-sidebar__title-checkbox">
+                <label>
+                    <input type="checkbox" checked value="podribnue" name="sections-status"><span></span>
+                </label>
+            </div>
+        </div>
+        <div class="category-sidebar__section-content-wrapper" id="podribnue">
+            <ul class="category-sidebar__section-content">
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> Конеплоди
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> Овочі
+                </label></li>
+                <li><label class="category-sidebar__checkbox">
+                    <input type="checkbox"><div class="category-sidebar__checkbox--visible"></div> Фрукти
+                </label></li>
+            </ul>
+            <div class="category-sidebar__section-overflow-indicator">Показати всі</div>
+            <div class="category-sidebar__section-overflow-indicator">Згорнути</div>
+        </div>
+
+    </div>
+</aside>

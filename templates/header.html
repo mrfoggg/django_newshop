@@ -1,3 +1,4 @@
+{% load custom_tags %}
 <header>
     <div class="main-header">
         <div class="content-wrapper main-header__content-wrapper">
@@ -12,33 +13,34 @@
                 </div>
             </div>
             <div class="main-header__item">
-                <ul>
-                    <li>
-                        <span>telegram</span>
-                        <span class="main-header__phone">067-777-1234</span>
-                    </li>
-                    <li>
-                        <span>viber</span>
-                        <span class="main-header__phone">066-666-4943</span>
-                    </li>
-                </ul>
+                <table class="main-header__contacts">
+                    {% for contact_phone in contact_phones %}
+                        <tr>
+                            <td class="main-header__phone-type">{{contact_phone.get_chat_links}}</td>
+                            <td class="main-header__phone" itemprop="telephone">
+                                <a href="tel:{{ contact_phone.phone }}">{{ contact_phone.phone.number|phone_national }}</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+
+                </table>
             </div>
             <div class="main-header__item">
                 <ul class="schedule">
-                    <li>
-                        <span>ПН-ПТ</span>
-                        <span class="main-header__hours">з 8:00</span>
-                        <span class="main-header__hours">до 19:00</span>
-                    </li>
-                    <li>
-                        <span>СБ</span>
-                        <span class="main-header__hours">з 10:00</span>
-                        <span class="main-header__hours">до 15:00</span>
-                    </li>
-                    <li>
-                        <span>НД</span>
-                        <span class="main-header__hours">вихідний</span>
-                    </li>
+                    {% for day in schedule %}
+                        {% if day.time_from and day.time_to%}
+                            <li>
+                                <span>{{ day.day }}</span>
+                                <span class="main-header__hours">{{ day.time_from | time }}</span>
+                                <span class="main-header__hours">{{ day.time_to | time}}</span>
+                            </li>
+                        {% else %}
+                            <li>
+                                <span>{{ day.day }}</span>
+                                <span class="main-header__hours">Вихідний</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
                 </ul>
             </div>   <!-- main-header__item -->
         </div> <!-- main-header__content -->
@@ -50,7 +52,6 @@
                 <form action="/">
                     <input class="sub-header__input" type="text" name="search" placeholder="шукати тут" value="">
                     <button class="sub-header__submit" type="submit">
-                        <img src="../media/main_page/header/search.svg" alt="Шукати">
                     </button>
                 </form>
             </div>
@@ -65,13 +66,13 @@
                 <ul >
                     <li>
                         <a href="#">
-                            <img src="../media/main_page/header/user.svg" alt="кабінет">
+                            <img src="../media/icons/user.svg" alt="кабінет">
                             <span>кабінет</span>
                         </a>
                     </li>
                     <li>
                         <a href="#">
-                            <img src="../media/main_page/header/basket.svg" alt="кошик">
+                            <img src="../media/icons/basket.svg" alt="кошик">
                             <span>кошик</span>
                         </a>
                     </li>
@@ -101,6 +102,11 @@
                                 <h2>{{ menu_item_1.title }}</h2>
                             </div>
                         {% endif %}
+                        {% if header_config.menu_height %}
+                            <style>
+                                .top-catalog__first-level-link-wrapper {height: {{ header_config.menu_height }};}
+                            </style>
+                        {% endif %}
                         <div class="top-catalog__second-level-list-wrapper--w100">
                             <ul class="top-catalog__second-level-list">
                                 {% for menu_item_2 in menu_item_1.get_children %}
@@ -118,9 +124,13 @@
                                                     {% else %}
                                                         {{ menu_item_3.title }}
                                                     {% endif %}
-                                                    <ul class="top-catalog__last-level-list">
-                                                        {% for menu_item_4 in menu_item_3.get_children %}
-                                                            <li><a href="/">{{ menu_item_4.title }}</a></li>
+                                                <ul class="top-catalog__last-level-list">
+                                                    {% for menu_item_4 in menu_item_3.get_children %}
+                                                        {% if  menu_item_4.get_link %}
+                                                            <li><a href={{ menu_item_4.get_link }}>{{ menu_item_4.title }}</a></li>
+                                                        {% else %}
+                                                            {{ menu_item_4.title }}
+                                                        {% endif %}
                                                         {% endfor %}
                                                     </ul>
                                                 </li>

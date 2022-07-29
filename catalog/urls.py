@@ -1,9 +1,11 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
+from .views import MainPageView
 
+app_name = 'category'
 urlpatterns = [
-    path('summernote/', include('django_summernote.urls')),
+    path('<slug:slug>/', MainPageView.as_view(), name='index'),
 ]
 
 if settings.DEBUG:

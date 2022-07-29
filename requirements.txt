@@ -1,6 +1,6 @@
 asgiref==3.4.1
 bleach==4.1.0
-Django==4.0
+Django~=4.0.6
 django-baton==2.2.3
 django-js-asset==1.2.2
 django-mptt==0.13.4
@@ -22,5 +22,8 @@ types-pytz==2021.3.1
 types-PyYAML==6.0.1
 typing_extensions==4.0.1
 webencodings==0.5.1
-django-admin-sortable2
-django-solo
+django-admin-sortable2~=2.1
+django-solo~=2.0.0
+
+phonenumbers~=8.12.51
+Telethon~=1.24.0

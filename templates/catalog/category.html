@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load thumbnail %}
+
+{% block title %}
+    <title> {{ title }}</title>
+{% endblock title %}
+
+{% block content %}
+    <div class="content-wrapper">
+        <div class="category__header">
+            {% include 'breadcrumbs.html' %}
+            <div class="category__title">
+                <h1>{{ category.name }}.</h1>
+                <span class="category__header-info">25 шт / 2 сторінки</span>
+            </div>
+            <div class="category__subcategory">
+                {% if category.subcategory_links %}
+                    <span class="category__subcategory-title">Підкатегорії:</span>
+                {% endif %}
+                {% for subcategory in category.children_to_display %}
+                    <span class="category__subcategory-item">{{ subcategory.link }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="category__main">
+            {% include 'sidebar.html' %}
+            <div class="category-content">
+                <div class="category-products__controls">
+                    <div class="category-products__filters-list">
+                        <span class="category-products__filters-item">З електроприводом</span>
+                        <span class="category-products__filters-item">Напруга 220В</span>
+                        <span class="category-products__filters-item">Скинути всі фільтри</span>
+                    </div>
+                    <div class="category-products__display-settings">
+                        <span>За популярністю</span>
+                        <div class="category-products__display-settings-popup">
+                            <a href="/category.html">За популярністю</a>
+                            <a class="selected" href="/category.html">Від дешевих к дорогим</a>
+                            <a href="/category.html">Від дорогих к дешевим</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="category-products__list">
+                    {% for product_placement in category.listing %}
+                    {% with product=product_placement.product %}
+                        <div class="product-list-item">
+
+                            <div class="product-list-item-content">
+                                <div class="product-list-item-content__img-slider-wrapper">
+                                    <div class="product-list-item-content__img-slider data-slick='{}'">
+                                        {% for imgplacing in product.images.all %}
+
+                                            {% thumbnail imgplacing.image "300" as im %}
+                                                <a href="/">
+                                                    <img src="{{ im.url }}" >
+                                                </a>
+                                            {% endthumbnail %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="product-list-item-content__title">
+                                    <a href="/">{{ product }}</a>
+                                </div>
+                                <div class="product-list-item-content__actions">
+                                    <span class="product-list-item-content__price">4550, грн</span>
+                                    <span class="product-list-item-content__icons">
+                                <span class="product-list-item-content__add-favorite"></span>
+                                <span class="product-list-item-content__compare"></span>
+                            </span>
+                                </div>
+                                <div class="product-list-item-content__reviews-summary">
+                                    <div class="product-list-item-content__rating-summary">
+                                        <div class="product-list-item-content__rating-result" title="70%">
+                                    <span style="width:{{ product.rating }}%">
+                                    </span>
+                                        </div>
+                                    </div>
+                                    <div class="product-list-item-content__reviews">
+                                        5 <span>відгуків</span>
+                                    </div>
+                                </div>
+                                <span class="product-list-item-content__by">
+                            <a href="/" >Купити</a>
+                        </span>
+                                <ul class="product-list-item-content__characteristics">
+                                    {% for shot_attr in product.shot_attributes %}
+                                        <li class="product-list-item-content__characteristics-item">
+                                            <span class="product-list-content-item__characteristic-title">{{ shot_attr.0 }}</span>
+                                            <span class="product-list-item-content__characteristic-value">{{ shot_attr.1 }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    {% endwith %}
+                    {% endfor %}
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

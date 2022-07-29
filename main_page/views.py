@@ -1,17 +1,16 @@
 from django.shortcuts import render
-from catalog.models import Category
-from main_page.models import Banner, Menu
-from site_settings.models import SliderConfiguration
+
+from ROOTAPP.views import HeaderView
+from main_page.models import Banner, Menu, Schedule, SitePhone
+from site_settings.models import SliderConfiguration, HeaderConfiguration
+from django.views.generic.base import TemplateView
 
 
-# Create your views here.
-def index(request):
-    banners = Banner.objects.all()
-    slider_config = SliderConfiguration.get_solo()
-    menu_items = Menu.objects.filter(level=0).only('title', 'image')
-    return render(
-        request,
-        'main-page/index.html',
-        context={'banners': banners, 'menu_items': menu_items,
-                 'slider_config': slider_config, 'title': "Сніп-сноп | Головна", }
-    )
+class MainPageView(TemplateView, HeaderView):
+    template_name = 'main-page/index.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['banners'] = Banner.objects.all()
+        context['slider_config'] = SliderConfiguration.get_solo()
+        return context

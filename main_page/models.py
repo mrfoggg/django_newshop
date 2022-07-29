@@ -1,10 +1,30 @@
+from datetime import time
+
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
-
+from ROOTAPP.models import Messenger, Phone
 from catalog.models import Category, Product
+
+
+class SitePhone(models.Model):
+    position = models.PositiveIntegerField("Position", null=True)
+    phone = models.ForeignKey(Phone, on_delete=models.CASCADE, verbose_name='Номер телефона')
+
+    def __str__(self):
+        return self.phone.__str__()
+
+    class Meta:
+        ordering = ('position',)
+        verbose_name = "Номер телефона сайта"
+        verbose_name_plural = "Номера телефонов сайта"
+
+    @property
+    @admin.display(description="Ссылки на мессенжеры")
+    def get_chat_links(self):
+        return self.phone.get_chat_links
 
 
 class StaticPage(models.Model):
@@ -28,6 +48,23 @@ class StaticPage(models.Model):
         return f'{self.slug}'
 
 
+class Schedule(models.Model):
+    day = models.CharField(max_length=128, default=None, unique=True, db_index=True, verbose_name='День/дни недели')
+    time_from = models.TimeField(auto_now_add=False, auto_now=False, blank=True, null=True,
+                                 verbose_name='Время начала рабочего дня')
+    time_to = models.TimeField(auto_now_add=False, auto_now=False, blank=True, null=True,
+                               verbose_name='Время окончания рабочего дня')
+    position = models.PositiveIntegerField("Position", null=True)
+
+    class Meta:
+        ordering = ('position',)
+        verbose_name = "День недели"
+        verbose_name_plural = "График работы"
+
+    def __str__(self):
+        return self.day
+
+
 class Menu(MPTTModel):
     TYPE_OF_ITEM_MENU = (
         (1, "Категория товаров"),
@@ -44,7 +81,6 @@ class Menu(MPTTModel):
                             related_name='children', db_index=True, verbose_name='Родительский пункт меню')
     link = models.URLField(max_length=128, blank=True, null=True, default=None, unique=True,
                            verbose_name='Ссылка на которую указывает пункт меню')
-    description = models.TextField(blank=True, null=True, default=None, verbose_name='Статический СЕО трэш')
     category = TreeForeignKey(Category, blank=True, null=True, default=None, on_delete=models.SET_NULL,
                               verbose_name='Целевая категория товаров')
     page = models.ForeignKey(StaticPage, blank=True, null=True, default=None, on_delete=models.SET_NULL,
@@ -56,7 +92,8 @@ class Menu(MPTTModel):
         verbose_name_plural = "Конструктор меню"
 
     def __str__(self):
-        return f'{self.title} ({self.get_type_of_item_display()})'
+        # return f'{self.title} ({self.get_type_of_item_display()})'
+        return self.title
 
     @property
     @admin.display(description='Текущая ссылка')
@@ -93,7 +130,7 @@ class Banner(models.Model):
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
     date_from = models.DateTimeField(auto_now_add=False, auto_now=False, verbose_name='Отображать с даты')
     date_to = models.DateTimeField(auto_now_add=False, auto_now=False, verbose_name='Отображать до даты')
-    image = models.ImageField(upload_to='main_page/banner', blank=True, null=True, verbose_name='Фото товара')
+    image = models.ImageField(upload_to='main_page/banner', verbose_name='Фото товара')
     position = models.PositiveIntegerField("Position", null=True)
 
     class Meta:
@@ -124,7 +161,7 @@ class PopularCategory(models.Model):
 
 class PopularProduct(models.Model):
     product = models.ForeignKey(Product, blank=True, null=True, default=None, on_delete=models.SET_NULL,
-                             verbose_name='Товар')
+                                verbose_name='Товар')
     is_active = models.BooleanField(default=True, verbose_name='Активно')
     date_from = models.DateTimeField(auto_now_add=False, auto_now=False, verbose_name='Отображать с даты')
     date_to = models.DateTimeField(auto_now_add=False, auto_now=False, verbose_name='Отображать до даты')
@@ -141,7 +178,7 @@ class PopularProduct(models.Model):
 
 class NewProduct(models.Model):
     product = models.ForeignKey(Product, blank=True, null=True, default=None, on_delete=models.SET_NULL,
-                             verbose_name='Товар')
+                                verbose_name='Товар')
     is_active = models.BooleanField(default=True, verbose_name='Активно')
     date_from = models.DateTimeField(auto_now_add=False, auto_now=False, verbose_name='Отображать с даты')
     date_to = models.DateTimeField(auto_now_add=False, auto_now=False, verbose_name='Отображать до даты')

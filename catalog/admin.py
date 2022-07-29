@@ -141,7 +141,7 @@ class PricesOtherShopInline(nested_admin.NestedTabularInline):
 
 
 class ProductImageInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
-    fields = ['position', ('image', 'name', 'is_main_1', 'on_focus',)]
+    fields = ['position', ('image', 'name',)]
     model = ProductImage
     sortable_field_name = "position"
     extra = 0
@@ -289,7 +289,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
             ),
             'classes': (
                 'order-0', 'baton-tabs-init', 'baton-tab-inline-productplacement', 'baton-tab-inline-pricesothershop',
-                'baton-tab-inline-related_image'
+
             ),
         })
 
@@ -392,11 +392,11 @@ class GroupAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin, ):
 
 @admin.register(Attribute)
 class AttributeAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin):
-    fields = ('name', 'slug', 'group', 'type_of_value', 'display_when_value_none')
+    fields = ('name', 'slug', 'group', 'type_of_value', 'default_str_value')
     prepopulated_fields = {"slug": ("name",)}
     list_display = ('group', 'name', 'type_of_value', 'unit_of_measure', 'fixed_values_list',
-                    'display_when_value_none',)
-    list_editable = ('display_when_value_none',)
+                    'default_str_value',)
+    list_editable = ('default_str_value',)
     list_display_links = ('group', 'name',)
     list_filter = ('group', 'type_of_value')
     list_select_related = ('group',)
