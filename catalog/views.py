@@ -80,22 +80,22 @@ class CategoryView(DetailView, HeaderView):
         total_filtered_products_amount = filtered_listing.count()
         for ff in context['filters_and_val_variant']:
             for val in ff['val_variant']:
-                if val['is_checked']:
-                    val['total_products'] = total_filtered_products_amount
-                else:
-                    match ff['type']:
-                        case 4:
-                            ff['queryset'] |= Q(
-                                    product__characteristics__contains={ff['slug']: val['slug']}
-                            )
-                        case 5:
-                            ff['queryset'] = Q(
-                                product__characteristics__contains={ff['slug']: [val['slug']]}
-                            )
-                    listing_for_count = context['category'].listing
-                    for fff in context['filters_and_val_variant']:
-                        listing_for_count = listing_for_count.filter(fff['queryset'])
-                    val['total_products'] = listing_for_count.count()
+                match ff['type']:
+                    case 4:
+                        ff['queryset'] |= Q(
+                            product__characteristics__contains={ff['slug']: val['slug']}
+                        )
+                    case 5:
+                        ff['queryset'] = Q(
+                            product__characteristics__contains={ff['slug']: [val['slug']]}
+                        )
+                listing_for_count = context['category'].listing
+                for fff in context['filters_and_val_variant']:
+                    listing_for_count = listing_for_count.filter(fff['queryset'])
+                    if val['is_checked'] and ff['type'] == 4:
+                        val['total_products'] = total_filtered_products_amount
+                    else:
+                        val['total_products'] = listing_for_count.count()
 
         # products_amount = []
         # for f in context['filters']:
