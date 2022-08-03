@@ -1,3 +1,5 @@
+from copy import copy, deepcopy
+
 from django.db.models import Q
 from django.db.models.expressions import OuterRef
 from django.shortcuts import render
@@ -79,10 +81,12 @@ class CategoryView(DetailView, HeaderView):
         context['category_listing'] = filtered_listing
         total_filtered_products_amount = filtered_listing.count()
         for ff in context['filters_and_val_variant']:
+            prev_qs = ff['queryset']
             for val in ff['val_variant']:
+                # prev_qs = ff['queryset']
                 match ff['type']:
                     case 4:
-                        ff['queryset'] |= Q(
+                        ff['queryset'] = Q(
                             product__characteristics__contains={ff['slug']: val['slug']}
                         )
                     case 5:
@@ -92,11 +96,8 @@ class CategoryView(DetailView, HeaderView):
                 listing_for_count = context['category'].listing
                 for fff in context['filters_and_val_variant']:
                     listing_for_count = listing_for_count.filter(fff['queryset'])
-                    if val['is_checked'] and ff['type'] == 4:
-                        val['total_products'] = total_filtered_products_amount
-                    else:
-                        val['total_products'] = listing_for_count.count()
-
+                    val['total_products'] = listing_for_count.count()
+                ff['queryset'] = prev_qs
         # products_amount = []
         # for f in context['filters']:
         #     filter_type = f.attribute.type_of_value
