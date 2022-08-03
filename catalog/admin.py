@@ -16,7 +16,7 @@ from .admin_forms import (CombinationOfCategoryAdminForm, GroupPlacementInlineFS
 from .models import (Attribute, Category, CombinationOfCategory, FixedTextValue, Group, GroupPlacement,
                      GroupPositionInCombinationOfCategory, MainAttribute, MainAttrPositionInCombinationOfCategory,
                      Product, ProductPlacement, ShotAttribute, ShotAttrPositionInCombinationOfCategory, UnitOfMeasure,
-                     Country, Brand, ProductSeries, PricesOtherShop, OtherShop, ProductImage)
+                     Country, Brand, ProductSeries, PricesOtherShop, OtherShop, ProductImage, Filter)
 from .services import (clean_combination_of_category,
                        get_changes_in_categories_fs, get_changes_in_groups_fs,
                        update_combination_in_fs_product, set_prod_pos_to_end, create_group_placement_at_end_combination,
@@ -83,7 +83,7 @@ class GroupPlacementInline(nested_admin.SortableHiddenMixin, nested_admin.Nested
 class AttributeInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     model = Attribute
     readonly_fields = ('name', 'type_of_value', 'unit_of_measure', 'fixed_values_list',)
-    fields = ('name', 'type_of_value', 'unit_of_measure', 'fixed_values_list', 'display_when_value_none', 'position')
+    fields = ('name', 'type_of_value', 'unit_of_measure', 'fixed_values_list', 'default_str_value', 'position')
     show_change_link = True
     extra = 0
 
@@ -92,6 +92,16 @@ class FixedTextValueInline(nested_admin.SortableHiddenMixin, nested_admin.Nested
     model = FixedTextValue
     prepopulated_fields = {"slug": ("name",)}
     extra = 0
+
+
+class FilterInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+    model = Filter
+    extra = 0
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'attribute':
+            kwargs["queryset"] = Attribute.objects.filter(group_id__in=request._self_groups_).exclude(type_of_value=1)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class GroupPositionInCombinationOfCategoryInLine(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
@@ -108,7 +118,7 @@ class MainAttributeInLine(nested_admin.SortableHiddenMixin, nested_admin.NestedT
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'attribute':
-            kwargs["queryset"] = Attribute.objects.filter(group_id__in=request._obj_)
+            kwargs["queryset"] = Attribute.objects.filter(group_id__in=request._self_groups_)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -118,7 +128,7 @@ class ShotAttributeInLine(nested_admin.SortableHiddenMixin, nested_admin.NestedT
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'attribute':
-            kwargs["queryset"] = Attribute.objects.filter(group_id__in=request._obj_)
+            kwargs["queryset"] = Attribute.objects.filter(group_id__in=request._self_groups_)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -154,7 +164,8 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin, Summernot
     summernote_fields = ('description',)
     save_as = True
     save_as_continue = False
-    inlines = (GroupPlacementInline, MainAttributeInLine, ShotAttributeInLine, ProductPlacementInlineForCategory)
+    inlines = (GroupPlacementInline, MainAttributeInLine, ShotAttributeInLine, ProductPlacementInlineForCategory,
+               FilterInline)
     actions = [export_as_json]
 
     class Media:
@@ -164,9 +175,9 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin, Summernot
 
     def get_form(self, request, obj=None, **kwargs):
         if obj:
-            request._obj_ = GroupPlacement.objects.filter(category_id=obj.id).values_list('group_id', flat=True)
+            request._self_groups_ = GroupPlacement.objects.filter(category_id=obj.id).values_list('group_id', flat=True)
         else:
-            request._obj_ = []
+            request._self_groups_ = []
         return super(CategoryAdmin, self).get_form(request, obj, **kwargs)
 
     def delete_selected_tree(self, modeladmin, request, queryset):
@@ -223,6 +234,7 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin, Summernot
         added_shot_attr_placement_id_list = [fs.id for fs in sorted(shot_attr_fs.new_objects, key=lambda x: x.position)]
 
         formsets[3].save()
+        formsets[4].save()
 
         combinations = CombinationOfCategory.objects.filter(categories=(category := groups_fs.instance))
         if sorted_added_group_placement_id_list:
@@ -277,9 +289,9 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
 
         ("Габбариты и вес",
          {'fields': (
-         ('length', 'width', 'height',), ('package_length', 'package_width', 'package_height'), ('weight',)),
-          'classes': ('tab-fs-none',),
-          }),
+             ('length', 'width', 'height',), ('package_length', 'package_width', 'package_height'), ('weight',)),
+             'classes': ('tab-fs-none',),
+         }),
 
         ("Характеристики", {
             # 'classes': ('collapse',),
@@ -340,8 +352,8 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
             product_copy.save()
             related_categories_product_pos = {x[0]: (0 if x[1] is None else x[1])
                                               for x in Category.objects.annotate(last_product_position=Max(
-                'productplacement__product_position')).filter(
-                productplacement__product=obj).values_list('id', 'last_product_position')}
+                    'productplacement__product_position')).filter(
+                    productplacement__product=obj).values_list('id', 'last_product_position')}
             placements_to_create = [
                 ProductPlacement(
                     product=product_copy, category_id=cat, product_position=related_categories_product_pos[cat] + 1)
@@ -406,22 +418,13 @@ class AttributeAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin):
         super().__init__(model, admin_site)
         self.obj = None
 
-    def formfield_for_choice_field(self, db_field, request, **kwargs):
-        if db_field.name == "type_of_value":
-            if self.obj:
-                if self.obj.type_of_value == 4:
-                    kwargs['choices'] = (
-                        (4, "Вариант из фикс. значений"),
-                        (5, "Набор фикс. значений")
-                    )
-        return super().formfield_for_choice_field(db_field, request, **kwargs)
 
     def get_fields(self, request, obj=None):
         self.obj = obj
         return self.fields + ('unit_of_measure',) if obj is not None and obj.type_of_value == 2 else self.fields
 
     def get_readonly_fields(self, request, obj=None):
-        return ('type_of_value',) if obj is not None and obj.type_of_value != 4 else ()
+        return ('type_of_value',) if obj is not None else ()
 
     def get_formsets_with_inlines(self, request, obj=None):
         for inline in self.get_inline_instances(request, obj):
@@ -461,6 +464,7 @@ class UnitOfMeasureAdmin(admin.ModelAdmin):
 @admin.register(CombinationOfCategory)
 class CombinationOfCategoryAdmin(nested_admin.NestedModelAdmin):
     form = CombinationOfCategoryAdminForm
+    filter_horizontal = ('categories',)
     inlines = (GroupPositionInCombinationOfCategoryInLine, MainAttrPositionInCombinationOfCategoryInLine,
                ShotAttrPositionInCombinationOfCategoryInLine)
 
@@ -475,3 +479,4 @@ admin.site.register(Brand)
 admin.site.register(ProductSeries)
 admin.site.register(OtherShop)
 admin.site.register(ProductImage)
+admin.site.register(Filter)

@@ -1,11 +1,11 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
-from .views import MainPageView
+from .views import CategoryView
 
 app_name = 'category'
 urlpatterns = [
-    path('<slug:slug>/', MainPageView.as_view(), name='index'),
+    path('<slug:slug>/', CategoryView.as_view(), name='index'),
 ]
 
 if settings.DEBUG:

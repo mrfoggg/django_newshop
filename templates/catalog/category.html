@@ -29,7 +29,9 @@
                     <div class="category-products__filters-list">
                         <span class="category-products__filters-item">З електроприводом</span>
                         <span class="category-products__filters-item">Напруга 220В</span>
-                        <span class="category-products__filters-item">Скинути всі фільтри</span>
+                        <span class="category-products__filters-item">
+                            <a href={{ category.get_absolute_url }}>Скинути всі фільтри</a>
+                        </span>
                     </div>
                     <div class="category-products__display-settings">
                         <span>За популярністю</span>
@@ -42,7 +44,7 @@
                 </div>
 
                 <div class="category-products__list">
-                    {% for product_placement in category.listing %}
+                    {% for product_placement in category_listing %}
                     {% with product=product_placement.product %}
                         <div class="product-list-item">
 
@@ -85,10 +87,12 @@
                         </span>
                                 <ul class="product-list-item-content__characteristics">
                                     {% for shot_attr in product.shot_attributes %}
+                                        {% if  shot_attr.1%}
                                         <li class="product-list-item-content__characteristics-item">
                                             <span class="product-list-content-item__characteristic-title">{{ shot_attr.0 }}</span>
                                             <span class="product-list-item-content__characteristic-value">{{ shot_attr.1 }}</span>
                                         </li>
+                                        {% endif %}
                                     {% endfor %}
                                 </ul>
                             </div>

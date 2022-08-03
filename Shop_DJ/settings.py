@@ -26,13 +26,25 @@ SECRET_KEY = 'django-insecure-19uq@+ebw9xhhhh^g!)%=v%7vl#m53pb_22pyj@&8e^4(9z27@
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+# DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
 # Application definition
+SITE_ID = 1
 
-
+MIDDLEWARE = [
+    # 'django.contrib.redirects.middleware.RedirectFallbackMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
 INSTALLED_APPS = [
+    # 'django.contrib.sites',
     'baton',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -47,6 +59,7 @@ INSTALLED_APPS = [
     'adminsortable2',
     'django_telethon_session',
     'sorl.thumbnail',
+    # 'django.contrib.redirects',
     'ROOTAPP',
     'catalog',
     'main_page',
@@ -56,15 +69,6 @@ INSTALLED_APPS = [
     'site_settings',
     'phonenumber_field',
     'babel'
-]
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'Shop_DJ.urls'

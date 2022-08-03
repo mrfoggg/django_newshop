@@ -16,6 +16,9 @@ class ProductAttributesWidget(forms.MultiWidget):
 
     def decompress(self, value):
         keys = self.keys
+        # values = []
+        # for x in self.keys:
+        #     if
         return [value[x] for x in self.keys if x in value.keys()] if value else []
 
     def value_from_datadict(self, data, files, name):
@@ -183,8 +186,8 @@ class CombinationOfCategoryAdminForm(forms.ModelForm):
 
             first_category = True
             for category in Category.objects.filter(
-                    id__in=added_categories_set).prefetch_related('groupplacement_set', 'mainattribute_set',
-                                                                  'shotattribute_set'):
+                    id__in=added_categories_set).prefetch_related('groupplacement_set', 'main_attributes',
+                                                                  'shot_attributes'):
                 next_group_position = 0 if first_category else next_group_position
                 next_main_attributes_position = 0 if first_category else next_main_attributes_position
                 next_shot_attributes_position = 0 if first_category else next_shot_attributes_position
@@ -200,7 +203,7 @@ class CombinationOfCategoryAdminForm(forms.ModelForm):
                     )
                     next_group_position += 1
 
-                for main_attribute in category.mainattribute_set.all():
+                for main_attribute in category.main_attributes.all():
                     main_attributes_to_add.append(
                         MainAttrPositionInCombinationOfCategory(
                             combination_of_category=self.instance,
@@ -210,7 +213,7 @@ class CombinationOfCategoryAdminForm(forms.ModelForm):
                     )
                     next_main_attributes_position += 1
 
-                for shot_attribute in category.shotattribute_set.all():
+                for shot_attribute in category.shot_attributes.all():
                     shot_attributes_to_add.append(
                         ShotAttrPositionInCombinationOfCategory(
                             combination_of_category=self.instance,
