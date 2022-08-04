@@ -97,15 +97,18 @@
                     </label>
                 </div>
             </div>
-            <div class="category-sidebar__section-content-wrapper" id={{ filter.slug }}>
+            <div id={{ filter.slug }} class="category-sidebar__section-content-wrapper" id={{ filter.slug }}>
                 <ul class="category-sidebar__section-content">
-{#                    {{ filter.selected }}#}
                     {% for val_variant in filter.val_variant %}
                         <li><label class="category-sidebar__checkbox">
                             {% if val_variant.is_checked %}
                                 <input type="checkbox" checked name="{{ filter.slug }}" value="{{ val_variant.slug }}">
                             {% else %}
-                                <input type="checkbox" name="{{ filter.slug }}" value="{{ val_variant.slug }}">
+                                {% if val_variant.total_products == 0 %}
+                                    <input type="checkbox" name="{{ filter.slug }}" value="{{ val_variant.slug }}" disabled>
+                                {% else %}
+                                    <input type="checkbox" name="{{ filter.slug }}" value="{{ val_variant.slug }}">
+                                {% endif %}
                             {% endif %}
                             <div class="category-sidebar__checkbox--visible"></div> {{ val_variant.name }} ({{ val_variant.total_products }})
                         </label></li>

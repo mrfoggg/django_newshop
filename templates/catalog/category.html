@@ -27,11 +27,12 @@
             <div class="category-content">
                 <div class="category-products__controls">
                     <div class="category-products__filters-list">
-                        <span class="category-products__filters-item">З електроприводом</span>
-                        <span class="category-products__filters-item">Напруга 220В</span>
-                        <span class="category-products__filters-item">
-                            <a href={{ category.get_absolute_url }}>Скинути всі фільтри</a>
-                        </span>
+                        {% for checkbox in checked_filters %}
+                            <span class="category-products__filters-item" data-filter={{ checkbox.2 }} data-val={{ checkbox.1 }}>{{ checkbox.0 }}</span>
+                        {% endfor %}
+                        <a class="category-products__filters-item" href={{ category.get_absolute_url }}>
+                            Скинути всі фільтри
+                        </a>
                     </div>
                     <div class="category-products__display-settings">
                         <span>За популярністю</span>
