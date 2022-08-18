@@ -26,7 +26,6 @@ admin.site.site_header = 'Снип-Сноп'
 admin.site.site_title = "Главная страница"
 admin.site.index_title = 'Панель администрирования интернет-магазина "Снип-Сноп"'
 
-
 urlpatterns = [
     path('', include('main_page.urls')),
     path('category/', include('catalog.urls')),
@@ -35,6 +34,7 @@ urlpatterns = [
     path('summernote/', include('django_summernote.urls')),
     path('_nested_admin/', include('nested_admin.urls')),
 ]
+
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

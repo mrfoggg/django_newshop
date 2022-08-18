@@ -45,42 +45,6 @@
             </div>
         </div>
     </div>
-{#    <form action="">#}
-{#    {% for filter in filters %}#}
-{#        <div class="category-sidebar__section">#}
-{#            <div class="category-sidebar__title"> {{ filter.attribute }}#}
-{#                <div class="category-sidebar__title-checkbox">#}
-{#                    <label>#}
-{#                        {% if filter.attribute.slug in wide_sections or not filtered %}#}
-{#                            <input type="checkbox" checked value={{ filter.attribute.slug }} name="sections-status">#}
-{#                            <span></span>#}
-{#                        {% else %}#}
-{#                            <input type="checkbox" value={{ filter.attribute.slug }} name="sections-status">#}
-{#                            <span></span>#}
-{#                        {% endif %}#}
-{#                    </label>#}
-{#                </div>#}
-{#            </div>#}
-{#            <div class="category-sidebar__section-content-wrapper" id={{ filter.attribute.slug }}>#}
-{#                <ul class="category-sidebar__section-content">#}
-{#                    {{ filter.selected }}#}
-{#                    {% for val_variant in filter.attribute.fixed_values.all %}#}
-{#                        <li><label class="category-sidebar__checkbox">#}
-{#                            {% if val.slug in filter.selected %}#}
-{#                                <input type="checkbox" checked name="{{ filter.attribute.slug }}" value="{{ val_variant.slug }}">#}
-{#                            {% else %}#}
-{#                                <input type="checkbox" name="{{ filter.attribute.slug }}" value="{{ val_variant.slug }}">#}
-{#                            {% endif %}#}
-{#                            <div class="category-sidebar__checkbox--visible"></div> {{ val_variant.name }} ({{ val_variant.cnt }})#}
-{#                        </label></li>#}
-{#                    {% endfor %}#}
-{#                </ul>#}
-{#                <div class="category-sidebar__section-overflow-indicator">Показати всі</div>#}
-{#                <div class="category-sidebar__section-overflow-indicator">Згорнути</div>#}
-{#            </div>#}
-{#        </div>#}
-{#    {% endfor %}#}
-{#    </form>#}
     <form action="">
     {% for filter in filters_and_val_variant %}
         <div class="category-sidebar__section">
@@ -99,8 +63,12 @@
             </div>
             <div id={{ filter.slug }} class="category-sidebar__section-content-wrapper" id={{ filter.slug }}>
                 <ul class="category-sidebar__section-content">
-                    {% for val_variant in filter.val_variant %}
+                    {% for val_variant in filter.val_variants %}
+                    {% if val_variant.total_products == 0 %}
+                        <li><label class="category-sidebar__checkbox" disabled="">
+                    {% else %}
                         <li><label class="category-sidebar__checkbox">
+                    {% endif %}
                             {% if val_variant.is_checked %}
                                 <input type="checkbox" checked name="{{ filter.slug }}" value="{{ val_variant.slug }}">
                             {% else %}
@@ -110,7 +78,7 @@
                                     <input type="checkbox" name="{{ filter.slug }}" value="{{ val_variant.slug }}">
                                 {% endif %}
                             {% endif %}
-                            <div class="category-sidebar__checkbox--visible"></div> {{ val_variant.name }} ({{ val_variant.total_products }})
+                            <div class="category-sidebar__checkbox--visible"></div> <span>{{ val_variant.name }} ({{ val_variant.total_products }})</span>
                         </label></li>
                     {% endfor %}
                 </ul>

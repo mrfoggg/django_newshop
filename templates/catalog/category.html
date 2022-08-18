@@ -30,9 +30,12 @@
                         {% for checkbox in checked_filters %}
                             <span class="category-products__filters-item" data-filter={{ checkbox.2 }} data-val={{ checkbox.1 }}>{{ checkbox.0 }}</span>
                         {% endfor %}
-                        <a class="category-products__filters-item" href={{ category.get_absolute_url }}>
-                            Скинути всі фільтри
-                        </a>
+                        {% if checked_filters_len > 1 %}
+
+                            <a class="category-products__filters-item" href={{ category.get_absolute_url }}>
+                                Скинути всі фільтри
+                            </a>
+                        {% endif %}
                     </div>
                     <div class="category-products__display-settings">
                         <span>За популярністю</span>
@@ -51,16 +54,31 @@
 
                             <div class="product-list-item-content">
                                 <div class="product-list-item-content__img-slider-wrapper">
-                                    <div class="product-list-item-content__img-slider data-slick='{}'">
-                                        {% for imgplacing in product.images.all %}
-
-                                            {% thumbnail imgplacing.image "300" as im %}
+                                    {% with photo_count=product.images.count %}
+                                        {% if photo_count == 0 %}
+                                            {% thumbnail photo_plug "300" as im %}
                                                 <a href="/">
                                                     <img src="{{ im.url }}" >
                                                 </a>
                                             {% endthumbnail %}
-                                        {% endfor %}
-                                    </div>
+                                        {% elif photo_count == 1 %}
+                                            {% thumbnail product.images.first.image "300" as im %}
+                                                <a href="/">
+                                                    <img src="{{ im.url }}" >
+                                                </a>
+                                            {% endthumbnail %}
+                                        {% else %}
+                                            <div class="product-list-item-content__img-slider data-slick='{}'">
+                                                {% for imgplacing in product.images.all %}
+                                                    {% thumbnail imgplacing.image "300" as im %}
+                                                        <a href="/">
+                                                            <img src="{{ im.url }}" >
+                                                        </a>
+                                                    {% endthumbnail %}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    {% endwith %}
                                 </div>
                                 <div class="product-list-item-content__title">
                                     <a href="/">{{ product }}</a>

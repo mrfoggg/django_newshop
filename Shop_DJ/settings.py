@@ -57,7 +57,7 @@ INSTALLED_APPS = [
     'django_summernote',
     'nested_admin',
     'adminsortable2',
-    'django_telethon_session',
+    # 'django_telethon_session',
     'sorl.thumbnail',
     # 'django.contrib.redirects',
     'ROOTAPP',

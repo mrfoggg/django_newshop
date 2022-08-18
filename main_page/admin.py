@@ -5,7 +5,7 @@ from django.contrib import admin
 from django_summernote.admin import SummernoteModelAdmin
 from mptt.admin import DraggableMPTTAdmin
 
-
+from main_page.admin_form import MenuAdminForm, BannerForm
 from main_page.models import StaticPage, Menu, Banner, PopularCategory, PopularProduct, NewProduct, Schedule, \
     SitePhone
 from django_svg_image_form_field import SvgAndImageFormField
@@ -34,30 +34,6 @@ class ScheduleAdmin(SortableAdminMixin, admin.ModelAdmin):
     baton_form_includes = [
         ('main-page/admin_schedule_include_top.html', 'day', 'bottom',),
     ]
-
-
-class MenuAdminForm(forms.ModelForm):
-    def clean(self):
-
-        super(MenuAdminForm, self).clean()
-        if self.cleaned_data['type_of_item'] == 1 and 'category' in self.cleaned_data.keys():
-            if self.cleaned_data['category'] is None:
-                raise forms.ValidationError('Выберите категорию на которую ссылается пункт меню')
-
-        if self.cleaned_data['type_of_item'] == 2 and 'page' in self.cleaned_data.keys():
-            if self.cleaned_data['page'] is None:
-                raise forms.ValidationError('Выберите текстовую старницу на которую ссылается пункт меню')
-
-        if self.cleaned_data['type_of_item'] == 3 and 'link' in self.cleaned_data.keys():
-            if self.cleaned_data['link'] is None:
-                raise forms.ValidationError('Укажите ссылку на которую указывает пункт меню')
-
-    class Meta:
-        model = Menu
-        exclude = []
-        field_classes = {
-            'image': SvgAndImageFormField,
-        }
 
 
 @admin.register(Menu)
@@ -95,6 +71,7 @@ class StaticPageAdmin(SummernoteModelAdmin):
 
 @admin.register(Banner)
 class BannerAdmin(SortableAdminMixin, admin.ModelAdmin):
+    form = BannerForm
     list_display = ('title', 'date_from', 'date_to',)
     list_editable = ('date_from', 'date_to',)
 

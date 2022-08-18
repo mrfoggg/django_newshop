@@ -27,3 +27,13 @@ class HeaderConfiguration(SingletonModel):
 
     class Meta:
         verbose_name = "Настройки шапки"
+
+
+class PhotoPlug(SingletonModel):
+    image = models.ImageField(upload_to='main_page', verbose_name='Фото заглушка')
+
+    def __str__(self):
+        return "PhotoPlug"
+
+    class Meta:
+        verbose_name = "Фото заглушка"

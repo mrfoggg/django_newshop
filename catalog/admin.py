@@ -12,11 +12,13 @@ from mptt.admin import DraggableMPTTAdmin
 from .admin_forms import (CombinationOfCategoryAdminForm, GroupPlacementInlineFS,
                           GroupPositionInCombinationOfCategoryInLineFS,
                           MainAttrPositionInCombinationOfCategoryInLineFS, ProductForm,
-                          ProductPlacementInlineForProductFS, ShotAttrPositionInCombinationOfCategoryInLineFS)
+                          ProductPlacementInlineForProductFS, ShotAttrPositionInCombinationOfCategoryInLineFS,
+                          AttributeForm, GroupForm, CategoryForm)
 from .models import (Attribute, Category, CombinationOfCategory, FixedTextValue, Group, GroupPlacement,
                      GroupPositionInCombinationOfCategory, MainAttribute, MainAttrPositionInCombinationOfCategory,
                      Product, ProductPlacement, ShotAttribute, ShotAttrPositionInCombinationOfCategory, UnitOfMeasure,
-                     Country, Brand, ProductSeries, PricesOtherShop, OtherShop, ProductImage, Filter)
+                     Country, Brand, ProductSeries, PricesOtherShop, OtherShop, ProductImage, Filter,
+                     )
 from .services import (clean_combination_of_category,
                        get_changes_in_categories_fs, get_changes_in_groups_fs,
                        update_combination_in_fs_product, set_prod_pos_to_end, create_group_placement_at_end_combination,
@@ -82,8 +84,10 @@ class GroupPlacementInline(nested_admin.SortableHiddenMixin, nested_admin.Nested
 
 class AttributeInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     model = Attribute
-    readonly_fields = ('name', 'type_of_value', 'unit_of_measure', 'fixed_values_list',)
-    fields = ('name', 'type_of_value', 'unit_of_measure', 'fixed_values_list', 'default_str_value', 'position')
+    # readonly_fields = ('name', 'type_of_value', 'unit_of_measure', 'fixed_values_list',)
+    readonly_fields = ('fixed_values_list',)
+    fields = ('name', 'slug', 'type_of_value', 'unit_of_measure', 'fixed_values_list', 'default_str_value', 'position')
+    prepopulated_fields = {"slug": ("name",)}
     show_change_link = True
     extra = 0
 
@@ -102,6 +106,17 @@ class FilterInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularI
         if db_field.name == 'attribute':
             kwargs["queryset"] = Attribute.objects.filter(group_id__in=request._self_groups_).exclude(type_of_value=1)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+# class BroCategoriesFilterInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+#     model = BroCategoriesFilter
+#     extra = 0
+#     fk_name = 'bro_category'
+#
+#     def formfield_for_foreignkey(self, db_field, request, **kwargs):
+#         if db_field.name == 'attribute':
+#             kwargs["queryset"] = Attribute.objects.filter(group_id__in=request._self_groups_).exclude(type_of_value=1)
+#         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class GroupPositionInCombinationOfCategoryInLine(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
@@ -159,13 +174,15 @@ class ProductImageInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTa
 
 @admin.register(Category)
 class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin, SummernoteModelAdmin):
+    form = CategoryForm
+    save_on_top = True
     list_display = ('tree_actions', 'indented_title', 'groups_list',)
     prepopulated_fields = {"slug": ("name",)}
     summernote_fields = ('description',)
     save_as = True
     save_as_continue = False
     inlines = (GroupPlacementInline, MainAttributeInLine, ShotAttributeInLine, ProductPlacementInlineForCategory,
-               FilterInline)
+               FilterInline,)
     actions = [export_as_json]
 
     class Media:
@@ -369,6 +386,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
 
 @admin.register(Group)
 class GroupAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin, ):
+    form = GroupForm
     list_display = ('name', 'attributes_list')
     inlines = (AttributeInline,)
 
@@ -378,7 +396,7 @@ class GroupAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin, ):
         }
 
     def delete_queryset(self, request, queryset):
-        print(f'{queryset=}')
+        # print(f'{queryset=}')
         updated_product_dict = {}
         first_iter = True
         for obj in queryset:
@@ -404,6 +422,7 @@ class GroupAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin, ):
 
 @admin.register(Attribute)
 class AttributeAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin):
+    form = AttributeForm
     fields = ('name', 'slug', 'group', 'type_of_value', 'default_str_value')
     prepopulated_fields = {"slug": ("name",)}
     list_display = ('group', 'name', 'type_of_value', 'unit_of_measure', 'fixed_values_list',
@@ -418,10 +437,13 @@ class AttributeAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin):
         super().__init__(model, admin_site)
         self.obj = None
 
-
     def get_fields(self, request, obj=None):
         self.obj = obj
-        return self.fields + ('unit_of_measure',) if obj is not None and obj.type_of_value == 2 else self.fields
+        if obj is not None and obj.type_of_value == 2:
+            return self.fields + ('unit_of_measure',)
+        if obj is not None and obj.type_of_value == 3:
+            return self.fields + ('str_true', 'str_false')
+        return self.fields
 
     def get_readonly_fields(self, request, obj=None):
         return ('type_of_value',) if obj is not None else ()
@@ -458,6 +480,13 @@ class AttributeAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin):
 
 @admin.register(UnitOfMeasure)
 class UnitOfMeasureAdmin(admin.ModelAdmin):
+    # save_as_continue = True
+    pass
+
+
+@admin.register(Country)
+class CountryAdmin(admin.ModelAdmin):
+    prepopulated_fields = {"slug": ("name",)}
     pass
 
 
@@ -474,7 +503,7 @@ class CombinationOfCategoryAdmin(nested_admin.NestedModelAdmin):
         }
 
 
-admin.site.register(Country)
+# admin.site.register(Country)
 admin.site.register(Brand)
 admin.site.register(ProductSeries)
 admin.site.register(OtherShop)

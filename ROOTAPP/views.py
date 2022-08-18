@@ -7,6 +7,7 @@ contact_phones = SitePhone.objects.all()
 schedule = Schedule.objects.all()
 menu_items = Menu.objects.filter(level=0).only('title', 'image')
 header_config = HeaderConfiguration.get_solo()
+# header_config = 1
 
 
 class HeaderView(ContextMixin):

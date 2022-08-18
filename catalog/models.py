@@ -9,7 +9,7 @@ from mptt.models import MPTTModel
 
 class Country(models.Model):
     name = models.CharField('Название страны', max_length=128, default=None, unique=True, db_index=True)
-    slug = models.SlugField(max_length=64, blank=True, null=True, default=None, unique=True)
+    slug = models.SlugField(max_length=64, unique=True)
 
     class Meta:
         verbose_name = "Страна"
@@ -47,6 +47,21 @@ class Filter(models.Model):
         return f'{self.attribute} (тип {self.attribute.get_type_of_value_display()})'
 
 
+# class BroCategoriesFilter(models.Model):
+#     category = models.ForeignKey('Category', on_delete=models.CASCADE, related_name='bro_filters')
+#     bro_category = models.ForeignKey('Category', on_delete=models.CASCADE)
+#     position = models.PositiveSmallIntegerField("Позиция брацкой категории", blank=True, null=True)
+#
+#     class Meta:
+#         unique_together = ('category', 'bro_category')
+#         verbose_name = 'Фильтр братской категории'
+#         verbose_name_plural = 'Фильтры братской категории'
+#         ordering = ('position',)
+#
+#     def __str__(self):
+#         return self.bro_category
+
+
 class Category(MPTTModel):
     name = models.CharField('Название', max_length=128, default=None, unique=True, db_index=True)
     parent = TreeForeignKey('self', blank=True, null=True, default=None, on_delete=models.SET_NULL,
@@ -54,7 +69,7 @@ class Category(MPTTModel):
     display_in_parent = models.BooleanField('Отображать в родительской категории', default=True)
     display_parent_filters = models.BooleanField('Отображать фильтры родительской категории', default=True)
     display_child_filters = models.BooleanField('Отображать фильтры потомков', default=True)
-    slug = models.SlugField(max_length=128, blank=True, null=True, default=None, unique=True)
+    slug = models.SlugField(max_length=128, unique=True)
     description = models.TextField('Описание категории', blank=True, null=True, default=None)
     groups = models.ManyToManyField('Group', through='GroupPlacement', related_name='categories')
     image = models.ImageField('Фото категории', upload_to='product_images/', blank=True, null=True)
@@ -112,7 +127,7 @@ class Category(MPTTModel):
 
     @property
     def full_filters_list(self):
-        parent_filters = list(self.parent.filters.all()) if self.display_parent_filters else []
+        parent_filters = list(self.parent.filters.all()) if self.display_parent_filters and self.parent else []
         filters = list(self.filters.all())
         children_filters = []
         for child_cat in self.children.all():
@@ -147,7 +162,7 @@ class Product(models.Model):
     )
     name = models.CharField('Название', max_length=128, default=None, unique=True, db_index=True)
     is_active = models.BooleanField('Товар включен', default=True, )
-    slug = models.SlugField(max_length=128, blank=True, null=True, default=None, unique=True)
+    slug = models.SlugField(max_length=128, blank=True, null=True, default=None,unique=True)
     sku = models.CharField(max_length=10, blank=True, null=True, default=None, unique=True,
                            verbose_name='Артикул товара')
     sku_manufacturer = models.CharField('Артикул товара в каталоге производителя', max_length=10, blank=True,
@@ -213,40 +228,37 @@ class Product(models.Model):
         return group_sorted_list
 
     def get_attr_string_val(self, attr):
-        characteristics = self.characteristics
-        slug = attr.slug
-        # print(attr)
-
-        match attr.type_of_value:
-            case 1:
-                return self.characteristics[attr.slug] + attr.suffix
-            case 2:
-                return str(self.characteristics[attr.slug]) + attr.suffix
-            case 3:
-                return 'так' if self.characteristics[attr.slug] else 'ні'
-            case 4:
-                # print(characteristics)
-                if slug in characteristics and characteristics[slug]:
-                    return FixedTextValue.objects.get(slug=characteristics[slug]).name
-                else:
-                    return attr.default_str_value
-            case 5:
-                if slug in characteristics:
-                    return ', '.join([FixedTextValue.objects.get(slug=i).name for i in characteristics[slug]])
-                else:
-                    return attr.default_str_value
+        if (slug := attr.slug) in (ch := self.characteristics):
+            value = ch[slug]
+            if attr.type_of_value == 3:
+                return attr.str_true if value else attr.str_false
+            if value:
+                match attr.type_of_value:
+                    case 1:
+                        return value + attr.suffix
+                    case 2:
+                        return str(value) + attr.suffix
+                    case 4:
+                        return FixedTextValue.objects.get(slug=value).name
+                    case 5:
+                        return ', '.join([FixedTextValue.objects.get(slug=i).name for i in value])
+            else:
+                return attr.default_str_value if attr.default_str_value else None
+        else:
+            return attr.default_str_value
 
     @property
     def shot_attributes(self):
         shot_attr_list = []
         if (cc := self.combination_of_categories) and cc.is_active_custom_order_mini_parameters:
             for shot_pl in cc.shot_attr_positions.all():
-                shot_attr_list.append([get_shot_attr_name(shot_pl.shot_attribute),
-                                       self.get_attr_string_val(shot_pl.shot_attribute.attribute)])
+                if str_val := self.get_attr_string_val(shot_pl.shot_attribute.attribute):
+                    shot_attr_list.append([get_shot_attr_name(shot_pl.shot_attribute), str_val])
         else:
             for cat_placement in self.productplacement_set.order_by('category_position'):
-                shot_attr_list.extend([[get_shot_attr_name(i), self.get_attr_string_val(i.attribute)]
-                                       for i in cat_placement.category.shot_attributes.all()])
+                shot_attr_list.extend([[get_shot_attr_name(i), str_val]
+                                       for i in cat_placement.category.shot_attributes.all()
+                                       if (str_val := self.get_attr_string_val(i.attribute))])
         return shot_attr_list
 
 
@@ -324,8 +336,8 @@ class UnitOfMeasure(models.Model):
 
 
 class Attribute(models.Model):
-    name = models.CharField('Название атрибута', max_length=128, default=None, unique=True, db_index=True)
-    slug = models.SlugField(max_length=128, blank=True, null=True, default=None, unique=True)
+    name = models.CharField('Название атрибута', max_length=128, default=None, unique=True, db_index=True,)
+    slug = models.SlugField(max_length=128, unique=True)
     group = models.ForeignKey(Group, blank=True, null=True, on_delete=models.CASCADE, verbose_name='Группа атрибутов',
                               related_name='attributes')
     position = models.PositiveSmallIntegerField("Позиция атрибута", blank=True, null=True, default=0)
@@ -335,6 +347,8 @@ class Attribute(models.Model):
     default_str_value = models.CharField(
         max_length=128, blank=True, null=True, default='Не вказано',
         verbose_name='Строка для отображения если значение не указано')
+    str_true = models.CharField('Отображение для True', max_length=64, default='так')
+    str_false = models.CharField('Отображение для False', max_length=64, default='ні')
 
     class Meta:
         verbose_name = "Атрибут"
@@ -358,7 +372,7 @@ class Attribute(models.Model):
 class FixedTextValue(models.Model):
     name = models.CharField('Предопределенное текстовое значение атрибута', max_length=128,
                             default=None, unique=True, db_index=True)
-    slug = models.SlugField(max_length=128, blank=True, null=True, default=None, unique=True)
+    slug = models.SlugField(max_length=128, unique=True)
     attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE, related_name='fixed_values')
     description = models.TextField('Подсказка в описании', blank=True, null=True, default=None)
     position = models.PositiveSmallIntegerField("Position", blank=True, null=True, default=0)

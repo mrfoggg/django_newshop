@@ -59,7 +59,7 @@ class ProductAttributesField(forms.MultiValueField):
                         field = forms.MultipleChoiceField(choices=ch, required=False)
                     list_fields.append(field)
                     # field.widget.attrs.update({'label': attribute.name})
-                    field.widget.attrs.update({'label': attribute.name,})
+                    field.widget.attrs.update({'label': attribute.name, })
                     if len(attributes_of_group) - atr_count == 0:
                         field.widget.attrs.update({'group_end': 'yes'})
                     else:
@@ -146,6 +146,32 @@ class ProductForm(forms.ModelForm):
             'height_box': NumberInput(attrs={'size': 5}),
             'weight': NumberInput(attrs={'size': 5}),
             # 'warranty': NumberInput(attrs={'size':5}),
+        }
+
+
+class AttributeForm(forms.ModelForm):
+    class Meta:
+        model = Attribute
+        fields = '__all__'
+        widgets = {
+            'name': TextInput(attrs={'size': 80}),
+        }
+
+
+class GroupForm(forms.ModelForm):
+    class Meta:
+        model = Group
+        fields = '__all__'
+        widgets = {
+            'name': TextInput(attrs={'size': 80}),
+        }
+
+class CategoryForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = '__all__'
+        widgets = {
+            'name': TextInput(attrs={'size': 60}),
         }
 
 
@@ -261,6 +287,3 @@ class ShotAttrPositionInCombinationOfCategoryInLineFS(forms.models.BaseInlineFor
             if 'id' not in form.cleaned_data:
                 form.can_delete = True
                 form.cleaned_data['DELETE'] = True
-
-
-
