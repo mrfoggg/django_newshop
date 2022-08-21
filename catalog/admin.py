@@ -9,6 +9,8 @@ from django.urls import reverse
 from django.utils.encoding import force_str
 from django_summernote.admin import SummernoteModelAdmin
 from mptt.admin import DraggableMPTTAdmin
+
+from finance.admin import ProductPriceProductInline
 from .admin_forms import (CombinationOfCategoryAdminForm, GroupPlacementInlineFS,
                           GroupPositionInCombinationOfCategoryInLineFS,
                           MainAttrPositionInCombinationOfCategoryInLineFS, ProductForm,
@@ -286,7 +288,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     list_display = ('name', 'category_placement')
     prepopulated_fields = {"slug": ("name",)}
     save_on_top = True
-    inlines = (ProductPlacementInlineForProduct, PricesOtherShopInline, ProductImageInline)
+    inlines = (ProductPlacementInlineForProduct, PricesOtherShopInline, ProductImageInline, ProductPriceProductInline)
     # formfield_overrides = {
     #     models.JSONField: {'widget': JSONEditorWidget},
     # }
@@ -338,6 +340,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
 
         formsets[1].save()
         formsets[2].save()
+        formsets[3].save()
 
         if added_categories_id_list:
             set_prod_pos_to_end(category_fs, added_categories_id_list)

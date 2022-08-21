@@ -20,7 +20,7 @@ class HeaderConfiguration(SingletonModel):
     sub_header_height = models.CharField(max_length=128, blank=True, null=True, unique=True, db_index=True,
                                          verbose_name='Высота нижней шапки')
     menu_height = models.CharField(max_length=128, blank=True, null=True, unique=True, db_index=True,
-                                   verbose_name='Высота нижней шапки')
+                                   verbose_name='Высота меню')
 
     def __str__(self):
         return "HeaderConfiguration"

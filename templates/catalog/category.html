@@ -2,7 +2,7 @@
 {% load thumbnail %}
 
 {% block title %}
-    <title> {{ title }}</title>
+    <title> Сніп-Сноп | {{ category }}</title>
 {% endblock title %}
 
 {% block content %}
@@ -84,7 +84,7 @@
                                     <a href="/">{{ product }}</a>
                                 </div>
                                 <div class="product-list-item-content__actions">
-                                    <span class="product-list-item-content__price">4550, грн</span>
+                                    <span class="product-list-item-content__price">{{ product.price }}</span>
                                     <span class="product-list-item-content__icons">
                                 <span class="product-list-item-content__add-favorite"></span>
                                 <span class="product-list-item-content__compare"></span>

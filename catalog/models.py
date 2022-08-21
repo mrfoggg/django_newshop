@@ -1,10 +1,15 @@
 from django.contrib import admin
 from django.db import models
+from django.db.models import Subquery, Min, Max, OuterRef
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html_join, format_html
+from djmoney.models.fields import MoneyField
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
+
+# from finance.models import ProductPrice
+from finance.models import PriceChangelist
 
 
 class Country(models.Model):
@@ -122,7 +127,15 @@ class Category(MPTTModel):
         return self.parent.children.exclude(id=self.id)
 
     @property
+    def prices(self):
+        return ProductPrice.objects.filter(
+            product__productplacement__category=self).aggregate(Min('price'), Max('price'))
+
+    @property
     def listing(self):
+        # sq_min_max_price = Subquery(ProductPrice.objects.filter(
+        #     product__productplacement__category_id=OuterRef('pk')).aggregate(Min('price'), Max('price')).values(
+        #     'price__min', 'price__max')
         return self.productplacement_set.order_by('product_position')
 
     @property
@@ -133,6 +146,21 @@ class Category(MPTTModel):
         for child_cat in self.children.all():
             children_filters.extend(child_cat.filters.all())
         return parent_filters + filters + (children_filters if self.display_child_filters else [])
+
+
+class ProductPrice(models.Model):
+    price_changelist = models.ForeignKey(PriceChangelist, on_delete=models.CASCADE, verbose_name='Установка цен')
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name="Товар")
+    price = MoneyField(max_digits=14, decimal_places=2, default_currency='UAH', default=0)
+    position = models.PositiveIntegerField("Положение", null=True)
+
+    def __str__(self):
+        return self.product.name
+
+    class Meta:
+        verbose_name = "Строка установки цен номенклатуры"
+        verbose_name_plural = "Строки установки цен номенклатуры"
+        ordering = ['position']
 
 
 class ProductSeries(models.Model):
@@ -162,7 +190,7 @@ class Product(models.Model):
     )
     name = models.CharField('Название', max_length=128, default=None, unique=True, db_index=True)
     is_active = models.BooleanField('Товар включен', default=True, )
-    slug = models.SlugField(max_length=128, blank=True, null=True, default=None,unique=True)
+    slug = models.SlugField(max_length=128, blank=True, null=True, default=None, unique=True)
     sku = models.CharField(max_length=10, blank=True, null=True, default=None, unique=True,
                            verbose_name='Артикул товара')
     sku_manufacturer = models.CharField('Артикул товара в каталоге производителя', max_length=10, blank=True,
@@ -261,6 +289,12 @@ class Product(models.Model):
                                        if (str_val := self.get_attr_string_val(i.attribute))])
         return shot_attr_list
 
+    @property
+    def price(self):
+        return self.productprice_set.order_by(
+            'price_changelist__confirmed_date').last().price if self.productprice_set.exists() else 0
+        # return self.productprice_set.order_by('price_changelist__confirmed')
+
 
 class ProductPlacement(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Товар')
@@ -336,7 +370,7 @@ class UnitOfMeasure(models.Model):
 
 
 class Attribute(models.Model):
-    name = models.CharField('Название атрибута', max_length=128, default=None, unique=True, db_index=True,)
+    name = models.CharField('Название атрибута', max_length=128, default=None, unique=True, db_index=True, )
     slug = models.SlugField(max_length=128, unique=True)
     group = models.ForeignKey(Group, blank=True, null=True, on_delete=models.CASCADE, verbose_name='Группа атрибутов',
                               related_name='attributes')

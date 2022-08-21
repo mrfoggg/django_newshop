@@ -1,12 +1,12 @@
 from copy import copy, deepcopy
 
-from django.db.models import Q
+from django.db.models import Q, Min, Max
 from django.db.models.expressions import OuterRef
 from django.shortcuts import render
 
 # Create your views here.
 from ROOTAPP.views import HeaderView
-from catalog.models import Category, Brand
+from catalog.models import Category, Brand, ProductSeries, ProductPrice
 from django.views.generic.detail import DetailView
 
 from site_settings.models import PhotoPlug
@@ -21,33 +21,64 @@ class CategoryView(DetailView, HeaderView):
         context = super().get_context_data(**kwargs)
         data = self.request.GET
 
+        print(data)
+
         context['wide_sections'] = data.getlist('sections-status')
         context['filtered'] = True if data else False
-        filtered_listing = context['category'].listing
+        # context['category_listing'] = context['category'].listing
 
         context['filters'] = context['category'].full_filters_list
         context['checked_filters'] = []
         context['photo_plug'] = PhotoPlug.get_solo().image
+        prices = context['category'].prices
+        # context['price_min'] = prices['price__min']
+        # context['price_max'] = prices['price__max']
+        # context['price_from'] = context['price_min']
+        # context['price_to'] = context['price_max']
+        some_filter_checked = False
 
         # заполняем основной массив данных для фильтров товаров кроме данных о резульeтатах поиска каждого фильтра
         filters_and_val_variant = []
         full_list_filtering = Q()
 
-        context['brands_exists'] = Brand.objects.filter(product__productplacement__category=context['category']).exists()
-        if context['brands_exists']:
+        if Brand.objects.filter(product__productplacement__category=context['category']).exists():
             filter_item = {'name': 'Бренди', 'slug': 'brands', 'type': 'brands', 'val_variants': []}
             list_selected = data.getlist('brands') if 'brands' in data.keys() else []
             brand_filter_params = Q()
+            selected_brand_list_id = []
             for brand in Brand.objects.filter(product__productplacement__category=context['category']).distinct():
                 val_variant_item = {'slug': brand.id, 'name': brand.name, 'total_products': None, 'is_checked': False}
                 if data and str(val_variant_item['slug']) in list_selected:
-                    brand_filter_params = Q(product__brand=brand)
+                    some_filter_checked = True
+                    brand_filter_params |= Q(product__brand=brand)
                     val_variant_item['is_checked'] = True
                     context['checked_filters'].append([brand.name, brand.id, 'brands'])
+                    selected_brand_list_id.append(brand.id)
                 filter_item['val_variants'].append(val_variant_item)
-            filters_and_val_variant.append(filter_item)
             filter_item['queryset'] = brand_filter_params
             full_list_filtering &= brand_filter_params
+
+            product_series = ProductSeries.objects.filter(
+                products__productplacement__category=context['category'],
+                products__brand_id__in=selected_brand_list_id
+            )
+            filters_and_val_variant.append(filter_item)
+
+            if product_series.exists():
+                filter_item = {'name': 'Лінійки товарів', 'slug': 'series', 'type': 'series', 'val_variants': []}
+                list_selected = data.getlist('series') if 'series' in data.keys() else []
+                series_filter_params = Q()
+
+                for ser in product_series.distinct():
+                    val_variant_item = {'slug': ser.id, 'name': ser.name, 'total_products': None, 'is_checked': False}
+                    if data and str(val_variant_item['slug']) in list_selected:
+                        series_filter_params |= Q(product__series=ser)
+                        val_variant_item['is_checked'] = True
+                        context['checked_filters'].append([ser.name, ser.id, 'series'])
+                    filter_item['val_variants'].append(val_variant_item)
+                filters_and_val_variant.append(filter_item)
+                filter_item['queryset'] = series_filter_params
+                full_list_filtering &= series_filter_params
 
         for f in context['category'].full_filters_list:
             filter_item = {
@@ -60,6 +91,7 @@ class CategoryView(DetailView, HeaderView):
                     {'slug': 'true', 'name': f.attribute.str_true, 'total_products': None, 'is_checked': False},
                 ]
                 if data and 'true' in list_selected:
+                    some_filter_checked = True
                     filter_item['val_variants'][0]['is_checked'] = True
                     context['checked_filters'].append([f'{f.attribute.name}: {f.attribute.str_true}',
                                                        'true', f.attribute.slug])
@@ -73,6 +105,7 @@ class CategoryView(DetailView, HeaderView):
                         'slug': val_variant.slug, 'name': val_variant.name, 'total_products': None, 'is_checked': False
                     }
                     if data and val_variant_item['slug'] in list_selected:
+                        some_filter_checked = True
                         val_variant_item['is_checked'] = True
                         context['checked_filters'].append([val_variant.name, val_variant.slug, f.attribute.slug])
                         # filter_item['checked_values_slugs'].append(val_variant.slug)
@@ -87,16 +120,42 @@ class CategoryView(DetailView, HeaderView):
                                 )
                     filter_item['val_variants'].append(val_variant_item)
             full_list_filtering &= filter_params
-            # filtered_listing = filtered_listing.filter(filter_params)
             filter_item['queryset'] = filter_params
             filters_and_val_variant.append(filter_item)
 
+        # if some_filter_checked:
+        prices = ProductPrice.objects.filter(
+            Q(product__productplacement__category=context['category']) & full_list_filtering).aggregate(Min('price'), Max('price'))
+        if some_filter_checked:
+            pass
+        context['price_min'] = prices['price__min']
+        context['price_max'] = prices['price__max']
+        context['price_from'] = context['price_min']
+        context['price_to'] = context['price_max']
+
+        if data and 'price_from' in data.keys():
+            context['price_from'] = data['price_from']
+            price_from_filter_params = Q(product__productprice__price__gte=context['price_from'])
+            full_list_filtering &= price_from_filter_params
+            filter_item = {'queryset': price_from_filter_params, 'type': 'price'}
+            filters_and_val_variant.append(filter_item)
+
+        if data and 'price_to' in data.keys():
+            context['price_to'] = data['price_to']
+            price_to_filter_params = Q(product__productprice__price__lte=context['price_to'])
+            full_list_filtering &= price_to_filter_params
+            filter_item = {'queryset': price_to_filter_params, 'type': 'price'}
+            filters_and_val_variant.append(filter_item)
+
+        if data and 'price_from' in data.keys() or data and 'price_to' in data.keys() :
+            context['checked_filters'].append([f'ціна від {context["price_from"]} грн до {context["price_to"]} грн', '', 'price'])
+
         context['filters_and_val_variant'] = filters_and_val_variant
-        context['category_listing'] = filtered_listing
+
         context['checked_filters_len'] = len(context['checked_filters'])
         for ff in context['filters_and_val_variant']:
-            # if ff['slug'] == 'brands':
-            #     continue
+            if ff['type'] == 'price':
+                continue
             prev_qs = ff['queryset']
             for val in ff['val_variants']:
                 match ff['type']:
@@ -108,10 +167,12 @@ class CategoryView(DetailView, HeaderView):
                         ff['queryset'] = Q(product__characteristics__contains={ff['slug']: [val['slug']]})
                     case 'brands':
                         ff['queryset'] = Q(product__brand=val['slug'])
-                listing_for_count = context['category_listing']
+                    case 'series':
+                        ff['queryset'] = Q(product__series=val['slug'])
+                listing_for_count = context['category'].listing
                 for fff in context['filters_and_val_variant']:
                     listing_for_count = listing_for_count.filter(fff['queryset'])
                 val['total_products'] = listing_for_count.count()
             ff['queryset'] = prev_qs
-        context['category_listing'] = context['category_listing'].filter(full_list_filtering)
+        context['category_listing'] = context['category'].listing.filter(full_list_filtering)
         return context
