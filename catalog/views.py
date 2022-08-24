@@ -20,21 +20,16 @@ class CategoryView(DetailView, HeaderView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         data = self.request.GET
-
         print(data)
-
-        context['wide_sections'] = data.getlist('sections-status')
-        context['filtered'] = True if data else False
-        # context['category_listing'] = context['category'].listing
-
-        context['filters'] = context['category'].full_filters_list
-        context['checked_filters'] = []
-        context['photo_plug'] = PhotoPlug.get_solo().image
-        prices = context['category'].prices
-        # context['price_min'] = prices['price__min']
-        # context['price_max'] = prices['price__max']
-        # context['price_from'] = context['price_min']
-        # context['price_to'] = context['price_max']
+        context |= {
+            'wide_sections': data.getlist('sections-status'), 'filtered': True if data else False,
+            'filters': context['category'].full_filters_list, 'checked_filters': [],
+            'photo_plug': PhotoPlug.get_solo().image,
+            'filter_price_applied': 'false'
+            # 'page_num': data['page_num'][0] if data else 1
+        }
+        if data:
+            context['listing_sort'] = data.getlist('listing_sort')[0]
         some_filter_checked = False
 
         # заполняем основной массив данных для фильтров товаров кроме данных о резульeтатах поиска каждого фильтра
@@ -125,7 +120,8 @@ class CategoryView(DetailView, HeaderView):
 
         # if some_filter_checked:
         prices = ProductPrice.objects.filter(
-            Q(product__productplacement__category=context['category']) & full_list_filtering).aggregate(Min('price'), Max('price'))
+            Q(product__productplacement__category=context['category']) & full_list_filtering).aggregate(Min('price'),
+                                                                                                        Max('price'))
         if some_filter_checked:
             pass
         context['price_min'] = prices['price__min']
@@ -135,6 +131,7 @@ class CategoryView(DetailView, HeaderView):
 
         if data and 'price_from' in data.keys():
             context['price_from'] = data['price_from']
+            context['filter_price_applied'] = 'true'
             price_from_filter_params = Q(product__productprice__price__gte=context['price_from'])
             full_list_filtering &= price_from_filter_params
             filter_item = {'queryset': price_from_filter_params, 'type': 'price'}
@@ -142,13 +139,15 @@ class CategoryView(DetailView, HeaderView):
 
         if data and 'price_to' in data.keys():
             context['price_to'] = data['price_to']
+            context['filter_price_applied'] = 'true'
             price_to_filter_params = Q(product__productprice__price__lte=context['price_to'])
             full_list_filtering &= price_to_filter_params
             filter_item = {'queryset': price_to_filter_params, 'type': 'price'}
             filters_and_val_variant.append(filter_item)
 
-        if data and 'price_from' in data.keys() or data and 'price_to' in data.keys() :
-            context['checked_filters'].append([f'ціна від {context["price_from"]} грн до {context["price_to"]} грн', '', 'price'])
+        if data and 'price_from' in data.keys() or data and 'price_to' in data.keys():
+            context['checked_filters'].append(
+                [f'ціна від {context["price_from"]} грн до {context["price_to"]} грн', '', 'price'])
 
         context['filters_and_val_variant'] = filters_and_val_variant
 
@@ -173,6 +172,25 @@ class CategoryView(DetailView, HeaderView):
                 for fff in context['filters_and_val_variant']:
                     listing_for_count = listing_for_count.filter(fff['queryset'])
                 val['total_products'] = listing_for_count.count()
+                if not val['total_products']:
+                    val['is_checked'] = False
+                    j = 0
+                    for v in context['checked_filters']:
+                        if v[1] == val['slug']:
+                            del context['checked_filters'][j]
+                        j += 1
             ff['queryset'] = prev_qs
-        context['category_listing'] = context['category'].listing.filter(full_list_filtering)
+
+        listing_variants = {
+            "default_sort": context['category'].productplacement_set.order_by('product_position'),
+            'sort_from_cheap_to_expensive': context['category'].productplacement_set.order_by(
+                'product__productprice__price'),
+            'sort_from_expensive_to_cheap': context['category'].productplacement_set.order_by(
+                '-product__productprice__price'),
+        }
+        if data:
+            context['category_listing'] = listing_variants[context['listing_sort']].filter(full_list_filtering)
+        else:
+            context['category_listing'] = context['category'].listing.filter(full_list_filtering)
+        context['total'] = context['category'].listing.filter(full_list_filtering).count()
         return context

@@ -11,7 +11,7 @@
             {% include 'breadcrumbs.html' %}
             <div class="category__title">
                 <h1>{{ category.name }}.</h1>
-                <span class="category__header-info">25 шт / 2 сторінки</span>
+                <span class="category__header-info">{{ total }} шт / HZ сторінки</span>
             </div>
             <div class="category__subcategory">
                 {% if category.subcategory_links %}
@@ -31,18 +31,38 @@
                             <span class="category-products__filters-item" data-filter={{ checkbox.2 }} data-val={{ checkbox.1 }}>{{ checkbox.0 }}</span>
                         {% endfor %}
                         {% if checked_filters_len > 1 %}
-
                             <a class="category-products__filters-item" href={{ category.get_absolute_url }}>
                                 Скинути всі фільтри
                             </a>
                         {% endif %}
                     </div>
                     <div class="category-products__display-settings">
-                        <span>За популярністю</span>
+                        {% if listing_sort == 'default_sort' or not filtered %}
+                            <span>За популярністю</span>
+                        {% elif  listing_sort == 'sort_from_cheap_to_expensive' %}
+                            <span>Від дешевих к дорогим</span>
+                        {% else %}
+                            <span>Від дорогих к дешевим</span>
+                        {% endif %}
                         <div class="category-products__display-settings-popup">
-                            <a href="/category.html">За популярністю</a>
-                            <a class="selected" href="/category.html">Від дешевих к дорогим</a>
-                            <a href="/category.html">Від дорогих к дешевим</a>
+                            {% if not filtered or listing_sort == 'default_sort' %}
+                                <input form="filter-form" id="default_sort" type="radio" name="listing_sort" value="default_sort" checked>
+                            {% else %}
+                                <input form="filter-form" id="default_sort" type="radio" name="listing_sort" value="default_sort">
+                            {% endif %}
+                            <label for="default_sort">За популярністю</label>
+                            {% if listing_sort == 'sort_from_cheap_to_expensive' %}
+                                <input form="filter-form" id="sort_from_cheap_to_expensive" type="radio" name="listing_sort" value="sort_from_cheap_to_expensive" checked>
+                            {% else %}
+                                <input form="filter-form" id="sort_from_cheap_to_expensive" type="radio" name="listing_sort" value="sort_from_cheap_to_expensive">
+                            {% endif %}
+                            <label for="sort_from_cheap_to_expensive">Від дешевих к дорогим</label>
+                            {% if listing_sort == 'sort_from_expensive_to_cheap' %}
+                                <input form="filter-form" id="sort_from_expensive_to_cheap" type="radio" name="listing_sort" value="sort_from_expensive_to_cheap" checked>
+                            {% else %}
+                                <input form="filter-form" id="sort_from_expensive_to_cheap" type="radio" name="listing_sort" value="sort_from_expensive_to_cheap">
+                            {% endif %}
+                            <label for="sort_from_expensive_to_cheap">Від дорогих к дешевим</label>
                         </div>
                     </div>
                 </div>
