@@ -1,5 +1,6 @@
 from copy import copy, deepcopy
 
+from django.core.paginator import Paginator
 from django.db.models import Q, Min, Max
 from django.db.models.expressions import OuterRef
 from django.shortcuts import render
@@ -20,13 +21,14 @@ class CategoryView(DetailView, HeaderView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         data = self.request.GET
+
         print(data)
         context |= {
             'wide_sections': data.getlist('sections-status'), 'filtered': True if data else False,
             'filters': context['category'].full_filters_list, 'checked_filters': [],
             'photo_plug': PhotoPlug.get_solo().image,
-            'filter_price_applied': 'false'
-            # 'page_num': data['page_num'][0] if data else 1
+            'filter_price_applied': 'false',
+            'page_num': data['paginator'][0] if data and 'paginator' in data.keys() else 1
         }
         if data:
             context['listing_sort'] = data.getlist('listing_sort')[0]
@@ -35,7 +37,6 @@ class CategoryView(DetailView, HeaderView):
         # заполняем основной массив данных для фильтров товаров кроме данных о резульeтатах поиска каждого фильтра
         filters_and_val_variant = []
         full_list_filtering = Q()
-
         if Brand.objects.filter(product__productplacement__category=context['category']).exists():
             filter_item = {'name': 'Бренди', 'slug': 'brands', 'type': 'brands', 'val_variants': []}
             list_selected = data.getlist('brands') if 'brands' in data.keys() else []
@@ -189,8 +190,15 @@ class CategoryView(DetailView, HeaderView):
                 '-product__productprice__price'),
         }
         if data:
-            context['category_listing'] = listing_variants[context['listing_sort']].filter(full_list_filtering)
+            listing = listing_variants[context['listing_sort']].filter(full_list_filtering)
         else:
-            context['category_listing'] = context['category'].listing.filter(full_list_filtering)
+            listing = context['category'].listing.filter(full_list_filtering)
+
+        paginator = Paginator(listing, 25)
+
+        context['category_listing'] = paginator.get_page(context['page_num'])
+        context['total_pages'] = paginator.num_pages
+        context['page_range'] = paginator.page_range
+        context['current_page'] = int(context['page_num'])
         context['total'] = context['category'].listing.filter(full_list_filtering).count()
         return context

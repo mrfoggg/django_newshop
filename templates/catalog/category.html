@@ -11,7 +11,7 @@
             {% include 'breadcrumbs.html' %}
             <div class="category__title">
                 <h1>{{ category.name }}.</h1>
-                <span class="category__header-info">{{ total }} шт / HZ сторінки</span>
+                <span class="category__header-info">{{ total }} шт / {{ total_pages }} сторінки (сторінка № {{ current_page }}) </span>
             </div>
             <div class="category__subcategory">
                 {% if category.subcategory_links %}
@@ -75,12 +75,11 @@
                             <div class="product-list-item-content">
                                 <div class="product-list-item-content__img-slider-wrapper">
                                     {% with photo_count=product.images.count %}
+                                    {% thumbnail photo_plug "300" as plug %}
                                         {% if photo_count == 0 %}
-                                            {% thumbnail photo_plug "300" as im %}
-                                                <a href="/">
-                                                    <img src="{{ im.url }}" >
-                                                </a>
-                                            {% endthumbnail %}
+                                            <a href="/">
+                                                <img src="{{ plug.url }}" >
+                                            </a>
                                         {% elif photo_count == 1 %}
                                             {% thumbnail product.images.first.image "300" as im %}
                                                 <a href="/">
@@ -92,12 +91,17 @@
                                                 {% for imgplacing in product.images.all %}
                                                     {% thumbnail imgplacing.image "300" as im %}
                                                         <a href="/">
-                                                            <img src="{{ im.url }}" >
+                                                            {% if forloop.first %}
+                                                                <img src="{{ im.url }}">
+                                                            {% else %}
+                                                                <img data-lazy="{{ im.url }}" src="{{ plug.url }}">
+                                                            {% endif %}
                                                         </a>
                                                     {% endthumbnail %}
                                                 {% endfor %}
                                             </div>
                                         {% endif %}
+                                    {% endthumbnail %}
                                     {% endwith %}
                                 </div>
                                 <div class="product-list-item-content__title">
@@ -139,6 +143,18 @@
                     {% endwith %}
                     {% endfor %}
             </div>
+                <div class="category-paginator">
+                    <div class="category-paginator__items-wrapper">
+                        {% for p in page_range %}
+                            {% if forloop.counter == current_page %}
+                                <input class="category__paginator_item" form="filter-form" id="page_{{ p }}" type="radio" name="paginator" value={{ p }} checked>
+                            {% else %}
+                                <input class="category__paginator_item" form="filter-form" id="page_{{ p }}" type="radio" name="paginator" value={{ p }}>
+                            {% endif %}
+                            <label for="page_{{ p }}">{{ p }}</label>
+                        {% endfor %}
+                    </div>
+                </div>
         </div>
     </div>
 

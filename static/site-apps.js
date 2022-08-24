@@ -17,6 +17,7 @@ $(document).ready(function(){
         $(this).slick('slickGoTo',0, true);
     });
 
+
     let t
     $('.top-catalog__first-level-item').hover(function(){
         $('.top-catalog__100w-bg').height($(this).children('.top-catalog__second-level-list-wrapper--w100').outerHeight());
@@ -99,11 +100,17 @@ $(document).ready(function(){
         }
     });
 
-    $('.category-sidebar__section-content input[type=checkbox]').add('input[type=radio]').click(function(){
+    $('input[type=radio]').click(function(){
     // $('.category-sidebar__section-content input[type=checkbox]').click(function(){
-        console.log($('#slider').data('changed'));
-        if ($('#slider').data('changed') == false){
-            console.log('PRICE NOT CHANGED');
+        if ($('#slider').data('changed') == false) {
+            $('#input-number-from').prop("disabled", true);
+            $('#input-number-to').prop("disabled", true);
+        }
+        $('#filter-form').submit();
+    })
+    $('.category-sidebar__section-content input[type=checkbox]').click(function(){
+        $('.category__paginator_item').first().prop( "checked", true );
+        if ($('#slider').data('changed') == false) {
             $('#input-number-from').prop("disabled", true);
             $('#input-number-to').prop("disabled", true);
         }
@@ -135,19 +142,21 @@ $(document).ready(function(){
             let val = $(this).data('val');
             $('input[name='+filter+'][value='+val+']').prop( "checked", false );
         }
-        $('#input-number-from').prop("disabled", true);
-        $('#input-number-to').prop("disabled", true);
+        $('.category__paginator_item').first().prop( "checked", true );
+        if ($('#slider').data('changed') == false | filter == 'price') {
+            $('#input-number-from').prop("disabled", true);
+            $('#input-number-to').prop("disabled", true);
+        }
         $('#filter-form').submit();
     })
     $('#input-number-from, #input-number-to').change(function(){
         $('button').fadeIn('fast');
-        $('#slider').data('changed', 'true');
+        $('#slider').data('changed', 'true')
 
     })
     slider.noUiSlider.on('change', function () {
         $('button').fadeIn('fast');
-        $('#slider').data('changed', 'true');
-        console.log($('#slider').data('changed'));
+        $('#slider').data('changed', 'true')
     });
 
 });

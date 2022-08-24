@@ -5609,6 +5609,44 @@ header {
     min-width: 0;
 }
 
+.category-paginator {
+    display: -ms-flexbox;
+    display: flex;
+    margin-top: 3rem;
+}
+
+.category-paginator__items-wrapper {
+    display: -ms-flexbox;
+    display: flex;
+    margin: 0 auto;
+}
+
+.category-paginator__items-wrapper input {
+    display: none;
+}
+
+.category-paginator__items-wrapper input:checked + label {
+    border: none;
+    text-decoration: underline;
+    font-size: 2rem;
+}
+
+.category-paginator__items-wrapper label {
+    width: 3rem;
+    font-size: 1.6rem;
+    font-weight: 600;
+    padding: 0.5rem;
+    border: 1px solid #A93CF3;
+    border-radius: 0.6rem;
+    margin-left: 1rem;
+    text-align: center;
+    cursor: pointer;
+}
+
+.category-paginator__items-wrapper label:first {
+    margin-left: 0;
+}
+
 .category-sidebar {
     -ms-flex: 1 1 20%;
     flex: 1 1 20%;
