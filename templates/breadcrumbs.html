@@ -9,7 +9,22 @@
         </li>
     {% endfor %}
 
-    </li class="breadcrumbs__item">
-        <span>{{ category.name }}</span>
-    </li>
+    {% if type_category == 'product' %}
+        <li class="breadcrumbs__item">
+            {% for cat in last_categories %}
+                <a href={{ cat.get_absolute_url }}>{{ cat }}</a>
+                    {% if not forloop.last %}
+{#                         &nbsp ~ &nbsp#}
+                        ~
+                    {% endif %}
+            {% endfor %}
+        </li>
+        </li class="breadcrumbs__item">
+            <span>{{ product }}</span>
+        </li>
+    {% else %}
+        </li class="breadcrumbs__item">
+            <span>{{ category.name }}</span>
+        </li>
+    {% endif %}
 </ul>

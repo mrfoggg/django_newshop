@@ -17,6 +17,23 @@ $(document).ready(function(){
         $(this).slick('slickGoTo',0, true);
     });
 
+    $('.product__top-gallery--main-slider').slick({
+        dots: true,
+        arrows: false,
+        adaptiveHeight: true,
+        infinite: false,
+        asNavFor:'.product__top-gallery--bottom-slider'
+    });
+
+    $('.product__top-gallery--bottom-slider').slick({
+        adaptiveHeight: true,
+        slidesToShow: 5,
+        infinite: false,
+        // centerMode: true,
+        // centerPadding: '60px',
+        asNavFor: '.product__top-gallery--main-slider',
+        focusOnSelect: true
+    });
 
     let t
     $('.top-catalog__first-level-item').hover(function(){
@@ -158,5 +175,6 @@ $(document).ready(function(){
         $('button').fadeIn('fast');
         $('#slider').data('changed', 'true')
     });
+
 
 });

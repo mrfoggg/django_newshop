@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load thumbnail %}
+
+{% block title %}
+    <title> Сніп-Сноп | {{ product }}</title>
+{% endblock title %}
+
+{% block content %}
+        <div class="content-wrapper">
+            {% include 'breadcrumbs.html' %}
+            <div class="product__header">
+            <h1>{{ product }}</h1>
+        </div>
+        <div class="product__header-info">
+            <span class="product__stock-on_stock">В наявності</span>
+            <span class="product__stock-on_stock">Код товару</span>
+            <div class="rating-summary">
+                <div class="rating-result" title="70%">
+                    <span style="width:70%">
+                        <span>70%</span>
+                    </span>
+                </div>
+            </div>
+            <span class="product__stock-on_stock">0 відгуків</span>
+        </div>
+        <div class="product__tabs-wrapper">
+            <div class="product__tabs">
+                <div class="product__tabs-item--active"><a href="">Загальна інформація про товар</a></div>
+                <div class="product__tabs-item"><a href="">Опис</a></div>
+                <div class="product__tabs-item"><a href="">Характеристики</a></div>
+                <div class="product__tabs-item"><a href="">ВІдгуки</a></div>
+            </div>
+        </div>
+        <div class="product__top">
+            <div class="product__top-gallery">
+                {% with photo_count=product.images.count %}
+                    {% if photo_count == 0 %}
+                        <img src="{{ photo_plug.url }}" alt="Немає фото">
+                    {% elif photo_count == 1 %}
+                        <img src={{ product.images.first.image.url }} >
+                    {% else %}
+                        <div class="product__top-gallery--main-slider">
+                            {% for img in product.images.all %}
+                                <img src={{ img.image.url }} alt="">
+                            {% endfor %}
+                        </div>
+                        <div class="product__top-gallery--bottom-slider">
+                            {% for img in product.images.all %}
+                                <img src={{ img.image.url }} alt="">
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+            <div class="product__top-data"></div>
+        </div>
+
+
+    </div>
+
+{% endblock content %}

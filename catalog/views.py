@@ -7,7 +7,7 @@ from django.shortcuts import render
 
 # Create your views here.
 from ROOTAPP.views import HeaderView
-from catalog.models import Category, Brand, ProductSeries, ProductPrice
+from catalog.models import Category, Brand, ProductSeries, ProductPrice, Product
 from django.views.generic.detail import DetailView
 
 from site_settings.models import PhotoPlug
@@ -26,9 +26,10 @@ class CategoryView(DetailView, HeaderView):
         context |= {
             'wide_sections': data.getlist('sections-status'), 'filtered': True if data else False,
             'filters': context['category'].full_filters_list, 'checked_filters': [],
-            'photo_plug': PhotoPlug.get_solo().image,
+            # 'photo_plug': PhotoPlug.get_solo().image,
             'filter_price_applied': 'false',
-            'page_num': data['paginator'][0] if data and 'paginator' in data.keys() else 1
+            'page_num': data['paginator'][0] if data and 'paginator' in data.keys() else 1,
+            'page_type': 'category'
         }
         if data:
             context['listing_sort'] = data.getlist('listing_sort')[0]
@@ -201,4 +202,24 @@ class CategoryView(DetailView, HeaderView):
         context['page_range'] = paginator.page_range
         context['current_page'] = int(context['page_num'])
         context['total'] = context['category'].listing.filter(full_list_filtering).count()
+        return context
+
+
+class ProductView(DetailView, HeaderView):
+    template_name = 'catalog/product.html'
+    model = Product
+    query_pk_and_slug = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        categories = {}
+        product = context['product']
+        for placement in context['product'].productplacement_set.filter(category__display_in_parent=True):
+            if (level := placement.category.level) in categories.keys():
+                categories[level].append(placement.category)
+            else:
+                categories[level] = [placement.category]
+        context['last_categories'] = categories[max(categories.keys())]
+        context['category'] = context['last_categories'][0]
+        context['type_category'] = 'product'
         return context

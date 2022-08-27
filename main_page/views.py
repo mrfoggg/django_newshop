@@ -1,8 +1,8 @@
 from django.shortcuts import render
 
 from ROOTAPP.views import HeaderView
-from main_page.models import Banner, Menu, Schedule, SitePhone
-from site_settings.models import SliderConfiguration, HeaderConfiguration
+from main_page.models import Banner
+from site_settings.models import SliderConfiguration
 from django.views.generic.base import TemplateView
 
 

@@ -99,7 +99,7 @@ class Category(MPTTModel):
 
     def get_absolute_url(self):
         # return f'/category/{self.slug}'
-        return reverse('category:index', args=(self.slug,))
+        return reverse('catalog:category', args=(self.slug,))
 
     @property
     def link(self):
@@ -234,6 +234,9 @@ class Product(models.Model):
             pass
             # raise ValidationError("Копия этого товара уже существует")
         super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('catalog:product', args=(self.slug,))
 
     @property
     @admin.display(description='Содержится в категориях')
