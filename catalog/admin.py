@@ -78,6 +78,7 @@ class GroupPlacementInline(nested_admin.SortableHiddenMixin, nested_admin.Nested
     fields = ('group', 'attributes_list', 'position')
     sortable_field_name = 'position'
     ordering = ('position',)
+    # autocomplete_fields = ('group',)
 
     @admin.display(description='Содержжит атрибуты')
     def attributes_list(self, obj):
@@ -292,10 +293,13 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     # formfield_overrides = {
     #     models.JSONField: {'widget': JSONEditorWidget},
     # }
+    search_fields = ('name',)
+    ordering = ('name',)
     readonly_fields = ('get_sorted_groups', 'combination_of_categories')
     summernote_fields = ('description',)
     change_form_template = "product_changeform.html"
     actions = [export_as_json]
+    list_filter = ('admin_category', 'brand')
     fieldsets = (
         ("Основное", {
             'fields': (
@@ -392,6 +396,7 @@ class GroupAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin, ):
     form = GroupForm
     list_display = ('name', 'attributes_list')
     inlines = (AttributeInline,)
+    search_fields = ('name',)
 
     class Media:
         css = {
@@ -435,6 +440,7 @@ class AttributeAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin):
     list_filter = ('group', 'type_of_value')
     list_select_related = ('group',)
     inlines = (FixedTextValueInline,)
+    autocomplete_fields = ('group',)
 
     def __init__(self, model, admin_site):
         super().__init__(model, admin_site)

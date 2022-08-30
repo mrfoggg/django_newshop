@@ -8,7 +8,8 @@ from finance.models import PriceChangelist
 
 class ProductPriceProductInline(nested_admin.NestedTabularInline):
     fields = ('price_changelist', 'price')
-    readonly_fields = ('price',)
+    # autocomplete_fields = ('product',)
+    # readonly_fields = ('price',)
     model = ProductPrice
     extra = 0
     # ordering = ('position',)
@@ -19,6 +20,7 @@ class ProductPricePriceChangelistInline(nested_admin.SortableHiddenMixin, nested
     extra = 0
     sortable_field_name = 'position'
     ordering = ('position',)
+    autocomplete_fields = ('product',)
 
 
 @admin.register(PriceChangelist)

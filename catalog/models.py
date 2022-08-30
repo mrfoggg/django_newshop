@@ -293,6 +293,19 @@ class Product(models.Model):
         return shot_attr_list
 
     @property
+    def main_attributes(self):
+        main_attr_list = []
+        if (cc := self.combination_of_categories) and cc.is_active_custom_order_main_parameters:
+            for main_pl in cc.main_attr_positions.all():
+                if str_val := self.get_attr_string_val(main_pl.shot_attribute.attribute):
+                    main_attr_list.append([main_pl.main_attribute, str_val])
+        else:
+            for cat_placement in self.productplacement_set.order_by('category_position'):
+                main_attr_list.extend([[i.attribute, str_val] for i in cat_placement.category.main_attributes.all()
+                                       if (str_val := self.get_attr_string_val(i.attribute))])
+        return main_attr_list
+
+    @property
     def price(self):
         return self.productprice_set.order_by(
             'price_changelist__confirmed_date').last().price if self.productprice_set.exists() else 0
