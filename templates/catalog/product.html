@@ -8,12 +8,10 @@
 {% block content %}
         <div class="content-wrapper">
             {% include 'breadcrumbs.html' %}
-            <div class="product__header">
-            <h1>{{ product }}</h1>
-        </div>
+            <div class="product__header" id="product_top"><h1>{{ product }}</h1></div>
         <div class="product__header-info">
             <span class="product__stock-on_stock">В наявності</span>
-            <span class="product__stock-on_stock">Код товару</span>
+            <span class="product__stock-on_stock">Артікул: {{ product.sku }}</span>
             <div class="rating-summary">
                 <div class="rating-result" title="70%">
                     <span style="width:70%">
@@ -25,10 +23,10 @@
         </div>
         <div class="product__tabs-wrapper">
             <div class="product__tabs">
-                <div class="product__tabs-item--active"><a href="">Загальна інформація про товар</a></div>
-                <div class="product__tabs-item"><a href="">Опис</a></div>
-                <div class="product__tabs-item"><a href="">Характеристики</a></div>
-                <div class="product__tabs-item"><a href="">ВІдгуки</a></div>
+                <div class="product__tabs-item"><a class="product__tabs-item--active" href="#product_top">Загальна інформація про товар</a></div>
+                <div class="product__tabs-item"><a href="#product_description">Опис</a></div>
+                <div class="product__tabs-item"><a href="#product_characteristics">Характеристики</a></div>
+                <div class="product__tabs-item"><a href="#product_reviews">ВІдгуки</a></div>
             </div>
         </div>
         <div class="product__top">
@@ -66,6 +64,7 @@
 {#                    {{ product.main_attributes }}#}
                 </ul>
                 <div class="product__top-data-by">
+                    <div class="product__top-data-by-price">{{ product.price }}</div>
                     <div class="product__top-data-by-btns">
                         <button class="product__top-data-by-btns-checkout" type="submit">Замовити зараз</button>
                         <button class="product__top-data-by-btns-add" type="submit">До кошика</button>
@@ -74,12 +73,34 @@
                         <p class="product__top-data-by-onclick-header">Проконсультуємо і оформимо замовлення по телефону:</p>
                         <span>+38 (0</span><input class="phone-number-input" type="text"><button disabled id="ok_button" >Відправити</button>
                     </div>
-
                 </div>
-
             </div>
         </div>
 
+        <div class="product__main-data">
+
+            <div class="product__main-data-description">
+                <h2 class="product__section_title" id="product_description">Опис товару</h2>
+                <div class="product__main-data-description-text">{{ product.description|safe }}</div>
+                <div class="product__main-data-characteristics">
+                    <h2 class="product__section_title" id="product_characteristics">Детальні характеристки</h2>
+                    {% for group in product.full_characteristics %}
+                        <h3>{{ group.0 }}</h3>
+                    <ul>
+                        {% for a in group.1 %}
+                            <li><span>{{ a.0 }}:</span><span class="dotted"></span><span>{{ a.1 }}</span></li>
+                        {% endfor %}
+                    </ul>
+                    {% endfor %}
+                </div>
+                <div class="product__main-data-reviews" id="product_reviews">
+                    <h2 class="product__section_title">Відгуки та питання</h2>
+                </div>
+            </div>
+            <div class="product__main-data-sidebar">
+                Lorem ipsum dolor sit amet, consectetur adipisicing elit. A nisi consectetur exercitationem, unde sed provident non rem expedita facere cum distinctio illo, fuga excepturi qui beatae ea dignissimos eos! Alias.
+            </div>
+        </div>
 
     </div>
 

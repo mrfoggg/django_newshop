@@ -293,7 +293,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     # formfield_overrides = {
     #     models.JSONField: {'widget': JSONEditorWidget},
     # }
-    search_fields = ('name',)
+    search_fields = ('name', 'sku')
     ordering = ('name',)
     readonly_fields = ('get_sorted_groups', 'combination_of_categories')
     summernote_fields = ('description',)
