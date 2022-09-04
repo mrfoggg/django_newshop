@@ -206,6 +206,16 @@ $(document).ready(function(){
     $('.product__top-gallery-img-wrapper img').imagezoomsl({
         cursorshade: true,
         // disablewheel: false
+        cursorshadeborder: '1px solid #A93CF3',
+    });
+
+    $('.product__tabs-item a').mPageScroll2id({
+        // layout:"horizontal"
+        clickedClass: 'product__tabs-item--active',
+        highlightClass: 'product__tabs-item--active',
+        keepHighlightUntilNext: true,
+        forceSingleHighlight: true,
+        scrollSpeed: 500
     });
 
 });

@@ -10,6 +10,7 @@ from django.utils.encoding import force_str
 from django_summernote.admin import SummernoteModelAdmin
 from mptt.admin import DraggableMPTTAdmin
 
+from ROOTAPP.models import Person
 from finance.admin import ProductPriceProductInline
 from .admin_forms import (CombinationOfCategoryAdminForm, GroupPlacementInlineFS,
                           GroupPositionInCombinationOfCategoryInLineFS,
@@ -19,7 +20,7 @@ from .admin_forms import (CombinationOfCategoryAdminForm, GroupPlacementInlineFS
 from .models import (Attribute, Category, CombinationOfCategory, FixedTextValue, Group, GroupPlacement,
                      GroupPositionInCombinationOfCategory, MainAttribute, MainAttrPositionInCombinationOfCategory,
                      Product, ProductPlacement, ShotAttribute, ShotAttrPositionInCombinationOfCategory, UnitOfMeasure,
-                     Country, Brand, ProductSeries, PricesOtherShop, OtherShop, ProductImage, Filter,
+                     Country, Brand, ProductSeries, PricesOtherShop, OtherShop, ProductImage, Filter, ProductSupplier,
                      )
 from .services import (clean_combination_of_category,
                        get_changes_in_categories_fs, get_changes_in_groups_fs,
@@ -70,6 +71,17 @@ class ProductPlacementInlineForProduct(nested_admin.SortableHiddenMixin, nested_
         return obj.category.groups_list
 
 
+class ProductSupplierInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+    model = ProductSupplier
+    extra = 0
+    sortable_field_name = 'priority'
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'supplier':
+            kwargs["queryset"] = Person.objects.filter(is_supplier=True)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
 class GroupPlacementInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     formset = GroupPlacementInlineFS
     readonly_fields = ('attributes_list',)
@@ -78,6 +90,7 @@ class GroupPlacementInline(nested_admin.SortableHiddenMixin, nested_admin.Nested
     fields = ('group', 'attributes_list', 'position')
     sortable_field_name = 'position'
     ordering = ('position',)
+
     # autocomplete_fields = ('group',)
 
     @admin.display(description='Содержжит атрибуты')
@@ -289,7 +302,8 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     list_display = ('name', 'category_placement')
     prepopulated_fields = {"slug": ("name",)}
     save_on_top = True
-    inlines = (ProductPlacementInlineForProduct, PricesOtherShopInline, ProductImageInline, ProductPriceProductInline)
+    inlines = (ProductPlacementInlineForProduct, PricesOtherShopInline, ProductImageInline, ProductPriceProductInline,
+               ProductSupplierInline)
     # formfield_overrides = {
     #     models.JSONField: {'widget': JSONEditorWidget},
     # }
@@ -334,7 +348,6 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
         css = {
             "all": ("test.css",)
         }
-        js = ('checkbox_one.js',)
 
     def save_related(self, request, form, formsets, change):
         # сохраняем FormSet иначе 'ProductPlacementFormFormSet' object has no attribute 'deleted_objects'
@@ -345,6 +358,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
         formsets[1].save()
         formsets[2].save()
         formsets[3].save()
+        formsets[4].save()
 
         if added_categories_id_list:
             set_prod_pos_to_end(category_fs, added_categories_id_list)

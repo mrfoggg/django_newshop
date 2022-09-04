@@ -6447,6 +6447,24 @@ header {
     flex: 1 1 45%;
 }
 
+.product__top-data h3 {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+.product__top-data-ship-item {
+    height: 4rem;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-align: end;
+    align-items: end;
+}
+
+.product__top-data-ship-item img {
+    height: 100%;
+    margin-right: 2rem;
+}
+
 .product__top-data {
     font-size: 1.6rem;
     font-weight: 600;

@@ -9,6 +9,7 @@ from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
 # from finance.models import ProductPrice
+from ROOTAPP.models import Person
 from finance.models import PriceChangelist
 
 
@@ -306,6 +307,15 @@ class Product(models.Model):
         return main_attr_list
 
     @property
+    def full_characteristics(self):
+        characteristics = []
+        for group in self.get_sorted_groups:
+            characteristics.append([group[1].name, [
+                [a.name, str_val] for a in group[1].attributes.all()
+                if (str_val := self.get_attr_string_val(a))
+            ]])
+        return characteristics
+
     def price(self):
         return self.productprice_set.order_by(
             'price_changelist__confirmed_date').last().price if self.productprice_set.exists() else 0
@@ -325,6 +335,21 @@ class ProductPlacement(models.Model):
 
     def __str__(self):
         return f'{self.product} в категории {self.category}'
+
+
+class ProductSupplier(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Товар')
+    supplier = models.ForeignKey(Person, on_delete=models.CASCADE, verbose_name='Поставщик')
+    priority = models.PositiveSmallIntegerField("Приоритет поставщика", blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Поставщик товара"
+        verbose_name_plural = "Поставщики товара"
+        unique_together = ('product', 'supplier')
+        ordering = ('priority',)
+
+    def __str__(self):
+        return f'Товар {self.product}, поставщик - {self.supplier}'
 
 
 class Group(models.Model):
@@ -360,7 +385,7 @@ class GroupPlacement(models.Model):
     class Meta:
         verbose_name = "Размещение групп атрибутов в категориях"
         verbose_name_plural = "Размещения групп атрибутов в категориях"
-        ordering = ['position']
+        ordering = ('position',)
 
 
 TYPE_OF_VALUE = (

@@ -30,6 +30,7 @@ urlpatterns = [
     path('', include('main_page.urls')),
     # path('catalog/', include('catalog.urls')),
     path('category/', include('catalog.urls')),
+    path('rootapp/', include('ROOTAPP.urls')),
     path('admin/', admin.site.urls),
     path('baton/', include('baton.urls')),
     path('summernote/', include('django_summernote.urls')),

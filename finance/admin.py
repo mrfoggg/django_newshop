@@ -17,7 +17,7 @@ class ProductPriceProductInline(nested_admin.NestedTabularInline):
 
 class ProductPricePriceChangelistInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     model = ProductPrice
-    extra = 0
+    extra = 3
     sortable_field_name = 'position'
     ordering = ('position',)
     autocomplete_fields = ('product',)

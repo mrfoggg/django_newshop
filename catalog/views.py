@@ -6,10 +6,12 @@ from django.db.models.expressions import OuterRef
 from django.shortcuts import render
 
 # Create your views here.
-from ROOTAPP.views import HeaderView
+# from ROOTAPP.views import HeaderView
+from ROOTAPP.models import City
 from catalog.models import Category, Brand, ProductSeries, ProductPrice, Product
 from django.views.generic.detail import DetailView
 
+from main_page.views import HeaderView
 from site_settings.models import PhotoPlug
 
 
@@ -212,14 +214,21 @@ class ProductView(DetailView, HeaderView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        categories = {}
         product = context['product']
-        for placement in context['product'].productplacement_set.filter(category__display_in_parent=True):
+        context['city_from'] = None
+        city = City.objects.filter(personcity__person__productsupplier__product=product)
+        if city.exists():
+            city = city.first()
+            context['city_from'] = f'{city.settlement_type_description} {city.description} ({city.area_description})'
+        categories = {}
+        for placement in product.productplacement_set.filter(category__display_in_parent=True):
             if (level := placement.category.level) in categories.keys():
                 categories[level].append(placement.category)
             else:
                 categories[level] = [placement.category]
-        context['last_categories'] = categories[max(categories.keys())]
-        context['category'] = context['last_categories'][0]
-        context['type_category'] = 'product'
+        context |= {
+            'last_categories': (last_cat := categories[max(categories.keys())]),
+            'category': last_cat[0],
+            'type_category': 'product'
+        }
         return context
