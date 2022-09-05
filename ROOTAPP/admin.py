@@ -3,7 +3,7 @@ from django.contrib import admin
 import nested_admin
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
 
-from ROOTAPP.models import Phone, Messenger, Person, PersonPhone, City, PersonCity
+from ROOTAPP.models import Phone, Messenger, Person, PersonPhone, Settlement, PersonSettlement
 from django import forms
 
 # from .services.telegram_servises import get_tg_username
@@ -17,21 +17,15 @@ class PersonPhoneInlineAdmin(nested_admin.NestedTabularInline):
     extra = 0
 
 
-class PersonCityInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
-    model = PersonCity
+class PersonSettlementInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+    model = PersonSettlement
     extra = 2
     sortable_field_name = 'priority'
     ordering = ('priority',)
-    autocomplete_fields = ('city',)
+    autocomplete_fields = ('settlement',)
 
 
 class PhoneAdminForm(forms.ModelForm):
-    # def clean(self):
-    #     super(PhoneAdminForm, self).clean()
-    #     if not self.cleaned_data['telegram_username']:
-    #         number = str(self.cleaned_data['number'])[1:]
-    #         self.cleaned_data['telegram_username'] = get_tg_username(number)
-
     class Meta:
         model = Phone
         fields = ('number', 'telegram_username', 'messengers')
@@ -57,25 +51,22 @@ class PhoneAdmin(admin.ModelAdmin):
 class PersonAdmin(nested_admin.NestedModelAdmin):
     fields = ('last_name', 'first_name', 'middle_name', 'email', ('is_customer', 'is_supplier'))
     search_fields = ('last_name', 'first_name', 'middle_name')
-    inlines = (PersonPhoneInlineAdmin, PersonCityInline)
+    inlines = (PersonPhoneInlineAdmin, PersonSettlementInline)
     list_display = ('__str__', 'is_customer', 'is_supplier')
+    list_filter = ('is_customer', 'is_supplier')
 
 
-@admin.register(City)
-class CityAdmin(admin.ModelAdmin):
+@admin.register(Settlement)
+class SettlementAdmin(admin.ModelAdmin):
     fields = (
-        ('description_ru', 'description', 'ref'),
-        ('settlement_type_description_ru', 'settlement_type_description', 'settlement_type'),
-        ('area_description_ru', 'area_description', 'area'),
-        ('region_description_ru', 'region_description', 'region'),
+        ('type', 'description_ru', 'description_ua', ),
+        ('area', 'region', ),
+        'warehouse',
         ('index_1', 'index_2', 'index_coatsu_1'),
-        ('warehouse',)
     )
-    list_display = ('description_ru', 'description', 'settlement_type_description_ru', 'area_description_ru',
-                    'region_description_ru', 'warehouse',)
-    list_filter = ('area_description_ru', 'warehouse')
-    list_display_links = ('description_ru', 'description')
+    list_filter = ('area__description_ru', 'warehouse')
     baton_cl_includes = [
         ('ROOTAPP/button_update_cities.html', 'top',),
     ]
-    search_fields = ('description_ru', 'description', 'area_description_ru', 'area_description', 'index_1')
+    search_fields = ('description_ru', 'description_ua', 'area__description_ru', 'area__description_ua',
+                     'region__description_ru', 'region__description_ua', 'index_1')

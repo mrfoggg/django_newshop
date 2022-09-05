@@ -7,7 +7,7 @@ from django.shortcuts import render
 
 # Create your views here.
 # from ROOTAPP.views import HeaderView
-from ROOTAPP.models import City
+from ROOTAPP.models import Settlement
 from catalog.models import Category, Brand, ProductSeries, ProductPrice, Product
 from django.views.generic.detail import DetailView
 
@@ -215,11 +215,13 @@ class ProductView(DetailView, HeaderView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         product = context['product']
-        context['city_from'] = None
-        city = City.objects.filter(personcity__person__productsupplier__product=product)
-        if city.exists():
-            city = city.first()
-            context['city_from'] = f'{city.settlement_type_description} {city.description} ({city.area_description})'
+        context['settlement_from'] = None
+        settlement = Settlement.objects.filter(personsettlement__person__productsupplier__product=product)
+
+        if settlement.exists():
+            settlement = settlement.first()
+            context['settlement_from'] = f'{settlement.type.description_ua} {settlement.description_ua} ' \
+                                         f'({settlement.area.description_ua})'
         categories = {}
         for placement in product.productplacement_set.filter(category__display_in_parent=True):
             if (level := placement.category.level) in categories.keys():

@@ -100,23 +100,62 @@ class PersonPhone(models.Model):
         return f'Телефон контрагента {self.person} - {self.phone}'
 
 
-class City(models.Model):
+class SettlementType(models.Model):
+    ref = models.CharField('Ref типа населенного пункта', max_length=128, primary_key=True)
+    description_ru = models.CharField('Название типа населенного пункта', max_length=128, default=None)
+    description_ua = models.CharField('Название типа населенного пункта укр.', max_length=128, default=None)
+
+    class Meta:
+        verbose_name = 'Тип населенного пункта'
+        verbose_name_plural = 'Населенные пункта'
+        ordering = ('description_ru',)
+
+    def __str__(self):
+        return self.description_ru
+
+
+class SettlementArea(models.Model):
+    ref = models.CharField('Ref области', max_length=128, primary_key=True)
+    description_ru = models.CharField('Название области', max_length=128, default=None)
+    description_ua = models.CharField('Название области укр.', max_length=128, default=None)
+
+    class Meta:
+        verbose_name = 'Область'
+        verbose_name_plural = 'Области'
+        ordering = ('description_ru',)
+
+    def __str__(self):
+        return self.description_ru
+
+
+class SettlementRegion(models.Model):
+    ref = models.CharField('Ref района', max_length=128, primary_key=True)
+    description_ru = models.CharField('Название района', max_length=128, default=None)
+    description_ua = models.CharField('Название района укр.', max_length=128, default=None)
+
+    class Meta:
+        verbose_name = 'Район'
+        verbose_name_plural = 'Районы'
+        ordering = ('description_ru',)
+
+    def __str__(self):
+        return self.description_ru
+
+
+class Settlement(models.Model):
     description_ru = models.CharField('Название', max_length=128, default=None, db_index=True)
-    description = models.CharField('Название укр.', max_length=128, default=None, db_index=True)
-    ref = models.CharField('Ref', max_length=128, default=None, unique=True)
-    settlement_type_description_ru = models.CharField('Тип населенного пункта', max_length=128, default=None)
-    settlement_type_description = models.CharField('Тип населенного пункта укр.', max_length=128, default=None)
-    settlement_type = models.CharField('Ref типа населенного пункта', max_length=128, default=None)
-    area_description_ru = models.CharField('Область', max_length=128, default=None)
-    area_description = models.CharField('Область укр.', max_length=128, default=None)
-    area = models.CharField('Ref области', max_length=128, default=None)
-    region_description_ru = models.CharField('Район', max_length=128, default=None)
-    region_description = models.CharField('Район укр.', max_length=128, default=None)
-    region = models.CharField('Ref района', max_length=128, default=None)
+    description_ua = models.CharField('Название укр.', max_length=128, default=None, db_index=True)
+    ref = models.CharField('Ref', max_length=128, primary_key=True)
+    type = models.ForeignKey(SettlementType, max_length=128, default=None, on_delete=models.CASCADE,
+                             db_index=True, verbose_name='Тип населенного пункта')
+    area = models.ForeignKey(SettlementArea, max_length=128, default=None, on_delete=models.CASCADE,
+                             db_index=True, verbose_name="Область")
+    region = models.ForeignKey(SettlementRegion, max_length=128, default=None, on_delete=models.CASCADE,
+                               verbose_name="Район")
     warehouse = models.BooleanField('Наличие отделений', default=False)
-    index_1 = models.CharField('Index1', max_length=128, null=True, default=None)
-    index_2 = models.CharField('Index2', max_length=128, null=True, default=None)
-    index_coatsu_1 = models.CharField('IndexCOATSU1', null=True, max_length=128, default=None)
+    index_1 = models.CharField('Индекс', max_length=128, null=True, default=None)
+    index_2 = models.CharField('Индекс-2', max_length=128, null=True, default=None)
+    index_coatsu_1 = models.CharField('Индекс КОАТУУ', null=True, max_length=128, default=None)
 
     class Meta:
         verbose_name = 'Населенный пункт'
@@ -124,20 +163,20 @@ class City(models.Model):
         ordering = ('description_ru',)
 
     def __str__(self):
-        return f'{self.settlement_type_description_ru} {self.description_ru}/{self.description}' \
-               f' {self.area_description_ru, self.region_description_ru}'
+        return f'{self.type.description_ru} {self.description_ru}/{self.description_ua}' \
+               f' {self.area.description_ru, self.region.description_ru}'
 
 
-class PersonCity(models.Model):
-    city = models.ForeignKey(City, on_delete=models.CASCADE, verbose_name='Населенный пункт')
+class PersonSettlement(models.Model):
+    settlement = models.ForeignKey(Settlement, on_delete=models.CASCADE, verbose_name='Населенный пункт')
     person = models.ForeignKey(Person, on_delete=models.CASCADE, verbose_name='Контрагент')
     priority = models.PositiveSmallIntegerField("Приоритет населенного пункта", blank=True, null=True)
 
     class Meta:
         verbose_name = "Населенный пункт контрагента"
         verbose_name_plural = "Населенные пункты контрагента"
-        unique_together = ('city', 'person')
+        unique_together = ('settlement', 'person')
         ordering = ('priority',)
 
     def __str__(self):
-        return f'Населенный пункт {self.city}, контрагента - {self.person}'
+        return f'Населенный пункт {self.settlement}, контрагента - {self.person}'
