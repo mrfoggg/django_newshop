@@ -7,6 +7,9 @@ from django.shortcuts import render
 
 # Create your views here.
 # from ROOTAPP.views import HeaderView
+from django.urls import reverse
+
+from ROOTAPP.forms import SettlementForm, AddressForm
 from ROOTAPP.models import Settlement
 from catalog.models import Category, Brand, ProductSeries, ProductPrice, Product
 from django.views.generic.detail import DetailView
@@ -222,6 +225,8 @@ class ProductView(DetailView, HeaderView):
             settlement = settlement.first()
             context['settlement_from'] = f'{settlement.type.description_ua} {settlement.description_ua} ' \
                                          f'({settlement.area.description_ua})'
+            context['settlement_to_form'] = SettlementForm()
+
         categories = {}
         for placement in product.productplacement_set.filter(category__display_in_parent=True):
             if (level := placement.category.level) in categories.keys():
@@ -231,6 +236,8 @@ class ProductView(DetailView, HeaderView):
         context |= {
             'last_categories': (last_cat := categories[max(categories.keys())]),
             'category': last_cat[0],
-            'type_category': 'product'
+            'type_category': 'product',
+            'url_get_cities': reverse('rootapp:get_cities_by_area'),
+            'address_form': AddressForm
         }
         return context

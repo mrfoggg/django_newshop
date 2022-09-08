@@ -27,12 +27,14 @@ admin.site.site_title = "Главная страница"
 admin.site.index_title = 'Панель администрирования интернет-магазина "Снип-Сноп"'
 
 urlpatterns = [
+    path("select2/", include("django_select2.urls")),
     path('', include('main_page.urls')),
     # path('catalog/', include('catalog.urls')),
     path('category/', include('catalog.urls')),
     path('rootapp/', include('ROOTAPP.urls')),
     path('admin/', admin.site.urls),
     path('baton/', include('baton.urls')),
+    # path("select2/", include("django_select2.urls")),
     path('summernote/', include('django_summernote.urls')),
     path('_nested_admin/', include('nested_admin.urls')),
 ]

@@ -1,4 +1,5 @@
 $(document).ready(function(){
+    // $(".django-select2").djangoSelect2();
     $('.slider').slick({
         dots: true,
         adaptiveHeight: true,
@@ -217,5 +218,30 @@ $(document).ready(function(){
         forceSingleHighlight: true,
         scrollSpeed: 500
     });
-
+    // $('#get_settlement').submit(function (e_submit){
+    //     console.log("SUBMIT");
+    //     e_submit.preventDefault();
+    //     $.ajax({
+    //         type:'GET',
+    //         url: $(this).data('url'),
+    //         data: $(this).serialize(),
+    //         success: function (response){
+    //             $('#id_settlement').html('<option value="" selected="">---------</option>')
+    //             for (let s of response['settlements']) {
+    //                 $('#id_settlement').append(`<option value="${s["ref"]}">${s["description_ua"]} (${s["region__description_ua"]})</option>`)
+    //                 // console.log(s);
+    //             }
+    //             console.log(response['settlements']);
+    //
+    //         },
+    //         error: function (response){
+    //             console.log('error');
+    //         }
+    //     })
+    // });
+    // $('#id_settlement_area').change(function (e){
+    //     $('#get_settlement').submit();
+    // })
+    $(".django-select2").djangoSelect2();
+    // $(".django-select2").select2();
 });

@@ -83,6 +83,16 @@
                 <img src="/media/icons/np.svg" alt=""> <span>На відділення, кур'єром на адресу</span>
             </div>
 
+            {% if settlement_from %}
+                <h3>Для розрахунку вартості доставки виберіть область та населений пункт куди треба відправити товар):</h3>
+{#                <form method="POST" id="get_settlement" data-url={{ url_get_cities }}>#}
+                <form method="POST" id="get_settlement" data-url={{ url_get_cities }}>
+                    {% csrf_token %}
+                    {{ address_form }}
+                </form>
+{#                {{ address_form }}#}
+            {% endif %}
+
             </div>
         </div>
 

@@ -1,6 +1,6 @@
 from django.contrib import messages
 import json
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 import requests
 from django.utils.html import format_html
@@ -60,7 +60,7 @@ def update_cities(request):
             edited_cities_data_list = []
             for data in response_dict['data']:
                 data_settlement_str = f"№{count}: {data['DescriptionRu']}/{data['Description']} ({data['AreaDescriptionRu']}, " \
-                                f"{data['RegionsDescriptionRu']})"
+                                      f"{data['RegionsDescriptionRu']})"
                 if search_by_descr:
                     message_text += f'Найдено {data_settlement_str} <br>'
                     print(f'Найдено {data_settlement_str}')
@@ -210,3 +210,9 @@ def update_cities(request):
     messages.add_message(request, messages.SUCCESS, format_html(message_text))
     print(total_info)
     return HttpResponseRedirect(reverse('admin:ROOTAPP_settlement_changelist'))
+
+
+def get_cities_by_area(request):
+    area_ref = request.GET.get("settlement_area")
+    settlements = Settlement.objects.filter(area=area_ref).values('ref', 'description_ua', 'region__description_ua')
+    return JsonResponse({"settlements": list(settlements)}, status=200)

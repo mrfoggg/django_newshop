@@ -1,4 +1,5 @@
 <form action={{ category.get_absolute_url }} id="filter-form" class="category-sidebar" data-max-height-section="26rem" >
+    {% csrf_token %}
     {% if category.level != 0 %}
         <div class="category-sidebar__bro-categories category-sidebar__section" >
 

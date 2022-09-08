@@ -2,8 +2,7 @@
 (function ($, undefined) {
     // init listeners
     Baton.Dispatcher.register('onReady', function () {
-        $('.django-select2').djangoSelect2("destroy");
-        $('.django-select2').djangoSelect2();
+        //
         $.fn.setCursorPosition = function(pos) {
           if ($(this).get(0).setSelectionRange) {
             $(this).get(0).setSelectionRange(pos, pos);

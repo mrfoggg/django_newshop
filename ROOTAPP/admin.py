@@ -58,15 +58,20 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
 
 @admin.register(Settlement)
 class SettlementAdmin(admin.ModelAdmin):
+    # fields = (
+    #     ('type', 'description_ru', 'description_ua', ),
+    #     ('area', 'region', ),
+    #     ('index_1', 'index_2', 'index_coatsu_1'),
+    #     'warehouse',
+    # )
     fields = (
-        ('type', 'description_ru', 'description_ua', ),
-        ('area', 'region', ),
-        'warehouse',
-        ('index_1', 'index_2', 'index_coatsu_1'),
+        'type', 'description_ru', 'description_ua', 'area', 'region', 'warehouse','index_1', 'index_2', 'index_coatsu_1'
+    )
+    readonly_fields = (
+        'type', 'description_ru', 'description_ua', 'area', 'region', 'warehouse','index_1', 'index_2', 'index_coatsu_1'
     )
     list_filter = ('area__description_ru', 'warehouse')
     baton_cl_includes = [
         ('ROOTAPP/button_update_cities.html', 'top',),
     ]
-    search_fields = ('description_ru', 'description_ua', 'area__description_ru', 'area__description_ua',
-                     'region__description_ru', 'region__description_ua', 'index_1')
+    search_fields = ('description_ru', 'description_ua', 'area__description_ru', 'area__description_ua', 'index_1')

@@ -45,6 +45,7 @@ MIDDLEWARE = [
 ]
 INSTALLED_APPS = [
     # 'django.contrib.sites',
+    # 'django_select2',
     'baton',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'mptt',
     # 'django_json_widget',
+    'django_select2',
     'django_summernote',
     'nested_admin',
     'adminsortable2',
@@ -70,7 +72,8 @@ INSTALLED_APPS = [
     'solo',
     'site_settings',
     'phonenumber_field',
-    'babel'
+    'babel',
+
 ]
 
 ROOT_URLCONF = 'Shop_DJ.urls'
@@ -168,6 +171,31 @@ INTERNAL_IPS = [
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 29000
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    'select2': {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+
+# Tell select2 which cache configuration to use:
+SELECT2_CACHE_BACKEND = "select2"
+
+# SELECT2_JS = "https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/js/select2.min.js"
+# SELECT2_CSS = "https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/css/select2.min.css"
+
 
 BATON = {
     'SITE_HEADER': 'Baton',
