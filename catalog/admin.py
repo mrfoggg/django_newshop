@@ -21,6 +21,7 @@ from .models import (Attribute, Category, CombinationOfCategory, FixedTextValue,
                      GroupPositionInCombinationOfCategory, MainAttribute, MainAttrPositionInCombinationOfCategory,
                      Product, ProductPlacement, ShotAttribute, ShotAttrPositionInCombinationOfCategory, UnitOfMeasure,
                      Country, Brand, ProductSeries, PricesOtherShop, OtherShop, ProductImage, Filter, ProductSupplier,
+                     CategoryAddictProduct,
                      )
 from .services import (clean_combination_of_category,
                        get_changes_in_categories_fs, get_changes_in_groups_fs,
@@ -41,6 +42,13 @@ def export_as_json(modeladmin, request, queryset):
     response = HttpResponse(content_type="application/json")
     serializers.serialize("json", queryset, stream=response)
     return response
+
+
+class CategoryAddictProductInlineAdmin(nested_admin.NestedTabularInline):
+    model = CategoryAddictProduct
+    # ordering = ('position',)
+    sortable_field_name = 'position'
+    extra = 0
 
 
 class ProductPlacementInlineForCategory(nested_admin.NestedTabularInline):
@@ -198,7 +206,7 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin, Summernot
     save_as = True
     save_as_continue = False
     inlines = (GroupPlacementInline, MainAttributeInLine, ShotAttributeInLine, ProductPlacementInlineForCategory,
-               FilterInline,)
+               FilterInline, )
     actions = [export_as_json]
 
     class Media:
@@ -303,7 +311,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
     save_on_top = True
     inlines = (ProductPlacementInlineForProduct, PricesOtherShopInline, ProductImageInline, ProductPriceProductInline,
-               ProductSupplierInline)
+               ProductSupplierInline, CategoryAddictProductInlineAdmin)
     # formfield_overrides = {
     #     models.JSONField: {'widget': JSONEditorWidget},
     # }
@@ -359,6 +367,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
         formsets[2].save()
         formsets[3].save()
         formsets[4].save()
+        formsets[5].save()
 
         if added_categories_id_list:
             set_prod_pos_to_end(category_fs, added_categories_id_list)
@@ -532,3 +541,4 @@ admin.site.register(ProductSeries)
 admin.site.register(OtherShop)
 admin.site.register(ProductImage)
 admin.site.register(Filter)
+

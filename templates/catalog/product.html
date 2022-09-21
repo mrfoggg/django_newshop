@@ -11,7 +11,7 @@
             <div class="product__header" id="product_top"><h1>{{ product }}</h1></div>
         <div class="product__header-info">
             <span class="product__stock-on_stock">В наявності</span>
-            <span class="product__stock-on_stock">Артікул: {{ product.sku }}</span>
+            <span class="product__stock-on_stock">артікул: {{ product.sku }}</span>
             <div class="rating-summary">
                 <div class="rating-result" title="70%">
                     <span style="width:70%">
@@ -24,8 +24,12 @@
         <div class="product__tabs-wrapper">
             <div class="product__tabs">
                 <div class="product__tabs-item"><a class="product__tabs-item--active" href="#product_top">Загальна інформація про товар</a></div>
-                <div class="product__tabs-item"><a href="#product_description">Опис</a></div>
-                <div class="product__tabs-item"><a href="#product_characteristics">Характеристики</a></div>
+                {% if product.description %}
+                    <div class="product__tabs-item"><a href="#product_description">Опис</a></div>
+                {% endif %}
+                {% if product.characteristics or size or package_size %}
+                    <div class="product__tabs-item"><a href="#product_characteristics">Характеристики</a></div>
+                {% endif %}
                 <div class="product__tabs-item"><a href="#product_reviews">ВІдгуки</a></div>
             </div>
         </div>
@@ -64,7 +68,11 @@
 {#                    {{ product.main_attributes }}#}
                 </ul>
                 <div class="product__top-data-by">
-                    <div class="product__top-data-by-price">{{ product.price }}</div>
+                    <div class="product__top-data-by-info">
+                        <span class="product__top-data-by-price">{{ product.price }}</span>
+                        <span class="product__top-data-by-art">артікул: {{ product.sku }}</span>
+
+                    </div>
                     <div class="product__top-data-by-btns">
                         <button class="product__top-data-by-btns-checkout" type="submit">Замовити зараз</button>
                         <button class="product__top-data-by-btns-add" type="submit">До кошика</button>
@@ -74,53 +82,191 @@
                         <span>+38 (0</span><input class="phone-number-input" type="text"><button disabled id="ok_button" >Відправити</button>
                     </div>
                 </div>
-            {% if settlement_from %}
-                <h3 class="product__section_title">Доставка з {{ settlement_from }} наступними перевізниками:</h3>
-            {% else %}
-                <h3 class="product__section_title">Доставка наступними перевізниками:</h3>
-            {% endif %}
-            <div class="product__top-data-ship-item">
-                <img src="/media/icons/np.svg" alt=""> <span>На відділення, кур'єром на адресу</span>
-            </div>
+                <div class="product__top-data-aсtions">
+                    {% if is_loved %}
+                        <span class="product__top-data-favorites loved" data-status="enabled"> У обраному</span>
+                    {% else %}
+                        <span class="product__top-data-favorites" data-status="disabled"> До обраного</span>
+                    {% endif %}
 
-            {% if settlement_from %}
-                <h3>Для розрахунку вартості доставки виберіть область та населений пункт куди треба відправити товар):</h3>
-{#                <form method="POST" id="get_settlement" data-url={{ url_get_cities }}>#}
-                <form method="POST" id="get_settlement" data-url={{ url_get_cities }}>
-                    {% csrf_token %}
-                    {{ address_form }}
-                </form>
-{#                {{ address_form }}#}
-            {% endif %}
+                    {% if is_compared %}
+                        <span class="product__top-data-compare compared" data-status="enabled">У порівнянні</span>
+                    {% else %}
+                        <span class="product__top-data-compare" data-status="disabled">До порівняння</span>
+                    {% endif %}
+                    <form  class="product_action_form" action="{{ url_product_actions }}" data-mode="product_view">
+                        {% csrf_token %}
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <input type="hidden" name="action" value="">
+                    </form>
+                </div>
+                {% if settlement_from %}
+                    <h3 class="product__section_title">Доставка з {{ settlement_from }} наступними перевізниками:</h3>
+                {% else %}
+                    <h3 class="product__section_title">Доставка наступними перевізниками:</h3>
+                {% endif %}
+                <div class="product__top-data-ship-item">
+                    <img src="/media/icons/np.svg" alt=""> <span>На відділення, кур'єром на адресу</span>
+                </div>
 
+                {% if settlement_from %}
+                    <h3>Для розрахунку вартості доставки вкажіть адресу:</h3>
+                    <form data-url={{ url_get_delivery_cost }} method="POST" class="change-form input-data-delivery-cost" id="get_delivery_cost">
+                        {% csrf_token %}
+                        {{ address_form.as_p }}
+                        <input type="hidden" name="settlement_from_ref" value={{ settlement_from.ref }}>
+                        <input type="hidden" name="width" value={{ product.package_width }}>
+                        <input type="hidden" name="height" value={{ product.package_height }}>
+                        <input type="hidden" name="length" value={{ product.package_length }}>
+                        <input type="hidden" name="weight" value={{ product.weight }}>
+                        <input type="hidden" name="price" value={{ product.price.amount }}>
+                        <input type="hidden" name="seats_amount" value={{ product.seats_amount }}>
+
+                        <div class="input-data-delivery-cost-actions">
+                            <div class="input-data-delivery-cost-preloader">
+                                <span>Триває запит </span>
+                                <img src="/media/icons/morecomplexpreloader.gif" alt="">
+                            </div>
+                            <button>Розрахувати вартість доставки</button>
+                        </div>
+                    </form>
+                {% endif %}
             </div>
         </div>
 
         <div class="product__main-data">
 
             <div class="product__main-data-description">
-                <h2 class="product__section_title" id="product_description">Опис товару</h2>
-                <div class="product__main-data-description-text">{{ product.description|safe }}</div>
-                <div class="product__main-data-characteristics">
-                    <h2 class="product__section_title" id="product_characteristics">Детальні характеристки</h2>
-                    {% for group in product.full_characteristics %}
-                        <h3>{{ group.0 }}</h3>
-                    <ul>
-                        {% for a in group.1 %}
-                            <li><span>{{ a.0 }}:</span><span class="dotted"></span><span>{{ a.1 }}</span></li>
+                {% if product.description %}
+                    <h2 class="product__section_title" id="product_description">Опис товару</h2>
+                    <div class="product__main-data-description-text">{{ product.description|safe }}</div>
+                {% endif %}
+
+                {% if product.characteristics or size or package_size %}
+                    <div class="product__main-data-characteristics">
+                        <h2 class="product__section_title" id="product_characteristics">Детальні характеристки</h2>
+                        {% for group in product.full_characteristics %}
+                            <h3>{{ group.0 }}</h3>
+                        <ul>
+                            {% for a in group.1 %}
+                                <li><span>{{ a.0 }}:</span><span class="dotted"></span><span>{{ a.1 }}</span></li>
+                            {% endfor %}
+                        </ul>
                         {% endfor %}
-                    </ul>
-                    {% endfor %}
-                </div>
+                        {% if size %}
+                            <h3>Габаритні розміри, вага:</h3>
+                            <ul>
+                                {% if product.length %}
+                                    <li><span>довжина:</span><span class="dotted"></span><span>{{ product.length }} см</span></li>
+                                {% endif %}
+                                {% if product.width %}
+                                    <li><span>ширина:</span><span class="dotted"></span><span>{{ product.width }} см</span></li>
+                                {% endif %}
+                                {% if product.height %}
+                                    <li><span>висота:</span><span class="dotted"></span><span>{{ product.height }} см</span></li>
+                                {% endif %}
+                                {% if product.weight %}
+                                    <li><span>вага:</span><span class="dotted"></span><span>{{ product.weight }} кг</span></li>
+                                {% endif %}
+                            </ul>
+                        {% endif %}
+                        {% if package_size %}
+                            <h3>Розміри упаковки:</h3>
+                            <ul>
+                                {% if product.package_length %}
+                                    <li><span>довжина:</span><span class="dotted"></span><span>{{ product.package_length }} см</span></li>
+                                {% endif %}
+                                {% if product.package_width %}
+                                    <li><span>ширина:</span><span class="dotted"></span><span>{{ product.package_width }} см</span></li>
+                                {% endif %}
+                                {% if product.package_height %}
+                                    <li><span>висота:</span><span class="dotted"></span><span>{{ product.package_height }} см</span></li>
+                                {% endif %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                {% endif %}
                 <div class="product__main-data-reviews" id="product_reviews">
                     <h2 class="product__section_title">Відгуки та питання</h2>
                 </div>
             </div>
             <div class="product__main-data-sidebar">
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit. A nisi consectetur exercitationem, unde sed provident non rem expedita facere cum distinctio illo, fuga excepturi qui beatae ea dignissimos eos! Alias.
+                <h3>Супутні товари</h3>
+
+                    {% for addict_product_category in product.addict_product_category.all %}
+                        <div class="product__main-data-sidebar-products-wrapper">
+                            <h4>{{ addict_product_category.category.name }}</h4>
+                            <div class="product__main-data-sidebar-products-slider">
+                                {% for placement in addict_product_category.category.listing %}
+                                    <div class="product__main-data-sidebar-products-item">
+                                        {% thumbnail placement.product.images.first.image "300" as im %}
+                                            <img src="{{ im.url }}" alt="">
+                                        {% endthumbnail %}
+                                        <h5>{{ placement.product.name }}</h5>
+                                        <ul class="product__main-data-sidebar-products__characteristics">
+                                            {% for shot_attr in placement.product.shot_attributes %}
+                                                {% if  shot_attr.1 %}
+                                                <li class="product-list-item-content__characteristics-item">
+                                                    <span class="product__main-data-sidebar-products__characteristic-title">{{ shot_attr.0 }}</span>
+                                                    <span class="product__main-data-sidebar-products__characteristic-value">{{ shot_attr.1 }}</span>
+                                                </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
             </div>
         </div>
-
     </div>
-
+    <a href="#delivery-cost-popup" class="open-delivery-cost-popup">open-delivery-cost-popup</a>
+    <div class="delivery-cost-popup mfp-hide" id="delivery-cost-popup">
+        <h3>Результати розрахунку вартості доставки. </h3>
+        <h4>З населеного пункту {{ settlement_from }}</h4>
+        <h4 id="settlement_to"></h4>
+        <h4>Параметри вантажу:</h4>
+        <ul>
+            <li>Довжина - {{ product.package_length }} см</li>
+            <li>Ширина - {{ product.package_width }} см</li>
+             <li>Висота - {{ product.package_height }} см</li>
+        </ul>
+        <ul>
+            <li>Вартість посилки - <span id="Cost"></span> грн</li>
+            <li>Кількість місць - {{ product.seats_amount }}</li>
+            <li>Вага - {{ product.weight }} кг</li>
+        </ul>
+        <h4>Комисия перевізника за переказ грошей складає - <span id="cost_redelivery"></span> грн.</h4>
+        <table>
+            <caption>Загальна вартість послуг перевізника "Нова пошта":</caption>
+            <thead>
+                <th></th>
+                <th>Доставка</th>
+                <th>Доставка + % за переказ</th>
+                <th>Доставка + вартість товару</th>
+                <th>Доставка + % за переказ + вартість товару</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Доставка до найближчого відділення</th>
+                    <td><span id="CostWarehouseWarehouse"></span> грн</td>
+                    <td><span id="CostWarehouseWarehouseMoney"></span> грн</td>
+                    <td><span id="CostWarehouseWarehouseProductCost"></span> грн</td>
+                    <td><span id="CostWarehouseWarehouseMoneyProductCost"></span> грн</td>
+                </tr>
+                <tr>
+                    <th>Доставка кур'єром на до дверей </th>
+                    <td><span id="CostWarehouseDoors"></span> грн</td>
+                    <td><span id="CostWarehouseDoorsMoney"></span> грн</td>
+                    <td><span id="CostWarehouseDoorsProductCost"></span> грн</td>
+                    <td><span id="CostWarehouseDoorsMoneyProductCost"></span> грн</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <a href="#delivery-cost-popup-error" class="open-delivery-cost-popup-error">open-delivery-cost-popup-error</a>
+    <div class="delivery-cost-popup mfp-hide" id="delivery-cost-popup-error">
+        <h3>Не можливо здійснити запит, відсутній інтернет або сервер не відовідає</h3>
+    </div>
 {% endblock content %}

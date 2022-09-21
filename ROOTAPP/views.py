@@ -6,25 +6,25 @@ import requests
 from django.utils.html import format_html
 
 from ROOTAPP.models import Settlement, SettlementType, SettlementArea, SettlementRegion
+from catalog.models import Product
+
+url_np = 'https://api.novaposhta.ua/v2.0/json/'
 
 
 def update_cities(request):
     data = request.GET
-    url = 'https://api.novaposhta.ua/v2.0/json/'
     limit = 150
     timeout_limit = 3.0
     request_dict = {
         "modelName": "Address",
         "calledMethod": "getSettlements",
         "methodProperties": {
-            # "FindByString": "0",
             "Limit": str(limit)
         }
     }
     message_text = ''
     search_by_descr = False
     if data:
-        print(f'{data=}')
         if 'search_name' in data.keys():
             search_by_descr = True
             request_dict['methodProperties']['FindByString'] = (search_name := data['search_name'])
@@ -47,7 +47,7 @@ def update_cities(request):
 
         try:
             request_json = json.dumps(request_dict, indent=4)
-            response = requests.post(url, data=request_json, timeout=timeout_limit)
+            response = requests.post(url_np, data=request_json, timeout=timeout_limit)
             response_dict = json.loads(response.text)
             print(f'Статус запроса {response_dict["success"]}')
             print(f'Получены данные {len(response_dict["data"])} городов, лимит: {limit}')
@@ -212,7 +212,63 @@ def update_cities(request):
     return HttpResponseRedirect(reverse('admin:ROOTAPP_settlement_changelist'))
 
 
-def get_cities_by_area(request):
-    area_ref = request.GET.get("settlement_area")
-    settlements = Settlement.objects.filter(area=area_ref).values('ref', 'description_ua', 'region__description_ua')
-    return JsonResponse({"settlements": list(settlements)}, status=200)
+def get_delivery_cost(request):
+    number_of_attempts = 1
+    max_number_of_attempts = 5
+    timeout_limit = 3.0
+    data_cost = {
+        "modelName": "InternetDocument",
+        "calledMethod": "getDocumentPrice",
+        "methodProperties": {
+            "CitySender": request.POST.get("settlement_from_ref"),
+            "CityRecipient": request.POST.get("settlement"),
+            "Weight": request.POST.get("weight"),
+            "ServiceType": '',
+            "Cost": request.POST.get("price")[:-3],
+            "CargoType": "Cargo",
+            "SeatsAmount": request.POST.get("seats_amount"),
+            'RedeliveryCalculate': {
+                'CargoType': 'Money',
+                'Amount': request.POST.get("price")[:-3]
+            }
+        }
+    }
+    while number_of_attempts <= max_number_of_attempts:
+        try:
+            request_json = json.dumps(data_cost, indent=4)
+            response = requests.post(url_np, data=request_json, timeout=timeout_limit)
+            response_dict = json.loads(response.text)
+            return JsonResponse({
+                'settlement_to_name': str(Settlement.objects.get(ref=request.POST.get("settlement"))),
+                'cost_redelivery': response_dict['data'][0]['CostRedeliveryWarehouseWarehouse'],
+                'CostWarehouseWarehouse': response_dict['data'][0]['CostWarehouseWarehouse'],
+                'CostWarehouseDoors': response_dict['data'][0]['CostWarehouseDoors'],
+                'Cost': request.POST.get("price")[:-3],
+            }, status=200)
+            break
+        except requests.exceptions.Timeout:
+            number_of_attempts += 1
+            print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
+    return JsonResponse({}, status=500)
+
+
+def product_actions(request):
+    if request.method == 'POST':
+        product_id = request.POST.get('product_id')
+        fav_list = request.session.get('favorites', list())
+        comp_list = request.session.get('compare', list())
+        match request.POST.get('action'):
+            case 'add_fav':
+                if product_id not in fav_list:
+                    fav_list.append(product_id)
+            case 'remove_fav':
+                fav_list.remove(product_id)
+            case 'add_to_compare':
+                if product_id not in comp_list:
+                    comp_list.append(product_id)
+            case 'remove_to_compare':
+                comp_list.remove(product_id)
+        request.session['favorites'] = fav_list
+        request.session['compare'] = comp_list
+        print(f'COMP LIST = {comp_list}')
+    return JsonResponse({'product_id': product_id}, status=200)

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.db import models
-from django.db.models import Subquery, Min, Max, OuterRef
+from django.db.models import Subquery, Min, Max, OuterRef, SmallIntegerField
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html_join, format_html
@@ -78,7 +78,6 @@ class Category(MPTTModel):
     slug = models.SlugField(max_length=128, unique=True)
     description = models.TextField('Описание категории', blank=True, null=True, default=None)
     groups = models.ManyToManyField('Group', through='GroupPlacement', related_name='categories')
-    image = models.ImageField('Фото категории', upload_to='product_images/', blank=True, null=True)
 
     class Meta:
         verbose_name = "Категория товаров"
@@ -222,6 +221,7 @@ class Product(models.Model):
     combination_of_categories = models.ForeignKey(
         'CombinationOfCategory', blank=True, null=True,
         verbose_name='Связанная комбинация категорий', on_delete=models.SET_NULL)
+    seats_amount = SmallIntegerField("Количество мест", default=1)
 
     def __str__(self):
         return self.name
@@ -277,7 +277,8 @@ class Product(models.Model):
             else:
                 return attr.default_str_value if attr.default_str_value else None
         else:
-            return attr.default_str_value
+            # return attr.default_str_value
+            return '-'
 
     @property
     def shot_attributes(self):
@@ -320,6 +321,31 @@ class Product(models.Model):
         return self.productprice_set.order_by(
             'price_changelist__confirmed_date').last().price if self.productprice_set.exists() else 0
         # return self.productprice_set.order_by('price_changelist__confirmed')
+
+
+class AddictProduct(models.Model):
+    main_product = models.ForeignKey(Product, on_delete=models.CASCADE, default=None, related_name='addict_product')
+    addict_product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, default=None, verbose_name='Сопутствующий товар')
+    position = models.PositiveSmallIntegerField("Позиция опутствующего товара", blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Сопуствующий товар"
+        verbose_name_plural = "Сопуствующие товары"
+        unique_together = ('main_product', 'addict_product')
+
+
+class CategoryAddictProduct(models.Model):
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, default=None, verbose_name='Категория сопутсвующих товаров')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, default=None,
+                                related_name='addict_product_category')
+    position = models.PositiveSmallIntegerField("Позиция категории сопутствующих товаров", blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Категория сопутсвующих товаров"
+        verbose_name_plural = "Категория сопутсвующих товаров"
+        unique_together = ('category', 'product')
 
 
 class ProductPlacement(models.Model):

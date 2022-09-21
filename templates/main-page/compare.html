@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load thumbnail %}
+{% load custom_tags %}
+
+{% block title %}
+    <title> Сніп-Сноп | Порывняння товарів</title>
+{% endblock title %}
+
+{% block content %}
+    <div class="content-wrapper compare">
+        <h2>Порівняння товарів</h2>
+        {% for group in grouped_dict.items %}
+            <a href={{ group.1.category.get_absolute_url }}><h3>{{ group.1.category }}</h3></a>
+            <table>
+                <thead>
+                    <th></th>
+                    {% for product in group.1.products %}
+                        <th data-product-id="{{ product.id }}">
+                            {{ product }}
+                            <span></span>
+                            <form  class="product_action_form" action="{{ url_product_actions }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="product_id" value="{{ product.id }}">
+                                <input type="hidden" name="action" value="remove_to_compare">
+                            </form>
+                        </th>
+                    {% endfor %}
+                </thead>
+                <tbody>
+                    {% for gr_attr in group.1.category.groupplacement_set.all %}
+                        <tr class="group-attributes"><td colspan="{{ group.1.products|length|add:'1' }}">{{ gr_attr.group }}</td></tr>
+                        {% for attr in gr_attr.group.attributes.all %}
+                            <tr>
+                                <td>{{ attr }}</td>
+                                {% for product in group.1.products %}
+                                    <td data-product-id="{{ product.id }}">{{ product | get_attr_str_value:attr }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for second_category in group.1.second_categories %}
+                        {% for gr_attr in second_category.groupplacement_set.all %}
+                            <tr class="group-attributes"><td colspan="{{ group.1.products|length|add:'1' }}">{{ gr_attr.group }}</td></tr>
+                            {% for attr in gr_attr.group.attributes.all %}
+                                <tr>
+                                    <td>{{ attr }}</td>
+                                    {% for product in group.1.products %}
+                                        <td data-product-id="{{ product.id }}">{{ product | get_attr_str_value:attr }}</td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% empty %}
+            <h3>Ви ще не додавали товарів для порівняння</h3>
+        {% endfor %}
+    </div>
+{% endblock %}

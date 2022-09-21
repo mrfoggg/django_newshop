@@ -125,7 +125,7 @@ class SettlementArea(models.Model):
         ordering = ('description_ru',)
 
     def __str__(self):
-        return self.description_ru
+        return self.description_ua
 
 
 class SettlementRegion(models.Model):
@@ -163,8 +163,9 @@ class Settlement(models.Model):
         ordering = ('description_ru',)
 
     def __str__(self):
-        return f'{self.type.description_ru} {self.description_ru}/{self.description_ua}' \
-               f' {self.area.description_ru, self.region.description_ru}'
+        region = f'{self.region.description_ua}, ' if self.region_id else ''
+        print(f'{self.region_id=}')
+        return f'{self.type.description_ua} {self.description_ua} ({region}{self.area.description_ua})'
 
 
 class PersonSettlement(models.Model):

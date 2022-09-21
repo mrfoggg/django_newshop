@@ -149,6 +149,7 @@ class PopularCategory(models.Model):
     date_from = models.DateTimeField(auto_now_add=False, auto_now=False, verbose_name='Отображать с даты')
     date_to = models.DateTimeField(auto_now_add=False, auto_now=False, verbose_name='Отображать до даты')
     position = models.PositiveIntegerField("Position", null=True)
+    image = models.ImageField('Фото категории', upload_to='product_images/', blank=True, null=True)
 
     class Meta:
         ordering = ('position',)

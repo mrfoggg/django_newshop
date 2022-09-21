@@ -9,16 +9,16 @@ from django.shortcuts import render
 # from ROOTAPP.views import HeaderView
 from django.urls import reverse
 
-from ROOTAPP.forms import SettlementForm, AddressForm
+from ROOTAPP.forms import AddressForm
 from ROOTAPP.models import Settlement
 from catalog.models import Category, Brand, ProductSeries, ProductPrice, Product
 from django.views.generic.detail import DetailView
 
-from main_page.views import HeaderView
+from main_page.views import HeaderView, ProductListsMixin
 from site_settings.models import PhotoPlug
 
 
-class CategoryView(DetailView, HeaderView):
+class CategoryView(DetailView, HeaderView, ProductListsMixin):
     template_name = 'catalog/category.html'
     model = Category
     query_pk_and_slug = True
@@ -27,14 +27,13 @@ class CategoryView(DetailView, HeaderView):
         context = super().get_context_data(**kwargs)
         data = self.request.GET
 
-        print(data)
         context |= {
             'wide_sections': data.getlist('sections-status'), 'filtered': True if data else False,
             'filters': context['category'].full_filters_list, 'checked_filters': [],
             # 'photo_plug': PhotoPlug.get_solo().image,
             'filter_price_applied': 'false',
             'page_num': data['paginator'][0] if data and 'paginator' in data.keys() else 1,
-            'page_type': 'category'
+            'page_type': 'category',
         }
         if data:
             context['listing_sort'] = data.getlist('listing_sort')[0]
@@ -210,7 +209,7 @@ class CategoryView(DetailView, HeaderView):
         return context
 
 
-class ProductView(DetailView, HeaderView):
+class ProductView(DetailView, HeaderView, ProductListsMixin):
     template_name = 'catalog/product.html'
     model = Product
     query_pk_and_slug = True
@@ -223,9 +222,9 @@ class ProductView(DetailView, HeaderView):
 
         if settlement.exists():
             settlement = settlement.first()
-            context['settlement_from'] = f'{settlement.type.description_ua} {settlement.description_ua} ' \
-                                         f'({settlement.area.description_ua})'
-            context['settlement_to_form'] = SettlementForm()
+            # context['settlement_from'] = f'{settlement.type.description_ua} {settlement.description_ua} ' \
+            #                              f'({settlement.area.description_ua})'
+            context['settlement_from'] = settlement
 
         categories = {}
         for placement in product.productplacement_set.filter(category__display_in_parent=True):
@@ -237,7 +236,12 @@ class ProductView(DetailView, HeaderView):
             'last_categories': (last_cat := categories[max(categories.keys())]),
             'category': last_cat[0],
             'type_category': 'product',
-            'url_get_cities': reverse('rootapp:get_cities_by_area'),
-            'address_form': AddressForm
+            'url_get_delivery_cost': reverse('root_app:get_delivery_cost'),
+            'url_product_actions': reverse('root_app:product_actions'),
+            'size': True if product.width or product.length or product.height or product.weight else False,
+            'package_size': True if product.package_width or product.package_length or product.package_height else False,
+            'address_form': AddressForm,
+            'is_loved': str(product.id) in context['fav_id_list'],
+            'is_compared': str(product.id) in context['comp_id_list'],
         }
         return context

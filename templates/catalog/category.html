@@ -12,6 +12,7 @@
 {#            {% include 'breadcrumbs.html' %}#}
             <div class="category__title">
                 <h1>{{ category.name }}.</h1>
+
                 <span class="category__header-info">{{ total }} шт / {{ total_pages }} сторінки (сторінка № {{ current_page }}) </span>
             </div>
             <div class="category__subcategory">
@@ -70,80 +71,9 @@
 
                 <div class="category-products__list">
                     {% for product_placement in category_listing %}
-                    {% with product=product_placement.product %}
-                        <div class="product-list-item">
-
-                            <div class="product-list-item-content">
-                                <div class="product-list-item-content__img-slider-wrapper">
-                                    {% with photo_count=product.images.count %}
-                                    {% thumbnail photo_plug "300" as plug %}
-                                        {% if photo_count == 0 %}
-                                            <a href="{{ product_placement.product.get_absolute_url }}">
-                                                <img src="{{ plug.url }}" >
-                                            </a>
-                                        {% elif photo_count == 1 %}
-                                            {% thumbnail product.images.first.image "300" as im %}
-                                                <a href="{{ product_placement.product.get_absolute_url }}">
-                                                    <img src="{{ im.url }}" >
-                                                </a>
-                                            {% endthumbnail %}
-                                        {% else %}
-                                            <div class="product-list-item-content__img-slider data-slick='{}'">
-                                                {% for imgplacing in product.images.all %}
-                                                    {% thumbnail imgplacing.image "300" as im %}
-                                                        <a href="{{ product_placement.product.get_absolute_url }}">
-                                                            {% if forloop.first %}
-                                                                <img src="{{ im.url }}">
-                                                            {% else %}
-                                                                <img data-lazy="{{ im.url }}" src="{{ plug.url }}">
-                                                            {% endif %}
-                                                        </a>
-                                                    {% endthumbnail %}
-                                                {% endfor %}
-                                            </div>
-                                        {% endif %}
-                                    {% endthumbnail %}
-                                    {% endwith %}
-                                </div>
-                                <div class="product-list-item-content__title">
-                                    <a href="{{ product_placement.product.get_absolute_url }}">{{ product }}</a>
-                                </div>
-                                <div class="product-list-item-content__actions">
-                                    <span class="product-list-item-content__price">{{ product.price }}</span>
-                                    <span class="product-list-item-content__icons">
-                                <span class="product-list-item-content__add-favorite"></span>
-                                <span class="product-list-item-content__compare"></span>
-                            </span>
-                                </div>
-                                <div class="product-list-item-content__reviews-summary">
-                                    <div class="rating-summary">
-                                        <div class="rating-result" title="70%">
-                                    <span style="width:{{ product.rating }}%">
-                                    </span>
-                                        </div>
-                                    </div>
-                                    <div class="product-list-item-content__reviews">
-                                        5 <span>відгуків</span>
-                                    </div>
-                                </div>
-                                <span class="product-list-item-content__by">
-                            <a href="/" >Купити</a>
-                        </span>
-                                <ul class="product-list-item-content__characteristics">
-                                    {% for shot_attr in product.shot_attributes %}
-                                        {% if  shot_attr.1%}
-                                        <li class="product-list-item-content__characteristics-item">
-                                            <span class="product-list-content-item__characteristic-title">{{ shot_attr.0 }}</span>
-                                            <span class="product-list-item-content__characteristic-value">{{ shot_attr.1 }}</span>
-                                        </li>
-                                        {% endif %}
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
-                    {% endwith %}
+                        {% include 'product_list_item.html' with product=product_placement.product url=url_product_actions mode='category' %}
                     {% endfor %}
-            </div>
+                </div>
                 <div class="category-paginator">
                     <div class="category-paginator__items-wrapper">
                         {% for p in page_range %}
@@ -156,6 +86,7 @@
                         {% endfor %}
                     </div>
                 </div>
+            </div>
         </div>
     </div>
 

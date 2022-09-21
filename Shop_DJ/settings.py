@@ -193,10 +193,6 @@ CACHES = {
 # Tell select2 which cache configuration to use:
 SELECT2_CACHE_BACKEND = "select2"
 
-# SELECT2_JS = "https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/js/select2.min.js"
-# SELECT2_CSS = "https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/css/select2.min.css"
-
-
 BATON = {
     'SITE_HEADER': 'Baton',
     'SITE_TITLE': 'Baton',

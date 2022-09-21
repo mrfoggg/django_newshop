@@ -1,0 +1,16 @@
+{% load thumbnail %}
+<section class="top-categories">
+    <div class="content-wrapper top-categories__wrapper">
+        <h2>Популярні категорії</h2>
+        <div class="top-categories__content">
+            {% for item in popular_categories %}
+                <a class="top-categories__item" href="{{ item.category.get_absolute_url }}">
+                    {% thumbnail item.image "300" as im %}
+                        <img src="{{ im.url }}" alt="">
+                    {% endthumbnail %}
+                    <h4>{{ item.category.name }}</h4>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>

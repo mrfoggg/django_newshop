@@ -5,27 +5,25 @@ from ROOTAPP.models import Settlement, SettlementArea
 from django_select2 import forms as s2forms
 
 
-class SettlementForm(forms.Form):
-    settlement_area = forms.ModelChoiceField(queryset=SettlementArea.objects.all(), label='Область')
-    settlement = forms.ChoiceField(label='Населений пункт')
-
-
 class AddressForm(forms.Form):
     area = forms.ModelChoiceField(
         queryset=SettlementArea.objects.all(),
         label="Область",
         widget=ModelSelect2Widget(
             model=SettlementArea,
-            search_fields=['description_ua__icontains'],
+            search_fields=['description_ua__icontains', 'description_ru__icontains'],
+            attrs={'data-placeholder': 'назва області'}
         )
     )
 
-    city = forms.ModelChoiceField(
+    settlement = forms.ModelChoiceField(
         queryset=Settlement.objects.all(),
         label="Населений пункт",
         widget=ModelSelect2Widget(
-            search_fields=['description_ua__icontains'],
-            dependent_fields={'area': area},
-            max_results=500,
+            model=Settlement,
+            search_fields=('description_ua__icontains', 'description_ru__icontains'),
+            dependent_fields={'area': 'area'},
+            max_results=50,
+            attrs={'data-placeholder': 'назва населеного пункту'}
         )
     )

@@ -14,9 +14,8 @@
 
     {% load static %}
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/css/select2.min.css"/>
-{#    {{ form.media.css }}#}
-
+    {{ address_form.media.css }}
+    <link href={% static "magnific_popup/magnific-popup.css" %} rel="stylesheet">
     <link rel="stylesheet" href={% static "site-styles.css" %}>
 
 {#    {{ form.media }}#}
@@ -40,7 +39,9 @@
     <script src={% static "zoomsl.min.js" %}></script>
     <script src={% static "jquery.malihu.PageScroll2id.min.js" %}></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/js/select2.min.js"></script>
-{#    {{ form.media.js }}#}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/uk.min.js" integrity="sha512-TDV/1TfxlJAwv/y8HVjHO/AbxfEi3JzUJhQ9HL8GqMprZTcgRggSavorvX2bYzpWyJLrav/Ub/ikmK1sd3eyTw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    {{ address_form.media.js }}
+    <script src={% static "magnific_popup/jquery.magnific-popup.min.js" %}></script>
     <script src={% static "site-apps.js" %}></script>
 </body>
 </html>

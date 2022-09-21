@@ -65,20 +65,18 @@
                 </ul>
             </div>
             <div class="sub-header__userlinks">
-                <ul >
-                    <li>
-                        <a href="#">
-                            <img src="/media/icons/user.svg" alt="кабінет">
-                            <span>кабінет</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#">
-                            <img src="/media/icons/basket.svg" alt="кошик">
-                            <span>кошик</span>
-                        </a>
-                    </li>
-                </ul>
+                <a class="sub-header__user" href="#"></a>
+                {% if favorites_count %}
+                    <a class="sub-header__favorites" href="{{ favorites_link }}"><span>{{ favorites_count }}</span></a>
+                {% else %}
+                    <a class="sub-header__favorites" href="{{ favorites_link }}"></a>
+                {% endif %}
+                {% if compare_count %}
+                    <a class="sub-header__compare" href="{{ compare_link }}"><span>{{ compare_count }}</span></a>
+                {% else %}
+                    <a class="sub-header__compare" href="{{ compare_link }}"></a>
+                {% endif %}
+                <a class="sub-header__basket" href="#"></a>
             </div>
         </div> <!-- sub-header__content -->
     </div> <!-- sub-header -->

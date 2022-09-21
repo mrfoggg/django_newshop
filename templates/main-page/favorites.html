@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load thumbnail %}
+
+{% block title %}
+    <title> Сніп-Сноп | Обрані товари</title>
+{% endblock title %}
+
+{% block content %}
+    <div class="content-wrapper favorites">
+        <h2>Обрані товари</h2>
+        {% for group in grouped_dict.items %}
+            <a href={{ group.1.category.get_absolute_url }}><h3>{{ group.1.category }}</h3></a>
+            <div class="favorites__section">
+                <div class="category-products__list">
+                    {% for product in group.1.products %}
+                        {% include 'product_list_item.html' with product=product  id_list=fav_id_list url=url_product_actions mode='favorites'%}
+                    {% endfor %}
+                </div>
+            </div>
+        {% empty %}
+            <h3>Ви ще не додавали товарів до обраного</h3>
+        {% endfor %}
+    </div>
+{% endblock %}
