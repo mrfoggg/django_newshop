@@ -21,6 +21,7 @@
 {#    {{ form.media }}#}
 </head>
 <body>
+    <span id="top"></span>
     <div class="page">
         <!-- Header -->
         {% include 'header.html' %}
@@ -31,6 +32,10 @@
             {% endblock content %}
         </main>
     </div>
+    {% include 'viewed_products.html' with products=new_products %}
+    {% include 'footer.html' %}
+    <a class="scroll-top" href="#top"></a>
+
 
     <script src={% static "jquery-3.6.1.min.js" %}></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js" integrity="sha512-XtmMtDEcNz2j7ekrtHvOVR4iwwaD6o/FUJe6+Zq+HgcCsk3kj4uSQQR8weQ2QVj1o0Pk6PwYLohm206ZzNfubg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>

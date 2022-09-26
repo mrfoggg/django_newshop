@@ -257,7 +257,13 @@ def product_actions(request):
         product_id = request.POST.get('product_id')
         fav_list = request.session.get('favorites', list())
         comp_list = request.session.get('compare', list())
+        basket_dict = request.session.get('basket', dict())
         match request.POST.get('action'):
+            case 'add_basket':
+                if product_id not in basket_dict.keys():
+                    basket_dict[product_id] = 1
+                else:
+                    basket_dict[product_id] += 1
             case 'add_fav':
                 if product_id not in fav_list:
                     fav_list.append(product_id)
@@ -270,5 +276,4 @@ def product_actions(request):
                 comp_list.remove(product_id)
         request.session['favorites'] = fav_list
         request.session['compare'] = comp_list
-        print(f'COMP LIST = {comp_list}')
     return JsonResponse({'product_id': product_id}, status=200)

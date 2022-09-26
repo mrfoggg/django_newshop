@@ -3,11 +3,15 @@
 {% load custom_tags %}
 
 {% block title %}
-    <title> Сніп-Сноп | Порывняння товарів</title>
+    <title> Сніп-Сноп | Порівняння товарів</title>
 {% endblock title %}
 
 {% block content %}
     <div class="content-wrapper compare">
+        <ul class="breadcrumbs">
+            <li class="breadcrumbs__item"> <a href="/">Головна</a> </li>
+            <li class="breadcrumbs__item"> Порівняння товарів </li>
+       </ul>
         <h2>Порівняння товарів</h2>
         {% for group in grouped_dict.items %}
             <a href={{ group.1.category.get_absolute_url }}><h3>{{ group.1.category }}</h3></a>
@@ -16,7 +20,7 @@
                     <th></th>
                     {% for product in group.1.products %}
                         <th data-product-id="{{ product.id }}">
-                            {{ product }}
+                            <a href={{ product.get_absolute_url }}><h3>{{ product }}</h3></a>
                             <span></span>
                             <form  class="product_action_form" action="{{ url_product_actions }}">
                                 {% csrf_token %}

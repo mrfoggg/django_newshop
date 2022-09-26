@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.urls import reverse
 
 from catalog.models import Product, Category
-from main_page.models import Banner, Menu, SitePhone, Schedule, PopularCategory
+from main_page.models import Banner, Menu, SitePhone, Schedule, PopularCategory, PopularProduct, NewProduct
 from site_settings.models import SliderConfiguration, HeaderConfiguration, PhotoPlug
 from django.views.generic.base import TemplateView
 from django.views.generic.base import ContextMixin
@@ -24,7 +24,26 @@ class HeaderView(ContextMixin):
         return context
 
 
-class MainPageView(TemplateView, HeaderView):
+class ProductListsMixin(ContextMixin):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        viewed_id_list = self.request.session.get('viewed', list())
+        viewed_products_dict = {
+            str(product.id): product for product
+            in Product.objects.filter(id__in=viewed_id_list)
+        }
+        viewed = [viewed_products_dict[id_pr] for id_pr in viewed_id_list]
+        context |= {
+            'fav_id_list': self.request.session.get('favorites', list()),
+            'comp_id_list': self.request.session.get('compare', list()),
+            'url_product_actions': reverse('root_app:product_actions'),
+            'viewed_products': viewed,
+            'viewed_mode': ' viewed_slider_mode' if len(viewed) > 5 else ' viewed_grid_mode' if len(viewed) else ''
+        }
+        return context
+
+
+class MainPageView(TemplateView, HeaderView, ProductListsMixin):
     template_name = 'main-page/index.html'
 
     def get_context_data(self, **kwargs):
@@ -32,18 +51,8 @@ class MainPageView(TemplateView, HeaderView):
         context['banners'] = Banner.objects.all()
         context['slider_config'] = SliderConfiguration.get_solo()
         context['popular_categories'] = PopularCategory.objects.all()
-
-        return context
-
-
-class ProductListsMixin(ContextMixin):
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context |= {
-            'fav_id_list': self.request.session.get('favorites', list()),
-            'comp_id_list': self.request.session.get('compare', list()),
-            'url_product_actions': reverse('root_app:product_actions'),
-        }
+        context['popular_products'] = PopularProduct.objects.all()
+        context['new_products'] = NewProduct.objects.all()
         return context
 
 

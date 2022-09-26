@@ -3,7 +3,6 @@
 {% block title %}
     <title> Сніп-Сноп | Головна</title>
 {% endblock title %}
-
 {% block content %}
     <div class="content-wrapper wrapper-slider">
         <div class="slider" data-slick='{"autoplay": {% if slider_config.autoplay %} true  {% else %} false {% endif %},
@@ -16,4 +15,13 @@
         </div>
     </div>
     {% include 'main-page/top-category-section.html' %}
+    <section class="about_shop">
+        <div class="content-wrapper">
+            <h2>Про наш магазин</h2>
+            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Laborum officiis sit aut, dignissimos sapiente saepe facere laudantium necessitatibus nemo pariatur magni perferendis ad, libero magnam eligendi velit ex veritatis voluptate.</p>
+            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Tempore, autem perspiciatis, doloremque beatae ut nulla illo, debitis illum iusto aspernatur deserunt nisi? Iusto totam reprehenderit animi et quos, cum rem?</p>
+        </div>
+    </section>
+    {% include 'main-page/main_page-products-section.html' with products=popular_products section_type="top_products" title='Хіти продаж'%}
+    {% include 'main-page/main_page-products-section.html' with products=new_products section_type="new_products" title='Новинки'%}
 {% endblock content %}

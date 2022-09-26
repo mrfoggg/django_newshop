@@ -2,6 +2,8 @@
 <section class="top-categories">
     <div class="content-wrapper top-categories__wrapper">
         <h2>Популярні категорії</h2>
+        <span class="arrow arrow--left"></span>
+        <span class="arrow arrow--right"></span>
         <div class="top-categories__content">
             {% for item in popular_categories %}
                 <a class="top-categories__item" href="{{ item.category.get_absolute_url }}">

@@ -6,9 +6,9 @@
 {% endblock title %}
 
 {% block content %}
-        <div class="content-wrapper">
-            {% include 'breadcrumbs.html' %}
-            <div class="product__header" id="product_top"><h1>{{ product }}</h1></div>
+    <div class="content-wrapper">
+        {% include 'breadcrumbs.html' %}
+        <div class="product__header" id="product_top"><h1>{{ product }}</h1></div>
         <div class="product__header-info">
             <span class="product__stock-on_stock">В наявності</span>
             <span class="product__stock-on_stock">артікул: {{ product.sku }}</span>
@@ -40,7 +40,7 @@
                         <img src="{{ photo_plug.url }}" alt="Немає фото">
                     {% elif photo_count == 1 %}
                         <div class="product__top-gallery-img-wrapper">
-                            <img src={{ product.images.first.image.url }} >
+                            <img src={{ product.images.first.image.url }} alt=''>
                         </div>
                     {% else %}
                         <div class="product__top-gallery--main-slider">
@@ -192,36 +192,35 @@
             </div>
             <div class="product__main-data-sidebar">
                 <h3>Супутні товари</h3>
-
-                    {% for addict_product_category in product.addict_product_category.all %}
-                        <div class="product__main-data-sidebar-products-wrapper">
-                            <h4>{{ addict_product_category.category.name }}</h4>
-                            <div class="product__main-data-sidebar-products-slider">
-                                {% for placement in addict_product_category.category.listing %}
-                                    <div class="product__main-data-sidebar-products-item">
-                                        {% thumbnail placement.product.images.first.image "300" as im %}
-                                            <img src="{{ im.url }}" alt="">
-                                        {% endthumbnail %}
-                                        <h5>{{ placement.product.name }}</h5>
-                                        <ul class="product__main-data-sidebar-products__characteristics">
-                                            {% for shot_attr in placement.product.shot_attributes %}
-                                                {% if  shot_attr.1 %}
-                                                <li class="product-list-item-content__characteristics-item">
-                                                    <span class="product__main-data-sidebar-products__characteristic-title">{{ shot_attr.0 }}</span>
-                                                    <span class="product__main-data-sidebar-products__characteristic-value">{{ shot_attr.1 }}</span>
-                                                </li>
-                                                {% endif %}
-                                            {% endfor %}
-                                        </ul>
-                                    </div>
-                                {% endfor %}
-                            </div>
+                {% for addict_product_category in product.addict_product_category.all %}
+                    <div class="product__main-data-sidebar-products-wrapper">
+                        <h4>{{ addict_product_category.category.name }}</h4>
+                        <div class="product__main-data-sidebar-products-slider">
+                            {% for placement in addict_product_category.category.listing %}
+                                <div class="product__main-data-sidebar-products-item">
+                                    {% thumbnail placement.product.images.first.image "300" as im %}
+                                        <img src="{{ im.url }}" alt="">
+                                    {% endthumbnail %}
+                                    <h5>{{ placement.product.name }}</h5>
+                                    <ul class="product__main-data-sidebar-products__characteristics">
+                                        {% for shot_attr in placement.product.shot_attributes %}
+                                            {% if  shot_attr.1 %}
+                                            <li class="product-list-item-content__characteristics-item">
+                                                <span class="product__main-data-sidebar-products__characteristic-title">{{ shot_attr.0 }}</span>
+                                                <span class="product__main-data-sidebar-products__characteristic-value">{{ shot_attr.1 }}</span>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endfor %}
                         </div>
-                    {% endfor %}
+                    </div>
+                {% endfor %}
             </div>
         </div>
     </div>
-    <a href="#delivery-cost-popup" class="open-delivery-cost-popup">open-delivery-cost-popup</a>
+    <a href="#delivery-cost-popup" class="open-delivery-cost-popup"></a>
     <div class="delivery-cost-popup mfp-hide" id="delivery-cost-popup">
         <h3>Результати розрахунку вартості доставки. </h3>
         <h4>З населеного пункту {{ settlement_from }}</h4>
@@ -241,11 +240,14 @@
         <table>
             <caption>Загальна вартість послуг перевізника "Нова пошта":</caption>
             <thead>
+                <tr>
                 <th></th>
-                <th>Доставка</th>
-                <th>Доставка + % за переказ</th>
-                <th>Доставка + вартість товару</th>
-                <th>Доставка + % за переказ + вартість товару</th>
+                    <th>Доставка</th>
+                    <th>Доставка + % за переказ</th>
+                    <th>Доставка + вартість товару</th>
+                    <th>Доставка + % за переказ + вартість товару</th>
+                </tr>
+
             </thead>
             <tbody>
                 <tr>
@@ -265,7 +267,7 @@
             </tbody>
         </table>
     </div>
-    <a href="#delivery-cost-popup-error" class="open-delivery-cost-popup-error">open-delivery-cost-popup-error</a>
+    <a href="#delivery-cost-popup-error" class="open-delivery-cost-popup-error"></a>
     <div class="delivery-cost-popup mfp-hide" id="delivery-cost-popup-error">
         <h3>Не можливо здійснити запит, відсутній інтернет або сервер не відовідає</h3>
     </div>

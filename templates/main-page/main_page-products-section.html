@@ -1,0 +1,30 @@
+{% load thumbnail %}
+<section class={{ section_type }}>
+    {% if products|length > 10 %}
+        <div class="content-wrapper">
+            <h2>{{ title }}</h2>
+            <div class="section-arrows">
+                <span class="section-arrows--left"></span>
+                <span class="section-arrows--right"></span>
+            </div>
+            <div class="{{ section_type }}__content slider-mode">
+                {% for product in popular_products %}
+                    {% include 'product_list_easy_item.html' with product=product.product url=url_product_actions mode='category' %}
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <div class="content-wrapper">
+            <h2>{{ title }}</h2>
+            <div class="section-arrows">
+                <span class="section-arrows--left slick-disabled"></span>
+                <span class="section-arrows--right slick-disabled"></span>
+            </div>
+            <div class="{{ section_type }}__content grid-mode">
+                {% for product in products %}
+                    {% include 'product_list_easy_item.html' with product=product.product url=url_product_actions mode='category' %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</section>
