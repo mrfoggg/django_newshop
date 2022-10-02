@@ -7,6 +7,7 @@ from django.utils.html import format_html
 
 from ROOTAPP.models import Settlement, SettlementType, SettlementArea, SettlementRegion
 from catalog.models import Product
+from sorl.thumbnail import get_thumbnail
 
 url_np = 'https://api.novaposhta.ua/v2.0/json/'
 
@@ -254,16 +255,26 @@ def get_delivery_cost(request):
 
 def product_actions(request):
     if request.method == 'POST':
+        print('GET FORM DATA')
+        print(request.POST.get('action'))
         product_id = request.POST.get('product_id')
         fav_list = request.session.get('favorites', list())
         comp_list = request.session.get('compare', list())
         basket_dict = request.session.get('basket', dict())
+
         match request.POST.get('action'):
             case 'add_basket':
                 if product_id not in basket_dict.keys():
                     basket_dict[product_id] = 1
-                else:
-                    basket_dict[product_id] += 1
+                    product = Product.objects.get(id=int(product_id))
+                    product_img = product.images.first().image
+                    im = get_thumbnail(product_img, '100x100', crop='center', quality=99)
+                    request.session['basket'] = basket_dict
+                    # print(str(product.price))
+                    return JsonResponse({
+                        'thumb': im.url, 'name': product.name, 'id': product_id, 'price': str(product.price),
+                    }, status=200)
+
             case 'add_fav':
                 if product_id not in fav_list:
                     fav_list.append(product_id)
@@ -274,6 +285,8 @@ def product_actions(request):
                     comp_list.append(product_id)
             case 'remove_to_compare':
                 comp_list.remove(product_id)
+
         request.session['favorites'] = fav_list
         request.session['compare'] = comp_list
+
     return JsonResponse({'product_id': product_id}, status=200)

@@ -317,6 +317,7 @@ class Product(models.Model):
             ]])
         return characteristics
 
+    @property
     def price(self):
         return self.productprice_set.order_by(
             'price_changelist__confirmed_date').last().price if self.productprice_set.exists() else 0

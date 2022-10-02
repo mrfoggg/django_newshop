@@ -1,0 +1,45 @@
+{% load thumbnail %}
+<div class="user-content user-content__basket" id="basket">
+    <!-- <p>Кошик порожній</p> -->
+    <div class="user-content__basket-list-wrapper">
+        <div class="user-content__basket-list">
+            {% for pr in products_obj_in_basket %}
+                <div class="user-content__basket-item">
+                    <div class="user-content__basket-item-img">
+                        {% thumbnail pr.product.images.first.image "80" as im %}
+                            <img src="{{ im.url }}" >
+                        {% endthumbnail %}
+                    </div>
+
+                    <div class="user-content__basket-item-info">
+                        <h4>{{ pr.product }}</h4>
+                        <div class="user-content__basket-item-calculate" data-id="34">
+                            <div class="user-content__basket-item-price"><span>{{ pr.product.price }}</span></div>
+                            <div class="user-content__basket-item-amount">
+                                <input form="bascet_form_amount" type="number" min="1" name="34" value="1">, шт
+                            </div>
+                            <div class="user-content__basket-item-total">Всього: <span>{{ pr.total }}</span></div>
+                        </div>
+                    </div>
+                    <span class="close"></span>
+                </div>
+
+            {% endfor %}
+        </div>
+
+    </div>
+
+    <div class="user-content__basket-total">
+        <form id='bascet_form' action="">
+            <button>Оформити</button>
+        </form>
+
+        <div class="user-content__basket-total--ammount">
+            15 шт
+        </div>
+        <div class="user-content__basket-total--summ">
+            на суму: 44250 ₴
+        </div>
+    </div>
+    <div class="hide_status"></div>
+</div>

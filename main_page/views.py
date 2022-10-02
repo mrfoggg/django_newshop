@@ -33,13 +33,24 @@ class ProductListsMixin(ContextMixin):
             in Product.objects.filter(id__in=viewed_id_list)
         }
         viewed = [viewed_products_dict[id_pr] for id_pr in viewed_id_list]
+        products_id_in_basket = self.request.session.get('basket', dict())
+
+        products_in_basket_dict = {str(pr.id): pr for pr in Product.objects.filter(id__in=products_id_in_basket)}
+        pib_list_dicts_with_amount = [
+            {'product': (product := products_in_basket_dict[pr[0]]), 'amount': pr[1], 'total': product.price * int(pr[1])}
+            for pr in products_id_in_basket.items()
+        ]
+        print(pib_list_dicts_with_amount)
         context |= {
             'fav_id_list': self.request.session.get('favorites', list()),
             'comp_id_list': self.request.session.get('compare', list()),
             'url_product_actions': reverse('root_app:product_actions'),
             'viewed_products': viewed,
-            'viewed_mode': ' viewed_slider_mode' if len(viewed) > 5 else ' viewed_grid_mode' if len(viewed) else ''
+            'viewed_mode': ' viewed_slider_mode' if len(viewed) > 5 else ' viewed_grid_mode' if len(viewed) else '',
+            'products_obj_in_basket': pib_list_dicts_with_amount,
+            'products_id_in_basket': products_id_in_basket
         }
+        # print(f"PRODUCTS IN BASKET: {context['products_in_basket']}")
         return context
 
 
@@ -48,11 +59,13 @@ class MainPageView(TemplateView, HeaderView, ProductListsMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['banners'] = Banner.objects.all()
-        context['slider_config'] = SliderConfiguration.get_solo()
-        context['popular_categories'] = PopularCategory.objects.all()
-        context['popular_products'] = PopularProduct.objects.all()
-        context['new_products'] = NewProduct.objects.all()
+        context |= {
+            'banners': Banner.objects.all(),
+            'slider_config': SliderConfiguration.get_solo(),
+            'popular_categories': PopularCategory.objects.all(),
+            'popular_products': PopularProduct.objects.all(),
+            'new_products': NewProduct.objects.all(),
+        }
         return context
 
 

@@ -67,7 +67,12 @@
             </div>
         </div>
         <span class="product-list-item-content__by">
-            <a href="/" >Купити</a>
+            <form class="product_by_form" action="{{ url }}" data-byed_text="У КОШИКУ" data-status="not_in_basket">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="action" value="add_basket">
+                <button type="button">КУПИТИ</button>
+            </form>
         </span>
     </div>
 </div>

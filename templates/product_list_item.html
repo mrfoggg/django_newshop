@@ -48,7 +48,7 @@
                 {% else %}
                     <span class="product-list-item-content__compare" data-status="disabled"></span>
                 {% endif %}
-                <form  class="product_action_form" action="{{ url }}" data-mode="{{ mode }}">
+                <form class="product_action_form" action="{{ url }}" data-mode="{{ mode }}">
                     {% csrf_token %}
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     <input type="hidden" name="action" value="">
@@ -67,7 +67,21 @@
             </div>
         </div>
         <span class="product-list-item-content__by">
-            <a href="/" >Купити</a>
+            {% if product.id|stringformat:"i" in products_id_in_basket %}
+                <form class="product_by_form" action="{{ url }}" data-byed_text="У КОШИКУ" data-status="in_basket">
+                    {% csrf_token %}
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <input type="hidden" name="action" value="add_basket">
+                    <button type="button">У кошику</button>
+                </form>
+            {% else %}
+                <form class="product_by_form" action="{{ url }}" data-byed_text="У КОШИКУ" data-status="not_in_basket">
+                    {% csrf_token %}
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <input type="hidden" name="action" value="add_basket">
+                    <button type="button">Купити</button>
+                </form>
+            {% endif %}
         </span>
         <ul class="product-list-item-content__characteristics">
             {% for shot_attr in product.shot_attributes %}
