@@ -282,8 +282,8 @@ class ProductView(DetailView):
             'size': True if product.width or product.length or product.height or product.weight else False,
             'package_size': True if product.package_width or product.package_length or product.package_height else False,
             'address_form': AddressForm,
-            'is_loved': str(product.id) in context['fav_id_list'],
-            'is_compared': str(product.id) in context['comp_id_list'],
+            # 'is_loved': str(product.id) in context['fav_id_list'],
+            # 'is_compared': str(product.id) in context['comp_id_list'],
         }
         viewed_dict = self.request.session.get('viewed', list())
         if str(product.id) not in viewed_dict[-5:]:
@@ -291,4 +291,6 @@ class ProductView(DetailView):
         if len(viewed_dict) > 30:
             viewed_dict.pop(0)
         self.request.session['viewed'] = viewed_dict
+        # print(self.kwargs)
         return context
+

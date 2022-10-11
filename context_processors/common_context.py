@@ -57,8 +57,8 @@ def product_lists_conntext(request):
         })
 
     context = {
-        # 'fav_id_list': request.session.get('favorites', list()),
-        # 'comp_id_list': request.session.get('compare', list()),
+        'fav_id_list': request.session.get('favorites', list()),
+        'comp_id_list': request.session.get('compare', list()),
         'url_product_actions': reverse('root_app:product_actions'),
         'viewed_products': viewed,
         'viewed_mode': ' viewed_slider_mode' if len(viewed) > 5 else ' viewed_grid_mode' if len(viewed) else '',

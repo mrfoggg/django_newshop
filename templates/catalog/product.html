@@ -93,13 +93,13 @@
                     </div>
                 </div>
                 <div class="product__top-data-aсtions">
-                    {% if is_loved %}
+                    {% if product.id|stringformat:"i" in fav_id_list %}
                         <span class="product__top-data-favorites added" data-status="enabled" data-mode="favorites"> У обраному</span>
                     {% else %}
                         <span class="product__top-data-favorites" data-status="disabled" data-mode="favorites"> До обраного</span>
                     {% endif %}
 
-                    {% if is_compared %}
+                    {% if product.id|stringformat:"i" in comp_id_list %}
                         <span class="product__top-data-compare added" data-status="enabled" data-mode="compare">У порівнянні</span>
                     {% else %}
                         <span class="product__top-data-compare" data-status="disabled" data-mode="compare">До порівняння</span>
