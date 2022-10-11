@@ -21,8 +21,8 @@
                     {% for product in group.1.products %}
                         <th data-product-id="{{ product.id }}">
                             <a href={{ product.get_absolute_url }}><h3>{{ product }}</h3></a>
-                            <span></span>
-                            <form  class="product_action_form" action="{{ url_product_actions }}">
+                            <span data-mode="compare" data-status="enabled" data-product-id="{{ product.id }}"></span>
+                            <form  class="product_action_form" action="{{ url_product_actions }}" data-page="compare">
                                 {% csrf_token %}
                                 <input type="hidden" name="product_id" value="{{ product.id }}">
                                 <input type="hidden" name="action" value="remove_to_compare">

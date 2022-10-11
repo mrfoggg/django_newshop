@@ -10,7 +10,7 @@
         <div class="viewed_products__content{{ viewed_mode }}">
             {% if viewed_products|length > 0 %}
                 {% for product in viewed_products reversed %}
-                    {% include 'product_list_easy_item.html' %}
+                    {% include 'product_list_easy_item.html' with old_price=product.price total_price=product.total_price discount_type=product.discount_type discount=product.discount product=product page='listing' %}
                 {% endfor %}
             {% else %}
                 <h3>Немає переглянутих товарів</h3>
@@ -32,7 +32,7 @@
         <div class="viewed_products__content{{ viewed_mode }}">
             {% if viewed_products|length > 0 %}
                 {% for product in viewed_products reversed %}
-                    {% include 'product_list_easy_item.html' %}
+                    {% include 'product_list_easy_item.html' with old_price=product.price total_price=product.total_price discount_type=product.discount_type discount=product.discount product=product page='listing' %}
                 {% endfor %}
             {% else %}
                 <h3>Немає переглянутих товарів</h3>

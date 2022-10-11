@@ -6,7 +6,7 @@ from django.db import models
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 from ROOTAPP.models import Messenger, Phone
-from catalog.models import Category, Product
+from catalog.models import Category, Product, PlacementWithPriceManager
 
 
 class SitePhone(models.Model):
@@ -161,6 +161,8 @@ class PopularCategory(models.Model):
 
 
 class PopularProduct(models.Model):
+    objects = models.Manager()
+    with_price = PlacementWithPriceManager()
     product = models.ForeignKey(Product, blank=True, null=True, default=None, on_delete=models.SET_NULL,
                                 verbose_name='Товар')
     is_active = models.BooleanField(default=True, verbose_name='Активно')
@@ -178,6 +180,9 @@ class PopularProduct(models.Model):
 
 
 class NewProduct(models.Model):
+    objects = models.Manager()
+    with_price = PlacementWithPriceManager()
+
     product = models.ForeignKey(Product, blank=True, null=True, default=None, on_delete=models.SET_NULL,
                                 verbose_name='Товар')
     is_active = models.BooleanField(default=True, verbose_name='Активно')

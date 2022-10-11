@@ -1,16 +1,53 @@
+from decimal import Decimal
 from django.contrib import admin
 from django.db import models
-from django.db.models import Subquery, Min, Max, OuterRef, SmallIntegerField
-from django.http import HttpResponseRedirect
+from django.db.models import Subquery, Min, Max, OuterRef, SmallIntegerField, Case, When
+from django.db.models.expressions import F
 from django.urls import reverse
 from django.utils.html import format_html_join, format_html
 from djmoney.models.fields import MoneyField
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
-
-# from finance.models import ProductPrice
 from ROOTAPP.models import Person
 from finance.models import PriceChangelist
+from djmoney.money import Money
+from site_settings.models import PhotoPlug
+
+
+def get_price_sq(outerref_field):
+    return Subquery(ProductPrice.objects.filter(
+        product=OuterRef(outerref_field)).order_by('price_changelist__confirmed_date').values('price')[:1]), \
+           Subquery(Discount.objects.filter(product=OuterRef(outerref_field)).values('amount')[:1]), \
+           Subquery(Discount.objects.filter(product=OuterRef(outerref_field)).values('type_of_amount')[:1])
+
+
+def annotate_query_with_price(input_query, outerref_field):
+    pr, ds, ds_type = get_price_sq(outerref_field)
+    return input_query.annotate(pr=pr).annotate(
+        price=Case(
+            When(pr__isnull=False, then=pr),
+            default=Decimal('0.00')
+        )
+    ).annotate(annotated_discount=ds, discount_type=ds_type).annotate(
+        total_price=Case(
+            When(pr__isnull=True, then=F('price')),
+            # When(pr__isnull=True, then=F(Money(0, 'UAH'))),
+            When(annotated_discount=None, then=pr),
+            When(discount_type=1, then=pr - pr * ds / 100),
+            default=pr - ds
+        )
+    )
+
+
+class PlacementWithPriceManager(models.Manager):
+    def get_queryset(self):
+        return annotate_query_with_price(super().get_queryset(), 'product_id').select_related(
+            'product').prefetch_related('product__images')
+
+
+class ProductWithPriceManager(models.Manager):
+    def get_queryset(self):
+        return annotate_query_with_price(super().get_queryset(), 'pk').prefetch_related('images')
 
 
 class Country(models.Model):
@@ -51,21 +88,6 @@ class Filter(models.Model):
 
     def __str__(self):
         return f'{self.attribute} (тип {self.attribute.get_type_of_value_display()})'
-
-
-# class BroCategoriesFilter(models.Model):
-#     category = models.ForeignKey('Category', on_delete=models.CASCADE, related_name='bro_filters')
-#     bro_category = models.ForeignKey('Category', on_delete=models.CASCADE)
-#     position = models.PositiveSmallIntegerField("Позиция брацкой категории", blank=True, null=True)
-#
-#     class Meta:
-#         unique_together = ('category', 'bro_category')
-#         verbose_name = 'Фильтр братской категории'
-#         verbose_name_plural = 'Фильтры братской категории'
-#         ordering = ('position',)
-#
-#     def __str__(self):
-#         return self.bro_category
 
 
 class Category(MPTTModel):
@@ -128,6 +150,7 @@ class Category(MPTTModel):
 
     @property
     def prices(self):
+        print('GET PRICES')
         return ProductPrice.objects.filter(
             product__productplacement__category=self).aggregate(Min('price'), Max('price'))
 
@@ -136,14 +159,23 @@ class Category(MPTTModel):
         # sq_min_max_price = Subquery(ProductPrice.objects.filter(
         #     product__productplacement__category_id=OuterRef('pk')).aggregate(Min('price'), Max('price')).values(
         #     'price__min', 'price__max')
-        return self.productplacement_set.order_by('product_position')
+
+        # for p in self.productplacement_set(manager='with_price').values(
+        #         'product__name', 'price', 'discount', 'discount_type', 'total_price'):
+        #     print(p)
+
+        return self.productplacement_set(manager='with_price').order_by(
+            'product_position')
+        # return self.productplacement_set.select_related('product').order_by('product_position')
 
     @property
     def full_filters_list(self):
-        parent_filters = list(self.parent.filters.all()) if self.display_parent_filters and self.parent else []
-        filters = list(self.filters.all())
+        parent_filters = list(
+            self.parent.filters.select_related('attribute').prefetch_related(
+                'attribute__fixed_values')) if self.display_parent_filters and self.parent else []
+        filters = list(self.filters.select_related('attribute').prefetch_related('attribute__fixed_values'))
         children_filters = []
-        for child_cat in self.children.all():
+        for child_cat in self.children.prefetch_related('filters__attribute__fixed_values'):
             children_filters.extend(child_cat.filters.all())
         return parent_filters + filters + (children_filters if self.display_child_filters else [])
 
@@ -180,6 +212,9 @@ def get_shot_attr_name(shot_attribute):
 
 
 class Product(models.Model):
+    objects = models.Manager()
+    with_price = ProductWithPriceManager()
+
     RATING = [(i, i) for i in range(0, 100, 5)]
 
     WARRANTY = (
@@ -191,22 +226,22 @@ class Product(models.Model):
     name = models.CharField('Название', max_length=128, default=None, unique=True, db_index=True)
     is_active = models.BooleanField('Товар включен', default=True, )
     slug = models.SlugField(max_length=128, blank=True, null=True, default=None, unique=True)
-    sku = models.CharField(max_length=10, blank=True, null=True, default=None, unique=True,
+    sku = models.CharField(max_length=10, blank=True, null=True, default=None, unique=True, db_index=True,
                            verbose_name='Артикул товара')
     sku_manufacturer = models.CharField('Артикул товара в каталоге производителя', max_length=10, blank=True,
                                         null=True, default=None, unique=True)
     country_of_manufacture = models.ForeignKey(Country, blank=True, null=True, default=None, on_delete=models.SET_NULL,
                                                verbose_name='Страна производства')
     brand = models.ForeignKey(Brand, blank=True, null=True, default=None, on_delete=models.CASCADE,
-                              verbose_name='Бренд товара')
+                              verbose_name='Бренд товара', db_index=True)
     series = models.ForeignKey(ProductSeries, blank=True, null=True, default=None, on_delete=models.CASCADE,
-                               verbose_name='Товары из лиенйки', related_name='products')
+                               verbose_name='Товары из лиенйки', related_name='products', db_index=True)
     description = models.TextField('Описание товара', blank=True, null=True, default=None)
-    characteristics = models.JSONField('Характеристики товара', default=dict, blank=True)
+    characteristics = models.JSONField('Характеристики товара', default=dict, blank=True, db_index=True)
     service_info = models.TextField('Cлужебная информация', blank=True, null=True, default=None)
     rating = models.SmallIntegerField('Рейтинг товара', choices=RATING, default=1, db_index=True, )
     admin_category = TreeForeignKey(Category, blank=True, null=True, default=None, on_delete=models.SET_NULL,
-                                    verbose_name='Категория отображения в админ-панели')
+                                    verbose_name='Категория отображения в админ-панели', db_index=True)
     url = models.URLField('Ссылка на товар на сайте производителя', max_length=128, blank=True, null=True,
                           default=None, unique=True)
     length = models.FloatField('Длина, см', blank=True, null=True)
@@ -220,7 +255,7 @@ class Product(models.Model):
     categories = models.ManyToManyField(Category, through='ProductPlacement', related_name='products')
     combination_of_categories = models.ForeignKey(
         'CombinationOfCategory', blank=True, null=True,
-        verbose_name='Связанная комбинация категорий', on_delete=models.SET_NULL)
+        verbose_name='Связанная комбинация категорий', on_delete=models.SET_NULL, db_index=True)
     seats_amount = SmallIntegerField("Количество мест", default=1)
 
     def __str__(self):
@@ -280,18 +315,36 @@ class Product(models.Model):
             # return attr.default_str_value
             return '-'
 
+    # @property
+    # def shot_attributes(self):
+    #     shot_attr_list = []
+    #     if (cc := self.combination_of_categories) and cc.is_active_custom_order_mini_parameters:
+    #         for shot_pl in cc.shot_attr_positions.all():
+    #             if str_val := self.get_attr_string_val(shot_pl.shot_attribute.attribute):
+    #                 shot_attr_list.append([get_shot_attr_name(shot_pl.shot_attribute), str_val])
+    #     else:
+    #         for cat_placement in self.productplacement_set.order_by('category_position'):
+    #             shot_attr_list.extend([[get_shot_attr_name(i), str_val]
+    #                                    for i in cat_placement.category.shot_attributes.prefetch_related('attribute')
+    #                                    if (str_val := self.get_attr_string_val(i.attribute))])
+    #     # print(shot_attr_list)
+    #     return shot_attr_list
+
     @property
-    def shot_attributes(self):
+    def shot_attributes_id_list(self):
         shot_attr_list = []
         if (cc := self.combination_of_categories) and cc.is_active_custom_order_mini_parameters:
             for shot_pl in cc.shot_attr_positions.all():
                 if str_val := self.get_attr_string_val(shot_pl.shot_attribute.attribute):
                     shot_attr_list.append([get_shot_attr_name(shot_pl.shot_attribute), str_val])
         else:
-            for cat_placement in self.productplacement_set.order_by('category_position'):
-                shot_attr_list.extend([[get_shot_attr_name(i), str_val]
-                                       for i in cat_placement.category.shot_attributes.all()
-                                       if (str_val := self.get_attr_string_val(i.attribute))])
+            for cat_placement in self.productplacement_set.order_by('category_position').select_related(
+                    'category'):
+                shot_attr_list.extend(
+                    [(attr, self.characteristics[attr] if attr in self.characteristics.keys() else None)
+                     for attr in cat_placement.category.shot_attributes.values_list('attribute__slug', flat=True)]
+                )
+        # print(shot_attr_list)
         return shot_attr_list
 
     @property
@@ -317,11 +370,14 @@ class Product(models.Model):
             ]])
         return characteristics
 
+    # @property
+    # def price(self):
+    #     return self.productprice_set.order_by(
+    #         'price_changelist__confirmed_date').last().price if self.productprice_set.exists() else Money(0, 'UAH')
+
     @property
-    def price(self):
-        return self.productprice_set.order_by(
-            'price_changelist__confirmed_date').last().price if self.productprice_set.exists() else 0
-        # return self.productprice_set.order_by('price_changelist__confirmed')
+    def first_image(self):
+        return self.images.first().image if self.images.exists() else PhotoPlug.get_solo().image
 
 
 class AddictProduct(models.Model):
@@ -350,10 +406,13 @@ class CategoryAddictProduct(models.Model):
 
 
 class ProductPlacement(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Товар')
-    category = TreeForeignKey(Category, on_delete=models.CASCADE, verbose_name='Размещение в категории')
-    category_position = models.PositiveSmallIntegerField("Позиция категории", blank=True, null=True)
-    product_position = models.PositiveSmallIntegerField("Позиция товара", blank=True, null=True)
+    objects = models.Manager()
+    with_price = PlacementWithPriceManager()
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Товар', db_index=True)
+    category = TreeForeignKey(Category, on_delete=models.CASCADE, verbose_name='Размещение в категории', db_index=True)
+    category_position = models.PositiveSmallIntegerField("Позиция категории", blank=True, null=True, db_index=True)
+    product_position = models.PositiveSmallIntegerField("Позиция товара", blank=True, null=True, db_index=True)
 
     class Meta:
         verbose_name = "Размещение товаров в категориях"
@@ -402,9 +461,10 @@ class Group(models.Model):
 
 
 class GroupPlacement(models.Model):
-    category = TreeForeignKey(Category, on_delete=models.CASCADE, verbose_name='Категория товаров')
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, verbose_name='Группа атрибутов')
-    position = models.PositiveSmallIntegerField("Позиция группы атрибутов", blank=True, null=True, default=0)
+    category = TreeForeignKey(Category, on_delete=models.CASCADE, verbose_name='Категория товаров', db_index=True)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, verbose_name='Группа атрибутов', db_index=True)
+    position = models.PositiveSmallIntegerField(
+        "Позиция группы атрибутов", blank=True, null=True, default=0, db_index=True)
 
     def __str__(self):
         return f'Группа атрибутов "{self.group}" размещенная в категории "{self.category}"'
@@ -439,18 +499,18 @@ class UnitOfMeasure(models.Model):
 
 class Attribute(models.Model):
     name = models.CharField('Название атрибута', max_length=128, default=None, unique=True, db_index=True, )
-    slug = models.SlugField(max_length=128, unique=True)
+    slug = models.SlugField(max_length=128, unique=True, db_index=True)
     group = models.ForeignKey(Group, blank=True, null=True, on_delete=models.CASCADE, verbose_name='Группа атрибутов',
-                              related_name='attributes')
-    position = models.PositiveSmallIntegerField("Позиция атрибута", blank=True, null=True, default=0)
-    type_of_value = models.SmallIntegerField('Тип данных', choices=TYPE_OF_VALUE, default=1)
+                              related_name='attributes', db_index=True)
+    position = models.PositiveSmallIntegerField("Позиция атрибута", blank=True, null=True, default=0, db_index=True)
+    type_of_value = models.SmallIntegerField('Тип данных', choices=TYPE_OF_VALUE, default=1, db_index=True)
     unit_of_measure = models.ForeignKey(UnitOfMeasure, blank=True, null=True, on_delete=models.SET_NULL,
-                                        verbose_name='Еденица измерения')
+                                        verbose_name='Еденица измерения', db_index=True)
     default_str_value = models.CharField(
         max_length=128, blank=True, null=True, default='Не вказано',
-        verbose_name='Строка для отображения если значение не указано')
-    str_true = models.CharField('Отображение для True', max_length=64, default='так')
-    str_false = models.CharField('Отображение для False', max_length=64, default='ні')
+        verbose_name='Строка для отображения если значение не указано', db_index=True)
+    str_true = models.CharField('Отображение для True', max_length=64, default='так', db_index=True)
+    str_false = models.CharField('Отображение для False', max_length=64, default='ні', db_index=True)
 
     class Meta:
         verbose_name = "Атрибут"
@@ -474,10 +534,10 @@ class Attribute(models.Model):
 class FixedTextValue(models.Model):
     name = models.CharField('Предопределенное текстовое значение атрибута', max_length=128,
                             default=None, unique=True, db_index=True)
-    slug = models.SlugField(max_length=128, unique=True)
-    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE, related_name='fixed_values')
+    slug = models.SlugField(max_length=128, unique=True, db_index=True)
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE, related_name='fixed_values', db_index=True)
     description = models.TextField('Подсказка в описании', blank=True, null=True, default=None)
-    position = models.PositiveSmallIntegerField("Position", blank=True, null=True, default=0)
+    position = models.PositiveSmallIntegerField("Position", blank=True, null=True, default=0, db_index=True)
 
     class Meta:
         verbose_name = "Значение атрибута"
@@ -488,10 +548,10 @@ class FixedTextValue(models.Model):
 
 
 class MainAttribute(models.Model):
-    category = TreeForeignKey(Category, on_delete=models.CASCADE, related_name='main_attributes')
+    category = TreeForeignKey(Category, on_delete=models.CASCADE, related_name='main_attributes', db_index=True)
     attribute = models.ForeignKey(
-        Attribute, on_delete=models.CASCADE, verbose_name='Атрибут основных характеристик')
-    position = models.PositiveIntegerField("Порядок", null=True, blank=True)
+        Attribute, on_delete=models.CASCADE, verbose_name='Атрибут основных характеристик', db_index=True)
+    position = models.PositiveIntegerField("Порядок", null=True, blank=True, db_index=True)
 
     def __str__(self) -> str:
         return f'{self.attribute.name} из категории {self.category}'
@@ -504,11 +564,11 @@ class MainAttribute(models.Model):
 
 
 class ShotAttribute(models.Model):
-    name = models.CharField('Краткое название', max_length=128, blank=True, null=True, default=None)
-    category = TreeForeignKey(Category, on_delete=models.CASCADE, related_name='shot_attributes')
+    name = models.CharField('Краткое название', max_length=128, blank=True, null=True, default=None, db_index=True)
+    category = TreeForeignKey(Category, on_delete=models.CASCADE, related_name='shot_attributes', db_index=True)
     attribute = models.ForeignKey(
-        Attribute, on_delete=models.CASCADE, verbose_name='Атрибут кратких характеристик')
-    position = models.PositiveIntegerField("Порядок", null=True, blank=True)
+        Attribute, on_delete=models.CASCADE, verbose_name='Атрибут кратких характеристик', db_index=True)
+    position = models.PositiveIntegerField("Порядок", null=True, blank=True, db_index=True)
 
     def __str__(self) -> str:
         return self.attribute.name
@@ -623,8 +683,8 @@ class ProductImage(models.Model):
     updated = models.DateTimeField('Изменено', auto_now_add=False, auto_now=True)
     product = models.ForeignKey('Product', blank=True, null=True, default=None, on_delete=models.CASCADE,
                                 verbose_name='Товар', related_name='images')
-    image = models.ImageField('Фото товара', upload_to='product_images/', blank=True, null=True)
-    position = models.PositiveIntegerField("Положение", null=True)
+    image = models.ImageField('Фото товара', upload_to='product_images/', blank=True, null=True, db_index=True)
+    position = models.PositiveIntegerField("Положение", null=True, db_index=True)
 
     class Meta:
         ordering = ('position',)
@@ -633,3 +693,21 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Discount(models.Model):
+    TYPES_OF_AMOUNT = {
+        (1, 'Процент'),
+        (2, 'Абсолютное занчение суммы скидки')
+    }
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Товар')
+    amount = models.DecimalField(max_digits=6, decimal_places=3)
+    type_of_amount = models.SmallIntegerField('Тип скидки', choices=TYPES_OF_AMOUNT)
+
+    class Meta:
+        verbose_name = "Скидка на товар"
+        verbose_name_plural = "Скидки на товары"
+
+    def __str__(self):
+        val = f'{round(self.amount, 2)} %' if self.type_of_amount == 1 else str(Money(self.amount, 'UAH'))
+        return f'{self.product} - {val}'

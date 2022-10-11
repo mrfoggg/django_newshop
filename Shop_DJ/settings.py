@@ -35,6 +35,7 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     # 'django.contrib.redirects.middleware.RedirectFallbackMiddleware',
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -46,6 +47,7 @@ MIDDLEWARE = [
 INSTALLED_APPS = [
     # 'django.contrib.sites',
     # 'django_select2',
+    "debug_toolbar",
     'baton',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -88,6 +90,8 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'context_processors.common_context.header_context',
+                'context_processors.common_context.product_lists_conntext',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',

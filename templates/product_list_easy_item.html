@@ -36,19 +36,24 @@
             <a href="{{ product.get_absolute_url }}">{{ product }} </a>
         </div>
         <div class="product-list-item-content__actions">
-            <span class="product-list-item-content__price">{{ product.price }}</span>
+            <span class="product-list-item-content__price">{{ total_price|floatformat:2 }} ₴</span>
+{#            discount {{ discount }}#}
+            {% if discount %}
+                <span class="product-list-item-content__price--old">{{ old_price|floatformat:2 }} ₴</span>
+            {% endif %}
+
             <span class="product-list-item-content__icons">
                 {% if product.id|stringformat:"i" in fav_id_list %}
-                    <span class="product-list-item-content__add-favorite loved" data-status="enabled"></span>
+                    <span class="product-list-item-content__add-favorite added" data-status="enabled" data-mode="favorites" data-page="listing"></span>
                 {% else %}
-                    <span class="product-list-item-content__add-favorite" data-status="disabled"></span>
+                    <span class="product-list-item-content__add-favorite" data-status="disabled" data-mode="favorites"></span>
                 {% endif %}
                 {% if product.id|stringformat:"i" in comp_id_list %}
-                    <span class="product-list-item-content__compare compared" data-status="enabled"></span>
+                    <span class="product-list-item-content__compare added" data-status="enabled" data-mode="compare"></span>
                 {% else %}
-                    <span class="product-list-item-content__compare" data-status="disabled"></span>
+                    <span class="product-list-item-content__compare" data-status="disabled" data-mode="compare"></span>
                 {% endif %}
-                <form  class="product_action_form" action="{{ url_product_actions }}" data-mode="{{ mode }}">
+                <form  class="product_action_form" action="{{ url_product_actions }}" data-page="{{ page }}">
                     {% csrf_token %}
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     <input type="hidden" name="action" value="">
@@ -67,12 +72,30 @@
             </div>
         </div>
         <span class="product-list-item-content__by">
-            <form class="product_by_form" action="{{ url }}" data-byed_text="У КОШИКУ" data-status="not_in_basket">
+            {% if product.id|stringformat:"i" in products_id_in_basket %}
+                <form class="product_by_form" action="{{ url_product_actions }}" data-by_text="Купитии" data-byed_text="У кошику" data-status="in_basket" data-product_id="{{ product.id }}">
+            {% else %}
+                <form class="product_by_form" action="{{ url_product_actions }}" data-by_text="Купитии" data-byed_text="У кошику" data-status="not_in_basket" data-product_id="{{ product.id }}">
+            {% endif %}
+            <form class="product_by_form" action="{{ url_product_actions }}" data-by_text="Купитии" data-byed_text="У кошику" data-status="not_in_basket" data-product_id="{{ product.id }}">
                 {% csrf_token %}
                 <input type="hidden" name="product_id" value="{{ product.id }}">
                 <input type="hidden" name="action" value="add_basket">
-                <button type="button">КУПИТИ</button>
+                {% if product.id|stringformat:"i" in products_id_in_basket %}
+                    <button type="button">У кошику</button>
+                {% else %}
+                    <button type="button">КУПИТИ</button>
+                {% endif %}
             </form>
         </span>
+        <div class="product-list-item-content__promo">
+            {% if discount and discount_type == 1 %}
+                <span class="product-list-item-content__promo-item">Знижка {{ discount|floatformat:2 }} % </span>
+            {% elif discount and discount_type == 2 %}
+                <span class="product-list-item-content__promo-item">Знижка {{ discount|floatformat:2 }} ₴ </span>
+            {% endif %}
+        </div>
+        {% block characteristic %}
+        {% endblock %}
     </div>
 </div>

@@ -1,5 +1,6 @@
 {% load thumbnail %}
 <section class={{ section_type }}>
+
     {% if products|length > 10 %}
         <div class="content-wrapper">
             <h2>{{ title }}</h2>
@@ -8,8 +9,8 @@
                 <span class="section-arrows--right"></span>
             </div>
             <div class="{{ section_type }}__content slider-mode">
-                {% for product in popular_products %}
-                    {% include 'product_list_easy_item.html' with product=product.product url=url_product_actions mode='category' %}
+                {% for product in products %}
+                    {% include 'product_list_easy_item.html' with old_price=product.price total_price=product.total_price discount_type=product.discount_type discount=product.discount product=product.product page='listing' %}
                 {% endfor %}
             </div>
         </div>
@@ -22,7 +23,7 @@
             </div>
             <div class="{{ section_type }}__content grid-mode">
                 {% for product in products %}
-                    {% include 'product_list_easy_item.html' with product=product.product url=url_product_actions mode='category' %}
+                    {% include 'product_list_easy_item.html' with old_price=product.price total_price=product.total_price discount_type=product.discount_type discount=product.discount product=product.product page='listing' %}
                 {% endfor %}
             </div>
         </div>

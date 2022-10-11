@@ -69,14 +69,24 @@
                 </ul>
                 <div class="product__top-data-by">
                     <div class="product__top-data-by-info">
-                        <span class="product__top-data-by-price">{{ product.price }}</span>
+                        <span class="product__top-data-by-price">{{ product.total_price|floatformat:2 }}</span>
                         <span class="product__top-data-by-art">артікул: {{ product.sku }}</span>
 
                     </div>
-                    <div class="product__top-data-by-btns">
-                        <button class="product__top-data-by-btns-checkout" type="submit">Замовити зараз</button>
-                        <button class="product__top-data-by-btns-add" type="submit">До кошика</button>
-                    </div>
+{#                    <div class="product__top-data-by-btns">#}
+                    <form class="product__top-data-by-btns product_by_form" action="{{ url_product_actions }}" data-by_text="До кошика" data-byed_text="У кошику" data-status="not_in_basket" data-product_id="{{ product.id }}">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="action" value="add_basket">
+                        <span class="product__top-data-by-btns-checkout" type="submit">Замовити зараз</span>
+                        {% if product.id|stringformat:"i" in products_id_in_basket %}
+                            <button class="product__top-data-by-btns-add" type="button">У кошику</button>
+                        {% else %}
+                            <button class="product__top-data-by-btns-add" type="button">До кошика</button>
+                        {% endif %}
+                    </form>
+
+{#                    </div>#}
                     <div class="product__top-data-by-onclick">
                         <p class="product__top-data-by-onclick-header">Проконсультуємо і оформимо замовлення по телефону:</p>
                         <span>+38 (0</span><input class="phone-number-input" type="text"><button disabled id="ok_button" >Відправити</button>
@@ -84,17 +94,17 @@
                 </div>
                 <div class="product__top-data-aсtions">
                     {% if is_loved %}
-                        <span class="product__top-data-favorites loved" data-status="enabled"> У обраному</span>
+                        <span class="product__top-data-favorites added" data-status="enabled" data-mode="favorites"> У обраному</span>
                     {% else %}
-                        <span class="product__top-data-favorites" data-status="disabled"> До обраного</span>
+                        <span class="product__top-data-favorites" data-status="disabled" data-mode="favorites"> До обраного</span>
                     {% endif %}
 
                     {% if is_compared %}
-                        <span class="product__top-data-compare compared" data-status="enabled">У порівнянні</span>
+                        <span class="product__top-data-compare added" data-status="enabled" data-mode="compare">У порівнянні</span>
                     {% else %}
-                        <span class="product__top-data-compare" data-status="disabled">До порівняння</span>
+                        <span class="product__top-data-compare" data-status="disabled" data-mode="compare">До порівняння</span>
                     {% endif %}
-                    <form  class="product_action_form" action="{{ url_product_actions }}" data-mode="product_view">
+                    <form  class="product_action_form" action="{{ url_product_actions }}" data-page="product">
                         {% csrf_token %}
                         <input type="hidden" name="product_id" value="{{ product.id }}">
                         <input type="hidden" name="action" value="">

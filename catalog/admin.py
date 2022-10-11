@@ -21,7 +21,7 @@ from .models import (Attribute, Category, CombinationOfCategory, FixedTextValue,
                      GroupPositionInCombinationOfCategory, MainAttribute, MainAttrPositionInCombinationOfCategory,
                      Product, ProductPlacement, ShotAttribute, ShotAttrPositionInCombinationOfCategory, UnitOfMeasure,
                      Country, Brand, ProductSeries, PricesOtherShop, OtherShop, ProductImage, Filter, ProductSupplier,
-                     CategoryAddictProduct,
+                     CategoryAddictProduct, Discount,
                      )
 from .services import (clean_combination_of_category,
                        get_changes_in_categories_fs, get_changes_in_groups_fs,
@@ -195,6 +195,9 @@ class ProductImageInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTa
     sortable_field_name = "position"
     extra = 0
 
+class DiscountInline(nested_admin.NestedTabularInline):
+    model = Discount
+    extra = 0
 
 @admin.register(Category)
 class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin, SummernoteModelAdmin):
@@ -311,7 +314,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
     save_on_top = True
     inlines = (ProductPlacementInlineForProduct, PricesOtherShopInline, ProductImageInline, ProductPriceProductInline,
-               ProductSupplierInline, CategoryAddictProductInlineAdmin)
+               ProductSupplierInline, CategoryAddictProductInlineAdmin, DiscountInline)
     # formfield_overrides = {
     #     models.JSONField: {'widget': JSONEditorWidget},
     # }
@@ -368,6 +371,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
         formsets[3].save()
         formsets[4].save()
         formsets[5].save()
+        formsets[6].save()
 
         if added_categories_id_list:
             set_prod_pos_to_end(category_fs, added_categories_id_list)
@@ -541,4 +545,5 @@ admin.site.register(ProductSeries)
 admin.site.register(OtherShop)
 admin.site.register(ProductImage)
 admin.site.register(Filter)
+# admin.site.register(Discount)
 

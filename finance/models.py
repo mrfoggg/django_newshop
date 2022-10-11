@@ -6,6 +6,9 @@ from django.db import models
 from djmoney.models.fields import MoneyField
 
 # from catalog.models import Product
+from djmoney.money import Money
+
+# from catalog.models import Product
 
 
 class PriceChangelist(models.Model):
@@ -23,6 +26,8 @@ class PriceChangelist(models.Model):
     @property
     def date(self):
         return self.confirmed_date.strftime("%m/%d/%Y, (%H:%M)")
+
+
 
 
 # class ProductPrice(models.Model):

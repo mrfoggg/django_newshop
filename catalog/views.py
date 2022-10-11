@@ -1,24 +1,14 @@
-from copy import copy, deepcopy
-
 from django.core.paginator import Paginator
-from django.db.models import Q, Min, Max
-from django.db.models.expressions import OuterRef
-from django.shortcuts import render
-
-# Create your views here.
-# from ROOTAPP.views import HeaderView
+from django.db.models import Q, Min, Max, F
+from django.db.models.expressions import OuterRef, Case, When
 from django.urls import reverse
-
 from ROOTAPP.forms import AddressForm
 from ROOTAPP.models import Settlement
-from catalog.models import Category, Brand, ProductSeries, ProductPrice, Product
+from catalog.models import Category, Brand, ProductSeries, ProductPrice, Product, ShotAttribute
 from django.views.generic.detail import DetailView
 
-from main_page.views import HeaderView, ProductListsMixin
-from site_settings.models import PhotoPlug
 
-
-class CategoryView(DetailView, HeaderView, ProductListsMixin):
+class CategoryView(DetailView):
     template_name = 'catalog/category.html'
     model = Category
     query_pk_and_slug = True
@@ -26,10 +16,12 @@ class CategoryView(DetailView, HeaderView, ProductListsMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         data = self.request.GET
+        input_listing = context['category'].listing
+        category = context['category']
 
         context |= {
             'wide_sections': data.getlist('sections-status'), 'filtered': True if data else False,
-            'filters': context['category'].full_filters_list, 'checked_filters': [],
+            'filters': category.full_filters_list, 'checked_filters': [],
             # 'photo_plug': PhotoPlug.get_solo().image,
             'filter_price_applied': 'false',
             'page_num': data['paginator'][0] if data and 'paginator' in data.keys() else 1,
@@ -42,12 +34,12 @@ class CategoryView(DetailView, HeaderView, ProductListsMixin):
         # заполняем основной массив данных для фильтров товаров кроме данных о резульeтатах поиска каждого фильтра
         filters_and_val_variant = []
         full_list_filtering = Q()
-        if Brand.objects.filter(product__productplacement__category=context['category']).exists():
+        if Brand.objects.filter(product__productplacement__category=category).exists():
             filter_item = {'name': 'Бренди', 'slug': 'brands', 'type': 'brands', 'val_variants': []}
             list_selected = data.getlist('brands') if 'brands' in data.keys() else []
             brand_filter_params = Q()
             selected_brand_list_id = []
-            for brand in Brand.objects.filter(product__productplacement__category=context['category']).distinct():
+            for brand in Brand.objects.filter(product__productplacement__category=category).distinct():
                 val_variant_item = {'slug': brand.id, 'name': brand.name, 'total_products': None, 'is_checked': False}
                 if data and str(val_variant_item['slug']) in list_selected:
                     some_filter_checked = True
@@ -60,7 +52,7 @@ class CategoryView(DetailView, HeaderView, ProductListsMixin):
             full_list_filtering &= brand_filter_params
 
             product_series = ProductSeries.objects.filter(
-                products__productplacement__category=context['category'],
+                products__productplacement__category=category,
                 products__brand_id__in=selected_brand_list_id
             )
             filters_and_val_variant.append(filter_item)
@@ -81,7 +73,7 @@ class CategoryView(DetailView, HeaderView, ProductListsMixin):
                 filter_item['queryset'] = series_filter_params
                 full_list_filtering &= series_filter_params
 
-        for f in context['category'].full_filters_list:
+        for f in category.full_filters_list:
             filter_item = {
                 'name': f.attribute, 'slug': f.attribute.slug, 'type': f.attribute.type_of_value, 'val_variants': [],
             }
@@ -126,7 +118,7 @@ class CategoryView(DetailView, HeaderView, ProductListsMixin):
 
         # if some_filter_checked:
         prices = ProductPrice.objects.filter(
-            Q(product__productplacement__category=context['category']) & full_list_filtering).aggregate(Min('price'),
+            Q(product__productplacement__category=category) & full_list_filtering).aggregate(Min('price'),
                                                                                                         Max('price'))
         if some_filter_checked:
             pass
@@ -138,7 +130,7 @@ class CategoryView(DetailView, HeaderView, ProductListsMixin):
         if data and 'price_from' in data.keys():
             context['price_from'] = data['price_from']
             context['filter_price_applied'] = 'true'
-            price_from_filter_params = Q(product__productprice__price__gte=context['price_from'])
+            price_from_filter_params = Q(total_price__gte=context['price_from'])
             full_list_filtering &= price_from_filter_params
             filter_item = {'queryset': price_from_filter_params, 'type': 'price'}
             filters_and_val_variant.append(filter_item)
@@ -146,7 +138,7 @@ class CategoryView(DetailView, HeaderView, ProductListsMixin):
         if data and 'price_to' in data.keys():
             context['price_to'] = data['price_to']
             context['filter_price_applied'] = 'true'
-            price_to_filter_params = Q(product__productprice__price__lte=context['price_to'])
+            price_to_filter_params = Q(total_price__lte=context['price_to'])
             full_list_filtering &= price_to_filter_params
             filter_item = {'queryset': price_to_filter_params, 'type': 'price'}
             filters_and_val_variant.append(filter_item)
@@ -174,7 +166,7 @@ class CategoryView(DetailView, HeaderView, ProductListsMixin):
                         ff['queryset'] = Q(product__brand=val['slug'])
                     case 'series':
                         ff['queryset'] = Q(product__series=val['slug'])
-                listing_for_count = context['category'].listing
+                listing_for_count = input_listing
                 for fff in context['filters_and_val_variant']:
                     listing_for_count = listing_for_count.filter(fff['queryset'])
                 val['total_products'] = listing_for_count.count()
@@ -188,31 +180,80 @@ class CategoryView(DetailView, HeaderView, ProductListsMixin):
             ff['queryset'] = prev_qs
 
         listing_variants = {
-            "default_sort": context['category'].productplacement_set.order_by('product_position'),
-            'sort_from_cheap_to_expensive': context['category'].productplacement_set.order_by(
-                'product__productprice__price'),
-            'sort_from_expensive_to_cheap': context['category'].productplacement_set.order_by(
-                '-product__productprice__price'),
+            "default_sort": input_listing,
+            'sort_from_cheap_to_expensive': input_listing.order_by('total_price'),
+            'sort_from_expensive_to_cheap': input_listing.order_by('-total_price'),
         }
         if data:
             listing = listing_variants[context['listing_sort']].filter(full_list_filtering)
         else:
-            listing = context['category'].listing.filter(full_list_filtering)
+            listing = input_listing.filter(full_list_filtering)
 
         paginator = Paginator(listing, 25)
+        paginated_listing = paginator.get_page(context['page_num'])
 
-        context['category_listing'] = paginator.get_page(context['page_num'])
+            # для варианта 2
+        listing_attributes = ShotAttribute.objects.filter(
+            category__productplacement__product__productplacement__category=category).distinct().select_related(
+            'attribute__unit_of_measure'
+        ).annotate(
+            display_name=Case(
+                When(name__isnull=False, then=F('name')),
+                default=F('attribute__name')
+            )
+        ).prefetch_related('attribute__fixed_values')
+
+        attr_data_dict = dict()
+        values_dict = dict()
+        for sh_attr in listing_attributes.all():
+            attr_data_dict[sh_attr.attribute.slug] = {
+                'display_name': sh_attr.display_name, 'type': sh_attr.attribute.type_of_value,
+                'unit_of_measure': sh_attr.attribute.unit_of_measure, 'default': sh_attr.attribute.default_str_value
+            }
+            for val in sh_attr.attribute.fixed_values.values('name', 'slug'):
+                values_dict[val['slug']] = val['name']
+        products_with_characteristics = list()
+        for pr in paginated_listing:
+            minidescription_data = list()
+            for ch_key, ch_val in pr.product.shot_attributes_id_list:
+                attr_data = attr_data_dict[ch_key]
+                ch_name = attr_data['display_name']
+                ch_unit_of_measure = attr_data['unit_of_measure']
+                match attr_data['type']:
+                    case 1:
+                        text_value = ch_val
+                    case 2:
+                        text_value = str(ch_val) + f' {ch_unit_of_measure.name}' if ch_unit_of_measure else ''
+                    case 4:
+                        if not ch_val and not attr_data['default']:
+                            continue
+                        text_value = values_dict[ch_val] if ch_val else attr_data['default']
+                    case 5:
+                        if not ch_val and not attr_data['default']:
+                            continue
+                        text_value = ', '.join([values_dict[v] for v in ch_val]) if ch_val else attr_data['default']
+                minidescription_data.append([ch_name, text_value])
+
+            product_with_characteristics = {
+                'product_obj': pr.product, 'total_price': pr.total_price, 'price': pr.price,
+                'annotated_discount': pr.annotated_discount, 'discount_type': pr.discount_type,
+                'minidescription_data': minidescription_data
+            }
+            products_with_characteristics.append(product_with_characteristics)
+
+        context['category_listing'] = products_with_characteristics
         context['total_pages'] = paginator.num_pages
         context['page_range'] = paginator.page_range
         context['current_page'] = int(context['page_num'])
-        context['total'] = context['category'].listing.filter(full_list_filtering).count()
+        context['total'] = input_listing.filter(full_list_filtering).count()
         return context
 
 
-class ProductView(DetailView, HeaderView, ProductListsMixin):
+class ProductView(DetailView):
     template_name = 'catalog/product.html'
     model = Product
     query_pk_and_slug = True
+    queryset = Product.with_price.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -246,10 +287,8 @@ class ProductView(DetailView, HeaderView, ProductListsMixin):
         }
         viewed_dict = self.request.session.get('viewed', list())
         if str(product.id) not in viewed_dict[-5:]:
-            print('ADD')
             viewed_dict.append(str(product.id))
         if len(viewed_dict) > 30:
             viewed_dict.pop(0)
         self.request.session['viewed'] = viewed_dict
-        # print(viewed_dict)
         return context

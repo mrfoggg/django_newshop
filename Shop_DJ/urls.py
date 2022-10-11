@@ -37,6 +37,7 @@ urlpatterns = [
     # path("select2/", include("django_select2.urls")),
     path('summernote/', include('django_summernote.urls')),
     path('_nested_admin/', include('nested_admin.urls')),
+    path('__debug__/', include('debug_toolbar.urls')),
 ]
 
 

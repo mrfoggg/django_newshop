@@ -22,6 +22,7 @@
             <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Tempore, autem perspiciatis, doloremque beatae ut nulla illo, debitis illum iusto aspernatur deserunt nisi? Iusto totam reprehenderit animi et quos, cum rem?</p>
         </div>
     </section>
+{#    {{ popular_products }}#}
     {% include 'main-page/main_page-products-section.html' with products=popular_products section_type="top_products" title='Хіти продаж'%}
     {% include 'main-page/main_page-products-section.html' with products=new_products section_type="new_products" title='Новинки'%}
 {% endblock content %}

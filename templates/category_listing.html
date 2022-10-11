@@ -1,0 +1,3 @@
+{% for product_placement in category_listing %}
+    {% include 'product_list_item.html' with old_price=product_placement.price total_price=product_placement.total_price discount_type=product_placement.discount_type discount=product_placement.annotated_discount product=product_placement.product_obj minidescription_data=product_placement.minidescription_data page='listing' %}
+{% endfor %}

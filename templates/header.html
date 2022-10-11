@@ -79,7 +79,11 @@
                 {% else %}
                     <a class="sub-header__compare" href="{{ compare_link }}"></a>
                 {% endif %}
-                <a class="sub-header__basket" href="#"></a>
+                {% if basket_total.total_amount %}
+                    <span class="sub-header__basket" href="#"><span>{{ basket_total.total_amount }}</span></span>
+                {% else %}
+                    <span class="sub-header__basket" href="#"></span>
+                {% endif %}
                 {% include 'user_content.html' %}
             </div>
         </div> <!-- sub-header__content -->
@@ -113,7 +117,7 @@
                         {% endif %}
                         <div class="top-catalog__second-level-list-wrapper--w100">
                             <ul class="top-catalog__second-level-list">
-                                {% for menu_item_2 in menu_item_1.get_children %}
+                                {% for menu_item_2 in menu_item_1.children.all %}
                                     <li class="top-catalog__second-level-item">
                                         {% if  menu_item_2.get_link %}
                                             <a href={{ menu_item_2.get_link }}>{{ menu_item_2.title }}</a>
@@ -121,7 +125,7 @@
                                             {{ menu_item_2.title }}
                                         {% endif %}
                                         <ul class="top-catalog__third-level-list">
-                                            {% for menu_item_3 in menu_item_2.get_children %}
+                                            {% for menu_item_3 in menu_item_2.children.all %}
                                                 <li class="top-catalog__third-level-item top-catalog__third-level-item">
                                                     {% if  menu_item_3.get_link %}
                                                         <a href={{ menu_item_3.get_link }}>{{ menu_item_3.title }}</a>
@@ -129,7 +133,7 @@
                                                         {{ menu_item_3.title }}
                                                     {% endif %}
                                                 <ul class="top-catalog__last-level-list">
-                                                    {% for menu_item_4 in menu_item_3.get_children %}
+                                                    {% for menu_item_4 in menu_item_3.children.all %}
                                                         {% if  menu_item_4.get_link %}
                                                             <li><a href={{ menu_item_4.get_link }}>{{ menu_item_4.title }}</a></li>
                                                         {% else %}

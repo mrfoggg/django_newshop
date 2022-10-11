@@ -1,13 +1,21 @@
+from decimal import Decimal
+
 from django.contrib import messages
 import json
+
+from django.db.models import Case
+from django.db.models.expressions import When, F
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 import requests
 from django.utils.html import format_html
+from django.views import View
 
 from ROOTAPP.models import Settlement, SettlementType, SettlementArea, SettlementRegion
-from catalog.models import Product
+from catalog.models import Product, get_price_sq
 from sorl.thumbnail import get_thumbnail
+
+from servises import get_products_annotated_prices
 
 url_np = 'https://api.novaposhta.ua/v2.0/json/'
 
@@ -253,10 +261,22 @@ def get_delivery_cost(request):
     return JsonResponse({}, status=500)
 
 
-def product_actions(request):
-    if request.method == 'POST':
-        print('GET FORM DATA')
-        print(request.POST.get('action'))
+def calculate_basket(request, basket_dict, product_id=None):
+    total_sum = 0
+    total_amount = 0
+    products_with_prices = get_products_annotated_prices(basket_dict.keys())
+    products_by_id = {str(pr.id): pr for pr in products_with_prices}
+    for b_item in basket_dict.items():
+        total_sum += round(products_by_id[b_item[0]].total_price * int(b_item[1]), 2)
+        total_amount += int(b_item[1])
+    if product_id:
+        return total_amount, round(total_sum, 2), round(products_by_id[product_id].total_price, 2)
+    else:
+        return total_amount, round(total_sum, 2)
+
+
+class ProductActionsView(View):
+    def post(self, request):
         product_id = request.POST.get('product_id')
         fav_list = request.session.get('favorites', list())
         comp_list = request.session.get('compare', list())
@@ -267,26 +287,58 @@ def product_actions(request):
                 if product_id not in basket_dict.keys():
                     basket_dict[product_id] = 1
                     product = Product.objects.get(id=int(product_id))
-                    product_img = product.images.first().image
-                    im = get_thumbnail(product_img, '100x100', crop='center', quality=99)
+                    im = get_thumbnail(product.first_image, '80x80', crop='center', quality=99)
                     request.session['basket'] = basket_dict
-                    # print(str(product.price))
+                    total_amount, total_sum, pr_total_price = calculate_basket(request, basket_dict, product_id)
                     return JsonResponse({
-                        'thumb': im.url, 'name': product.name, 'id': product_id, 'price': str(product.price),
+                        'thumb': im.url, 'name': product.name, 'id': product_id, 'pr_url': product.get_absolute_url(),
+                        'price': str(pr_total_price).replace('.', ','),
+                        'total_sum': str(total_sum).replace('.', ','), 'total_amount': total_amount
                     }, status=200)
+
+            case 'change_amount':
+                new_amount = request.POST.get('amount')
+                basket_dict[product_id] = new_amount
+                if new_amount == '0':
+                    basket_dict.pop(product_id)
+                request.session['basket'] = basket_dict
+                total_amount, total_sum, pr_total_price = calculate_basket(request, basket_dict, product_id)
+                return JsonResponse({
+                    'sum': str(int(new_amount) * pr_total_price),
+                    'total_sum': str(total_sum).replace('.', ','), 'total_amount': total_amount
+                }, status=200)
+
+            case 'remove_from_basket':
+                if product_id in basket_dict.keys():
+                    basket_dict.pop(product_id)
+                request.session['basket'] = basket_dict
+                total_amount, total_sum = calculate_basket(request, basket_dict)
+                return JsonResponse({
+                    'total_sum': str(total_sum).replace('.', ','), 'total_amount': total_amount
+                }, status=200)
 
             case 'add_fav':
                 if product_id not in fav_list:
                     fav_list.append(product_id)
+                    request.session['favorites'] = fav_list
+                return JsonResponse({'total_fav': len(fav_list)}, status=200)
+
             case 'remove_fav':
                 fav_list.remove(product_id)
+                request.session['favorites'] = fav_list
+                return JsonResponse({'total_fav': len(fav_list)}, status=200)
+
             case 'add_to_compare':
                 if product_id not in comp_list:
                     comp_list.append(product_id)
+                    request.session['compare'] = comp_list
+                return JsonResponse({'total_comp': len(comp_list)}, status=200)
             case 'remove_to_compare':
                 comp_list.remove(product_id)
+                request.session['compare'] = comp_list
+                return JsonResponse({'total_comp': len(comp_list)}, status=200)
 
         request.session['favorites'] = fav_list
         request.session['compare'] = comp_list
 
-    return JsonResponse({'product_id': product_id}, status=200)
+        return JsonResponse({'product_id': product_id}, status=200)

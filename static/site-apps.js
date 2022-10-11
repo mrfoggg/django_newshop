@@ -24,7 +24,6 @@ $(document).ready(function(){
         });
         $('.sub-header__basket').removeClass('active');
         $('.hide_status').removeClass('active hidding');
-
     }
 
     function showBasket(doWhenOpen){
@@ -104,8 +103,18 @@ $(document).ready(function(){
         pulse($('.sub-header__compare span'));
     }
 
-    makeSubheaderFlowing();
+    function updateTotalBasket(total_amount, total_sum){
+        $('.user-content__basket-total--ammount span, .sub-header__basket span').text(total_amount);
+        $('.user-content__basket-total--summ span').text(total_sum);
+        if (! total_amount){
+            $('.sub-header__basket span, .user-content__basket-total').fadeOut();
+            $('.user-content__basket-list').html($.parseHTML('<h2 id="empty_basket">Кошик порожній</h2>'))
+        } else {
+            $('.sub-header__basket span, .user-content__basket-total').fadeIn();
+        }
+    }
 
+    makeSubheaderFlowing();
 
     $('.slider').slick({
         dots: true,
@@ -388,72 +397,67 @@ $(document).ready(function(){
         dots: true,
     });
 
-    $('.product_action_form').submit(function (e){
-        console.log('SUBMIT');
-        e.preventDefault();
-        $.ajax({
-            type: "POST",
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            success: function (response) {
-            }
-        })
-    });
+    function favoritesOrCompareActions (e){
+        const target = $(e.target)
+        const mode = target.data('mode');
+        const form = target.nextAll('form');
+        const page = form.data('page');
+        let action;
+        let statusWhenSuccess;
+        const status = target.data('status');
 
-    $(".product-list-item-content__add-favorite, .product__top-data-favorites").click(function (e){
-        const form = $(e.target).nextAll('form');
-        const action_field = form.children('input[name="action"]')
-        if ($(e.target).data('status') == 'disabled'){
-            $(e.target).data('status', 'enabled').addClass('loved')
-            action_field.val('add_fav');
+        form.unbind('submit');
+        form.submit(function (submitEvent){
+            submitEvent.preventDefault();
+            $('.preloader.fast').fadeIn('fast');
 
-            if (form.data('mode') == 'product_view'){
-                $(e.target).text('У обраному');
+            if (status === 'disabled') {
+                action = (mode === 'favorites') ? {'code':'add_fav', 'text_when_success': 'У обраному'} : {'code':'add_to_compare', 'text_when_success': 'У порівнянні'}
+                statusWhenSuccess = 'enabled';
             }
-            increaseLovedCount();
-        } else {
-            $(e.target).data('status', 'disabled').removeClass('loved');
-            action_field.val('remove_fav');
-            if (form.data('mode') == 'product_view'){
-                $(e.target).text('До обраного');
+            else {
+                action = (mode === 'favorites') ? {'code':'remove_fav', 'text_when_success': 'До обраного'} : {'code':'remove_to_compare', 'text_when_success': 'До порівняння'}
+                statusWhenSuccess = 'disabled';
             }
-            decreaseLovedCount();
-        }
+
+            target.nextAll('form').children('input[name="action"]').val(action.code)
+
+            $.ajax({
+                type: "POST",
+                url: $(this).attr('action'),
+                data: $(this).serialize(),
+                success: function (response) {
+                    target.data('status', statusWhenSuccess);
+                    setTimeout(function (){
+                        $('.preloader.fast').fadeOut('fast');
+                        target.toggleClass('added', statusWhenSuccess === 'enabled');
+                        if (page === 'product')
+                            target.text(action.text_when_success);
+                        if (page === 'favorites' && action.code === 'remove_fav')
+                            target.parents('.product-list-item').fadeOut();
+                        if (page === 'compare') {
+                            const product_id = target.data('productId');
+                            $(`td[data-product-id=${product_id}], th[data-product-id=${product_id}]`).fadeOut();
+                        }
+                        if (mode === 'favorites') {
+                            $('.sub-header__favorites').html(`<span>${response['total_fav']}</span>`);
+                            pulse($('.sub-header__favorites span'));
+                            if (response['total_fav'] === 0)
+                                $('.sub-header__favorites span').fadeOut();
+                        } else {
+                            $('.sub-header__compare').html(`<span>${response['total_comp']}</span>`);
+                            pulse($('.sub-header__compare span'));
+                            if (response['total_comp'] === 0)
+                                $('.sub-header__compare span').fadeOut();
+                        }
+                    }, 400)
+                }
+            });
+        });
         form.submit();
-        if (form.data('mode') == 'favorites') {
-            $(e.target).parents('.product-list-item').fadeOut();
-        }
-    });
+    }
 
-    $(".product-list-item-content__compare, .product__top-data-compare").click(function (e){
-        const form = $(e.target).nextAll('form');
-        const action_field = form.children('input[name="action"]');
-        if ($(e.target).data('status') == 'disabled'){
-            $(e.target).data('status', 'enabled').addClass('compared');
-            action_field.val('add_to_compare');
-            if (form.data('mode') == 'product_view'){
-                $(e.target).text('У порівнянні');
-            }
-            increaseCompareCount();
-        } else {
-            $(e.target).data('status', 'disabled').removeClass('compared');
-            action_field.val('remove_to_compare');
-
-            if (form.data('mode') == 'product_view'){
-                $(e.target).text('До порівняння');
-            }
-            decreaseCompareCount()
-        }
-        form.submit();
-    });
-
-    $(".compare th span").click(function (e){
-        const form = $(e.target).nextAll('form');
-        form.submit();
-        const product_id = $(e.target).parent('th').data('productId');
-        $(`td[data-product-id=${product_id}], th[data-product-id=${product_id}]`).fadeOut();
-        decreaseCompareCount();
-    });
+    $(".product-list-item-content__icons span, .product__top-data-aсtions span, .compare th span").click(favoritesOrCompareActions);
 
     $(window).scroll(function(){
         hideFlowingViewed();
@@ -483,6 +487,8 @@ $(document).ready(function(){
         infinite: false,
         prevArrow: ".top_products .section-arrows--left",
         nextArrow: ".top_products .section-arrows--right",
+    }).init(function(){
+        $('.top_products__content.slider-mode .product-list-item-content__img-slider-wrapper').css('display', 'flex')
     });
 
     $('.new_products__content.slider-mode').slick({
@@ -492,6 +498,8 @@ $(document).ready(function(){
         infinite: false,
         prevArrow: ".new_products .section-arrows--left",
         nextArrow: ".new_products .section-arrows--right",
+    }).init(function(){
+        $('.new_products__content.slider-mode .product-list-item-content__img-slider-wrapper').css('display', 'flex')
     });
 
     $('.static .viewed_products__content.viewed_slider_mode').slick({
@@ -508,6 +516,8 @@ $(document).ready(function(){
         infinite: false,
         prevArrow: ".flowing.viewed_products .arrow--left",
         nextArrow: ".flowing.viewed_products .arrow--right",
+    }).init(function(){
+        $('.viewed_slider_mode .product-list-item-content__img-slider-wrapper').css('display', 'flex')
     });
 
     $('.viewed_products__flowing-ancor').click(function(){
@@ -520,12 +530,43 @@ $(document).ready(function(){
         hideFlowingViewed();
     });
 
-    $('.user-content__basket-item-amount input').change(function(e){
-        let clicked_val = $(e.target).val();
-        let clicked_id = $(e.target).attr('name');
-        let clicked_price = $(`[data-id=${clicked_id}] .user-content__basket-item-price span`).text();
-        $(`[data-id=${clicked_id}] .user-content__basket-item-total span`).text(clicked_price * clicked_val);
-    });
+    function changeBasket(e){
+        const target = $(e.target)
+        const product_id = target.data('product_id');
+        const action = target.data('action');
+        $('form#update_basket input[name="product_id"]').val(product_id);
+        if (action === 'change_amount')
+            $('form#update_basket input[name="amount"]').val(target.val());
+        $('form#update_basket input[name="action"]').val(action);
+        $('#basket').addClass('disabled');
+        $('form#update_basket').unbind('submit');
+        $('form#update_basket').submit({'this_input': $(e.target)}, function (e){
+            e.preventDefault();
+            $.ajax({
+                type: "POST",
+                url: $(this).attr('action'),
+                data: $(this).serialize(),
+                success: function (response) {
+                    setTimeout(function (){
+                        if (action === 'change_amount')
+                            $(e.data.this_input).parent().next().children('span').text(response['sum']);
+                        if (action === 'remove_from_basket'){
+                            $(e.data.this_input).parents('.user-content__basket-item').fadeOut();
+                            const productForm = $(`form.product_by_form[data-product_id="${product_id}"]`);
+                            productForm.data('status', "not_in_basket");
+                            productForm.children('button').text(productForm.data('by_text'));
+                        }
+                        updateTotalBasket(response['total_amount'], response['total_sum']);
+                        $('#basket').removeClass('disabled');
+                    }, 200)
+                }
+            });
+        });
+        $('form#update_basket').submit();
+    }
+
+    $('.user-content__basket-item-amount input').change(changeBasket);
+    $('.user-content__basket-item span.close span').click(changeBasket);
 
     $(document).click(function(e){
         if (!$(e.target).closest('#basket').length && !$(e.target).closest('.sub-header__basket').length && basketOpen) {
@@ -540,6 +581,7 @@ $(document).ready(function(){
             showBascketWithAutohide(function (){});
     });
 
+
     $('.product_by_form').submit(function(e){
         e.preventDefault();
         $('.preloader.fast').fadeIn('fast');
@@ -549,40 +591,50 @@ $(document).ready(function(){
             data: $(this).serialize(),
             success: function (response) {
                 setTimeout(function () {
-                    console.log('ajax SUCSSES');
                     $('.preloader.fast').fadeOut();
                     let htmlNewItem = $.parseHTML(`
                         <div class="user-content__basket-item" style="display: none">
                             <div class="user-content__basket-item-img">
-                                <img src="${response['thumb']}" >
+<!--                                <img src="${response['thumb']}">-->
+                                <a href="${response['pr_url']}"><img src="${response['thumb']}"></a>
                             </div>
                             <div class="user-content__basket-item-info">
-                                <h4>${response['name']}</h4>
-                                <div class="user-content__basket-item-calculate" data-id="${response['id']}">
+<!--                                <h4>${response['name']}</h4>-->
+                                <a href="${response['pr_url']}"><h4>${response['name']}</h4></a>
+                                <div class="user-content__basket-item-calculate">
                                     <div class="user-content__basket-item-price"><span>${response['price']}</span></div>
                                     <div class="user-content__basket-item-amount">
-                                        <input form="bascet_form_amount" type="number" min="1" name="${response['id']}" value="1">, шт
+                                        <input type="number" min="1" name="amount" value="1" data-product_id="${response['id']}" data-action="change_amount" autocomplete="off">, шт
                                     </div>
-                                    <div class="user-content__basket-item-total">Всього: <span>${response['price']}</span></div>
+                                    <div class="user-content__basket-item-total">Всього: <span>${response['price']}</span> ₴</div>
                                 </div>
                             </div>
-                            <span class="close"></span>
-                        </div>`)
+                            <span class="close"><span data-product_id="${response['id']}" data-action="remove_from_basket"></span></span>
+                        </div>`);
+
+                    $(htmlNewItem).find('input').change(changeBasket);
+                    $(htmlNewItem).find('span.close span').click(changeBasket);
 
                     let byedText = $(e.target).data('byed_text');
                     $(e.target).find('button').text(byedText);
                     $(e.target).data('status', 'in_basket');
                     $('.user-content__basket-list').append(htmlNewItem);
                     function doWhenOpen(){
-                        $(htmlNewItem).delay(200).slideDown(300);
-                        console.log(htmlNewItem);
+                        $(htmlNewItem).delay(200).slideDown(500);
+                    }
+                    $('#empty_basket').remove();
+                    $('.user-content__basket-total').addClass('visible');
+                    updateTotalBasket(response['total_amount'], response['total_sum']);
+                    if (! $('.sub-header__basket span').length){
+                        $('.sub-header__basket').html('<span>1</span');
                     }
                     showBascketWithAutohide(doWhenOpen);
-
-                }, 600)
+                }, 200)
             }
         });
     });
+
+
 
     $('.product_by_form button').click(function(e){
         let form = $(e.target).parent('form');
