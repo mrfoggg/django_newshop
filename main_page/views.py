@@ -1,15 +1,18 @@
 from django.db.models import Subquery, When, ImageField, ExpressionWrapper
 from django.db.models.expressions import OuterRef, Case, F
+from django.http import HttpResponse
 from django.shortcuts import render
 
 # from ROOTAPP.views import HeaderView
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 
 from catalog.models import Product, Category, ProductImage
+from catalog.views import ProductView, CategoryView
 from main_page.models import Banner, Menu, SitePhone, Schedule, PopularCategory, PopularProduct, NewProduct
 from servises import get_products_annotated_prices
 from site_settings.models import SliderConfiguration, HeaderConfiguration, PhotoPlug
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, View
 from django.views.generic.base import ContextMixin
 
 
@@ -69,3 +72,11 @@ class CompareView(TemplateView):
 
         context['grouped_dict'] = categories_data
         return context
+
+
+@csrf_exempt
+def dispatch_view(request, slug, str_url_data=None):
+    for model in (Category, Product):
+        if model.objects.filter(slug=slug).exists():
+            return {'product': ProductView, 'category': CategoryView}.get(
+                model.__name__.lower()).as_view()(request, slug=slug, str_url_data=str_url_data)

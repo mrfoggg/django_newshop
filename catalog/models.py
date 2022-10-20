@@ -64,6 +64,7 @@ class Country(models.Model):
 
 class Brand(models.Model):
     name = models.CharField('Название бренда', max_length=128, default=None, unique=True, db_index=True)
+    slug = models.SlugField(max_length=128, blank=True, null=True, default=None, unique=True)
     country = models.ForeignKey(Country, blank=True, null=True, default=None, on_delete=models.CASCADE,
                                 verbose_name='Страна брэнда')
 
@@ -121,7 +122,7 @@ class Category(MPTTModel):
 
     def get_absolute_url(self):
         # return f'/category/{self.slug}'
-        return reverse('catalog:category', args=(self.slug,))
+        return reverse('main_page:category_and_product', args=(self.slug,))
 
     @property
     def link(self):
@@ -198,6 +199,7 @@ class ProductPrice(models.Model):
 class ProductSeries(models.Model):
     name = models.CharField('Название линейки товаров', max_length=128, default=None, unique=True, db_index=True)
     description = models.TextField('Описание линейки товаров', blank=True, null=True, default=None)
+    slug = models.SlugField(max_length=128, blank=True, null=True, default=None, unique=True)
 
     class Meta:
         verbose_name = "Линейка товара"
@@ -272,7 +274,7 @@ class Product(models.Model):
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse('catalog:product', args=(self.slug,))
+        return reverse('main_page:category_and_product', args=(self.slug,))
 
     @property
     @admin.display(description='Содержится в категориях')

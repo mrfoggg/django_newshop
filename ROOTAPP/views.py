@@ -342,3 +342,6 @@ class ProductActionsView(View):
         request.session['compare'] = comp_list
 
         return JsonResponse({'product_id': product_id}, status=200)
+
+
+

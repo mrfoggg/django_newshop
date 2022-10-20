@@ -20,7 +20,7 @@
             <div class="category__title">
                 <h1>{{ category.name }}.</h1>
 
-                <span class="category__header-info">{{ total }} шт / {{ total_pages }} сторінки (сторінка № {{ current_page }}) </span>
+                <span class="category__header-info"><span id="category__header-info-total">{{ total }}</span> шт / <span id="category__header-info-total-pages">{{ total_pages }}</span> сторінки (сторінка № <span id="category__header-info-current-page">{{ current_page }}</span>) </span>
             </div>
             <div class="category__subcategory">
                 {% if category.subcategory_links %}
@@ -37,10 +37,18 @@
                 <div class="category-products__controls">
                     <div class="category-products__filters-list">
                         {% for checkbox in checked_filters %}
-                            <span class="category-products__filters-item" data-filter={{ checkbox.2 }} data-val={{ checkbox.1 }}>{{ checkbox.0 }}</span>
+                            {% if checkbox.1 == 'price'%}
+                                <span class="category-products__filters-item" data-filter={{ checkbox.1 }} data-val={{ checkbox.1 }}>Ціна від &nbsp <span class="from"> {{ checkbox.0.0 }}</span> &nbsp грн до &nbsp <span class="to">{{ checkbox.0.1 }}</span>&nbsp грн</span>
+                            {% else %}
+                                <span class="category-products__filters-item" data-filter={{ checkbox.2 }} data-val={{ checkbox.1 }}>{{ checkbox.0 }}</span>
+                            {% endif %}
                         {% endfor %}
                         {% if checked_filters_len > 1 %}
-                            <a class="category-products__filters-item" href={{ category.get_absolute_url }}>
+                            <a class="category-products__filters-item" href={{ category.get_absolute_url }} id='reset_all'>
+                                Скинути всі фільтри
+                            </a>
+                        {% else %}
+                            <a class="category-products__filters-item" href={{ category.get_absolute_url }} id='reset_all' style="visibility: hidden">
                                 Скинути всі фільтри
                             </a>
                         {% endif %}

@@ -36,6 +36,7 @@ def product_lists_conntext(request):
     ).annotate(
         thumb=Case(
             When(first_image_annotated__isnull=False, then=F('first_image_annotated')),
+            default=Subquery(PhotoPlug.objects.values('image')[:1])
         )
     )
 

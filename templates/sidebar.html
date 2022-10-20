@@ -1,5 +1,5 @@
 <form action={{ category.get_absolute_url }} id="filter-form" class="category-sidebar" data-max-height-section="26rem" >
-    {% csrf_token %}
+{#    {% csrf_token %}#}
     {% if category.level != 0 %}
         <div class="category-sidebar__bro-categories category-sidebar__section" >
 
@@ -27,10 +27,10 @@
         <div class="category-sidebar__title">Ціна
             <div class="category-sidebar__title-checkbox">
                 <label>
-                    {% if "tsyna" in wide_sections or not filtered %}
-                        <input type="checkbox" checked value="tsyna" name="sections-status"><span></span>
-                    {% else %}
+                    {% if "tsyna" not in wide_sections or not filtered %}
                         <input type="checkbox" value="tsyna" name="sections-status"><span></span>
+                    {% else %}
+                        <input type="checkbox" checked value="tsyna" name="sections-status"><span></span>
                     {% endif %}
 
                 </label>
@@ -39,52 +39,53 @@
         <div class="category-sidebar__section-content-wrapper" id="tsyna">
             <div class="category-sidebar__section-content category-sidebar__section-content--slider">
                 <div id="slider" data-min-price={{ price_min|stringformat:".2f" }} data-max-price={{ price_max|stringformat:".2f" }}
-                data-price-from={{ price_from }} data-price-to={{ price_to }} data-changed={{ filter_price_applied }}></div>
+                data-price-from={{ price_from }} data-price-to={{ price_to }} data-reset="false"></div>
                 <div class="category-sidebar__section-digital-inputs">
                     <input id="input-number-from" name="price_from" type="number">
                     <input id="input-number-to" name="price_to" type="number">
                 </div>
-                <button type="submit">Фільтрувати за ціною</button>
+{#                <button type="submit">Фільтрувати за ціною</button>#}
             </div>
         </div>
     </div>
     <form action="">
         {% for filter in filters_and_val_variant %}
+
             {% if filter.type == 'price' %}
             {% else %}
-                <div class="category-sidebar__section">
+                <div class="category-sidebar__section" data-filter-type = {{ filter.type }}>
                     <div class="category-sidebar__title"> {{ filter.name }}
                         <div class="category-sidebar__title-checkbox">
                             <label>
-                                {% if filter.slug in wide_sections or not filtered %}
-                                    <input type="checkbox" checked value={{ filter.slug }} name="sections-status">
+                                {% if filter.slug not in wide_sections or not filtered or filter.type == 'series' %}
+                                    <input type="checkbox" value={{ filter.slug }} name="sections-status">
                                     <span></span>
                                 {% else %}
-                                    <input type="checkbox" value={{ filter.slug }} name="sections-status">
+                                    <input type="checkbox" checked value={{ filter.slug }} name="sections-status">
                                     <span></span>
                                 {% endif %}
                             </label>
                         </div>
                     </div>
-                    <div id={{ filter.slug }} class="category-sidebar__section-content-wrapper" id={{ filter.slug }}>
-                        <ul class="category-sidebar__section-content">
+                    <div id={{ filter.slug }} class="category-sidebar__section-content-wrapper">
+                        <ul class="category-sidebar__section-content" data-filter-type = {{ filter.type }}>
                             {% for val_variant in filter.val_variants %}
                                 {% if val_variant.total_products == 0 %}
                                     <li><label class="category-sidebar__checkbox" disabled="">
                                         {% else %}
                                     <li><label class="category-sidebar__checkbox">
                                 {% endif %}
-                            {% if val_variant.is_checked %}
-                                <input type="checkbox" checked name="{{ filter.slug }}" value="{{ val_variant.slug }}">
-                            {% else %}
-                                {% if val_variant.total_products == 0 %}
-                                    <input type="checkbox" name="{{ filter.slug }}" value="{{ val_variant.slug }}" disabled>
+                                {% if val_variant.is_checked %}
+                                    <input type="checkbox" checked name="{{ filter.slug }}" value="{{ val_variant.slug }}">
                                 {% else %}
-                                    <input type="checkbox" name="{{ filter.slug }}" value="{{ val_variant.slug }}">
+                                    {% if val_variant.total_products == 0 %}
+                                        <input type="checkbox" name="{{ filter.slug }}" value="{{ val_variant.slug }}" disabled>
+                                    {% else %}
+                                        <input type="checkbox" name="{{ filter.slug }}" value="{{ val_variant.slug }}">
+                                    {% endif %}
                                 {% endif %}
-                            {% endif %}
-                            <div class="category-sidebar__checkbox--visible"></div> <span>{{ val_variant.name }} ({{ val_variant.total_products }})</span>
-                            </label></li>
+                                <div class="category-sidebar__checkbox--visible"></div> <span><span>{{ val_variant.name }}</span> (<span class="category-sidebar__checkbox--total">{{ val_variant.total_products }}</span>)</span>
+                                </label></li>
                             {% endfor %}
                         </ul>
                         <div class="category-sidebar__section-overflow-indicator">Показати всі</div>

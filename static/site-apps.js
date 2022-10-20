@@ -63,45 +63,45 @@ $(document).ready(function(){
         },2000, indicator)
     }
 
-    function increaseLovedCount(){
-        let loved_count = $('.sub-header__favorites span').text();
-        if (loved_count.length){
-                $('.sub-header__favorites span').text(Number(loved_count) + 1);
-            } else {
-                $('.sub-header__favorites').html('<span>1</span>');
-            }
-        pulse($('.sub-header__favorites span'));
-    }
-
-    function decreaseLovedCount(){
-        let loved_count = $('.sub-header__favorites span').text();
-        if (loved_count > 1){
-                $('.sub-header__favorites span').text(Number(loved_count) - 1);
-            } else {
-                $('.sub-header__favorites span').remove('span');
-            }
-        pulse($('.sub-header__favorites span'));
-    }
-
-    function increaseCompareCount(){
-        let compare_count = $('.sub-header__compare span').text();
-            if (compare_count.length){
-                $('.sub-header__compare span').text(Number(compare_count) + 1);
-            } else {
-                $('.sub-header__compare').html('<span>1</span>');
-            };
-        pulse($('.sub-header__compare span'));
-    }
-
-    function decreaseCompareCount(){
-        let compare_count = $('.sub-header__compare span').text();
-            if (compare_count > 1){
-                $('.sub-header__compare span').text(Number(compare_count) - 1);
-            } else {
-                $('.sub-header__compare span').remove('span');
-            }
-        pulse($('.sub-header__compare span'));
-    }
+    // function increaseLovedCount(){
+    //     let loved_count = $('.sub-header__favorites span').text();
+    //     if (loved_count.length){
+    //             $('.sub-header__favorites span').text(Number(loved_count) + 1);
+    //         } else {
+    //             $('.sub-header__favorites').html('<span>1</span>');
+    //         }
+    //     pulse($('.sub-header__favorites span'));
+    // }
+    //
+    // function decreaseLovedCount(){
+    //     let loved_count = $('.sub-header__favorites span').text();
+    //     if (loved_count > 1){
+    //             $('.sub-header__favorites span').text(Number(loved_count) - 1);
+    //         } else {
+    //             $('.sub-header__favorites span').remove('span');
+    //         }
+    //     pulse($('.sub-header__favorites span'));
+    // }
+    //
+    // function increaseCompareCount(){
+    //     let compare_count = $('.sub-header__compare span').text();
+    //         if (compare_count.length){
+    //             $('.sub-header__compare span').text(Number(compare_count) + 1);
+    //         } else {
+    //             $('.sub-header__compare').html('<span>1</span>');
+    //         };
+    //     pulse($('.sub-header__compare span'));
+    // }
+    //
+    // function decreaseCompareCount(){
+    //     let compare_count = $('.sub-header__compare span').text();
+    //         if (compare_count > 1){
+    //             $('.sub-header__compare span').text(Number(compare_count) - 1);
+    //         } else {
+    //             $('.sub-header__compare span').remove('span');
+    //         }
+    //     pulse($('.sub-header__compare span'));
+    // }
 
     function updateTotalBasket(total_amount, total_sum){
         $('.user-content__basket-total--ammount span, .sub-header__basket span').text(total_amount);
@@ -114,6 +114,88 @@ $(document).ready(function(){
         }
     }
 
+    function initProductItem(){
+        $('.product-list-item-content__img-slider').filter('.slick-initialized').slick('unslick');
+        $('.slick-slide').remove();
+        $('.product-list-item-content__img-slider').slick({
+            dots: true,
+            // adaptiveHeight: true,
+            pauseOnFocus: false,
+            waitForAnimate: false
+        }).hover(function(){
+            $(this).slick('slickGoTo',1);
+        }, function(){
+            $(this).slick('slickGoTo',0, true);
+        });
+
+        $('.product_by_form').submit(function(e){
+        console.log('product_by_form submit');
+            e.preventDefault();
+            $('.preloader.fast').fadeIn('fast');
+            $.ajax({
+                type: "POST",
+                url: $(this).attr('action'),
+                data: $(this).serialize(),
+                success: function (response) {
+                    setTimeout(function () {
+                        $('.preloader.fast').fadeOut();
+                        let htmlNewItem = $.parseHTML(`
+                            <div class="user-content__basket-item" style="display: none">
+                                <div class="user-content__basket-item-img">
+                                    <a href="${response['pr_url']}"><img src="${response['thumb']}"></a>
+                                </div>
+                                <div class="user-content__basket-item-info">
+                                    <a href="${response['pr_url']}"><h4>${response['name']}</h4></a>
+                                    <div class="user-content__basket-item-calculate">
+                                        <div class="user-content__basket-item-price"><span>${response['price']}</span></div>
+                                        <div class="user-content__basket-item-amount">
+                                            <input type="number" min="1" name="amount" value="1" data-product_id="${response['id']}" data-action="change_amount" autocomplete="off">, шт
+                                        </div>
+                                        <div class="user-content__basket-item-total">Всього: <span>${response['price']}</span> ₴</div>
+                                    </div>
+                                </div>
+                                <span class="close"><span data-product_id="${response['id']}" data-action="remove_from_basket"></span></span>
+                            </div>`);
+
+                        $(htmlNewItem).find('input').change(changeBasket);
+                        $(htmlNewItem).find('span.close span').click(changeBasket);
+
+                        let byedText = $(e.target).data('byed_text');
+                        $(e.target).find('button').text(byedText);
+                        $(e.target).data('status', 'in_basket');
+                        $('.user-content__basket-list').append(htmlNewItem);
+                        function doWhenOpen(){
+                            $(htmlNewItem).delay(200).slideDown(500);
+                        }
+                        $('#empty_basket').remove();
+                        $('.user-content__basket-total').addClass('visible');
+                        updateTotalBasket(response['total_amount'], response['total_sum']);
+                        if (! $('.sub-header__basket span').length){
+                            $('.sub-header__basket').html('<span>1</span');
+                        }
+                        showBascketWithAutohide(doWhenOpen);
+                    }, 200)
+                }
+            });
+        });
+
+        // $('.product_by_form button').unbind('click');
+        $('.product_by_form button').click(function(e){
+            console.log('product_by_form button click');
+            let form = $(e.target).parent('form');
+            if (form.data('status') == 'not_in_basket'){
+                form.submit();
+            } else {
+                if(!basketOpen) {
+                    showBascketWithAutohide(function (){});
+                }
+            }
+        });
+
+        $(".product-list-item-content__icons span").click(favoritesOrCompareActions);
+    }
+
+    initProductItem();
     makeSubheaderFlowing();
 
     $('.slider').slick({
@@ -123,16 +205,6 @@ $(document).ready(function(){
         waitForAnimate: false
     });
 
-    $('.product-list-item-content__img-slider').slick({
-        dots: true,
-        // adaptiveHeight: true,
-        pauseOnFocus: false,
-        waitForAnimate: false
-    }).hover(function(){
-        $(this).slick('slickGoTo',1);
-    }, function(){
-        $(this).slick('slickGoTo',0, true);
-    });
 
     $('.product__top-gallery--main-slider').slick({
         dots: true,
@@ -170,37 +242,39 @@ $(document).ready(function(){
 
     let maxHeightSection = $('.category-sidebar').data('max-height-section');
 
+    function bindWideOreCollapseSectionContent(sectionContent){
+        let wideBlock = $(sectionContent).next('div');
+        let collapseBlock = $(wideBlock).next('div');
+        $(wideBlock).on('click', function() {
+            $(sectionContent).css('max-height', '100%');
+            $(wideBlock).css('display', 'none');
+            $(collapseBlock).css('display', 'block');
+        })
+
+        $(collapseBlock).on('click', function() {
+            $(sectionContent).css('max-height', maxHeightSection);
+            $(collapseBlock).css('display', 'none');
+            $(wideBlock).css('display', 'block');
+        })
+    }
+
     $('.category-sidebar__section-content').css('max-height', maxHeightSection)
     for (let i of $(".category-sidebar__section")) {
         let checkBox = $(i).children('div').children('div').children('label').children('input')
         let content = $(i).children(".category-sidebar__section-content-wrapper").children('.category-sidebar__section-content');
-        if(checkBox.is(':checked')){
+        let wideBlock = $(content).next('div');
+        // если чекбокс атоит контент секции показать
+        if(! checkBox.is(':checked')){
             $('#'+checkBox.val()).css('display', 'block');
         } else {
             $('#'+checkBox.val()).css('display', 'none');
         }
-
-        if (content.prop('scrollHeight') - 23 > $(content).height()) {
-            let wideBlock = $(content).next('div');
-            let collapseBlock = $(wideBlock).next('div')
-
-            wideBlock.css('display', 'block');
-
-            $(i).css('margin-bottom', '0.5rem');
-            wideBlock.on('click', function() {
-                $(content).css('max-height', '100%');
-                wideBlock.css('display', 'none');
-                collapseBlock.css('display', 'block');
-            })
-
-            collapseBlock.on('click', function() {
-                $(content).css('max-height', maxHeightSection);
-                collapseBlock.css('display', 'none')
-                wideBlock.css('display', 'block')
-            })
+        if ($(content).prop('scrollHeight') - 21 > $(content).height()) {
+            $(wideBlock).css('display', 'block');
+            $(content).css('margin-bottom', '0.5rem');
+            bindWideOreCollapseSectionContent(content);
         }
     }
-
     $('.category-sidebar__section :checkbox').change(function(){
         $('#'+$(this).val()).slideToggle('fast');
     });
@@ -237,27 +311,273 @@ $(document).ready(function(){
             slider.noUiSlider.set([null, this.value]);
         });
 
-        slider.noUiSlider.on('change', function () {
-            $('button').fadeIn('fast');
-            $('#slider').data('changed', 'true')
+        slider.noUiSlider.on('set', function () {
+            let values = this.get()
+            $('#slider').data('priceFrom', values[0]);
+            $('#slider').data('priceTo', values[1]);
+            if (!$('#slider').data('reset'))
+                filterFormSubmit(null, 'price');
         });
+        slider.noUiSlider.on('start', function (){
+             $('#slider').data('reset', false);
+        });
+        slider.noUiSlider.on('end', function (){
+             console.log('END SET SLIDER');
+        });
+
+
     }
 
-    $('input[type=radio]').click(function(){
-        if ($('#slider').data('changed') == false) {
-            $('#input-number-from').prop("disabled", true);
-            $('#input-number-to').prop("disabled", true);
-        }
+    function filterFormSubmit(target, target_type){
+        $('#filter-form').unbind('submit')
+        $('#filter-form').submit({"target": target, 'target_type': target_type}, function (e){
+            console.log('SUBMIT');
+
+            e.preventDefault();
+            let slider_data = $('#slider').data();
+            let filterPriceNotChanged=Number(slider_data['minPrice']) === Number($('#input-number-from').val()) && Number(slider_data['maxPrice']) === Number($('#input-number-to').val());
+            if (filterPriceNotChanged){
+                $('.category-products__filters-item[data-filter="price"]').fadeOut(400,function (){
+                    $(this).remove();
+                })
+            } else {
+                // $('#input-number-from').prop("disabled", false);
+                // $('#input-number-to').prop("disabled", false);
+
+            }
+            $('.category-products__list, .category-sidebar__checkbox, .category__header-info').css('opacity', '30%');
+            if (filterPriceNotChanged) {
+                $('#input-number-to, #input-number-from').prop('disabled', true);
+            }
+            if ($('#default_sort').prop('checked')) {
+                $('#default_sort').prop('disabled', true);
+            }
+            if ($('#page_1').prop('checked')) {
+                $('#page_1').prop('disabled', true);
+            }
+            let groupedFilterData = {};
+            // получаем ссылку ЧПУ
+            for (let inp of $('.category-sidebar__section-content input[type="checkbox"]:checked')) {
+                $(inp).prop('disabled', true);
+                $(inp).data('tempDisabled', true);
+                if (groupedFilterData.hasOwnProperty(inp.name)) {
+                    groupedFilterData[inp.name] += '--' + $(inp).val();
+                } else {
+                    groupedFilterData[inp.name] = $(inp).val();
+                }
+            }
+            let readyHumanUrl = '';
+            for (let filter in groupedFilterData) {
+                if (readyHumanUrl === '') {
+                    readyHumanUrl = filter;
+                } else {
+                    readyHumanUrl += ('__' + filter);
+;                }
+                readyHumanUrl += ('__' + groupedFilterData[filter]);
+            }
+
+            $.ajax({
+                type: "POST",
+                url: (readyHumanUrl) ? $(this).attr('action') + readyHumanUrl + '/' : $(this).attr('action'),
+                data: $(this).serialize(),
+
+                success: function (response){
+                    $('#input-number-to, #input-number-from').prop('disabled', false);
+                    $('#default_sort').prop('disabled', false);
+                    $('#page_1').prop('disabled', false);
+                    $('input[data-temp-disabled="true"]').prop('disabled', false);
+                    if (! (e.data['target_type'] ==='paginator')) {
+                        let newPaginatorItems = '';
+                        for (let p of response['page_range']) {
+                            newPaginatorItems += `<input class="category__paginator_item" form="filter-form" id="page_${p}" type="radio" name="paginator" value=${p} ${p===1 ? 'checked' : ''}> <label for="page_${p}">${p}</label>`
+                        }
+                        const newParsedPaginatorItems = $.parseHTML(newPaginatorItems);
+                        $('.category-paginator__items-wrapper label, .category__paginator_item').remove();
+                        $('.category-paginator__items-wrapper').append(newParsedPaginatorItems);
+                        $('.category-paginator__items-wrapper input').change(function (){
+                            filterFormSubmit(null, 'paginator');
+                        });
+                    }
+
+
+
+                    // действия с блоком серий товаров
+                    const productSeries = response['product_series'];
+                    if (Object.keys(productSeries).length) {
+                        let serIdList = Object.keys(productSeries);
+                        let isRemovedOreAddedSomeSeries = false;
+
+                        // очистка ненужных серий
+                        if ($('.category-sidebar__section [data-filter-type="series"]').length){
+                            for (let ch of $('input[name="series"]')){
+                                if (! serIdList.includes($(ch).val())){
+                                    $(ch).parent().fadeOut(function (){
+                                        $(this).remove();
+                                    })
+                                    isRemovedOreAddedSomeSeries = true;
+                                }
+                            }
+                        } else {
+                            const blockSeriesParsedHtml = $.parseHTML(`
+                                <div class="category-sidebar__section" style="display: none" data-filter-type="series">
+                                    <div class="category-sidebar__title"> Серия товаров
+                                        <label>
+                                            <input type="checkbox" value='series' name="sections-status">
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                    <div id='series' class="category-sidebar__section-content-wrapper">
+                                        <ul class="category-sidebar__section-content" data-filter-type="series">
+                                        </ul>
+                                        <div class="category-sidebar__section-overflow-indicator">Показати всі</div>
+                                        <div class="category-sidebar__section-overflow-indicator">Згорнути</div>
+                                    </div>
+                                </div>
+                            `);
+                            $('input[value="brands"]').parents('.category-sidebar__section').after($(blockSeriesParsedHtml));
+                            $(blockSeriesParsedHtml).slideDown('slow');
+                            bindWideOreCollapseSectionContent($(blockSeriesParsedHtml).find('.category-sidebar__section-content'));
+                            $(blockSeriesParsedHtml).find('input').change(function (){
+                                $('#series').slideToggle('fast');
+                            })
+                        }
+                        // добавление новых серий
+                        for (let serId of serIdList) {
+                            const newVal = productSeries[serId];
+                            if (!$(`input[name="series"][value=${serId}]`).length){
+                                const newItemSeriesParsedHtml = $.parseHTML(`
+                                    <li><label class="category-sidebar__checkbox">
+                                        <input type="checkbox" name="series" value=${serId}>
+                                        <div class="category-sidebar__checkbox--visible"></div> <span><span>${newVal['name']}</span> (<span class="category-sidebar__checkbox--total">${newVal['total_products']}</span>)</span>
+                                    </label></li>
+                                `);
+                                $(newItemSeriesParsedHtml).find('input').click(function(e){
+                                    $('.category__paginator_item').first().prop( "checked", true );
+                                    filterFormSubmit(e.target, 'checkbox');
+                                });
+                                $('.category-sidebar__section-content[data-filter-type="series"]').append($(newItemSeriesParsedHtml));
+                                isRemovedOreAddedSomeSeries = true
+                            }
+                        }
+                        let seriesSectionContent =$('.category-sidebar__section[data-filter-type="series"]').find('.category-sidebar__section-content');
+                        if (isRemovedOreAddedSomeSeries) {
+                            setTimeout(function (){
+                                if ($(seriesSectionContent).prop('scrollHeight') - 21 > $(seriesSectionContent).height()) {
+                                    console.log('SHOW WIDER');
+                                    $(seriesSectionContent).next('div').fadeIn();
+                                } else if (!$(seriesSectionContent).next('div').next('div').height()) {
+                                    console.log('HIDE WIDER');
+                                    $(seriesSectionContent).next('div').fadeOut();
+                                    bindWideOreCollapseSectionContent($(seriesSectionContent));
+                                } else if ($(seriesSectionContent).height() < 260) {
+                                    console.log('HIDE ALL');
+                                    $(seriesSectionContent).next('div').next('div').fadeOut();
+                                    $(seriesSectionContent).next('div').fadeOut();
+                                } else if ($(seriesSectionContent).css('max-height') === '100%') {
+                                    $(seriesSectionContent).next('div').next('div').fadeIn();
+                                }
+                            }, 900);
+                        }
+                    } else {
+                        $('.category-sidebar__section[data-filter-type="series"]').fadeOut(function (){
+                            $('.category-products__filters-item[data-filter="series"]').fadeOut();
+                            $(this).remove();
+                        });
+                    }
+                    $('html, body').animate({
+                        scrollTop: $('.breadcrumbs').offset().top - 2*$('.breadcrumbs').height()
+                    }, 600, 'linear');
+                    let url;
+                    if (this['data']) {
+                        url = this['url'] + '?' + this['data'];
+                    } else {
+                        url = this['url'];
+                    }
+                    window.history.pushState({route: url}, "EVILEG", url);
+                    if (response['checked_filters_len'] < 2){
+                        $('#reset_all').fadeOut();
+                    } else {
+                        $('#reset_all').fadeIn();
+                    }
+
+                    if (e.data['target_type'] ==='checkbox'){
+                        if ($(e.data['target']).is(':checked')){
+                            const newCheckboxFilterDeleter = $.parseHTML(`<span class="category-products__filters-item" data-filter=${$(e.data.target).prop('name')} data-val=${$(e.data.target).val()}>${$(e.data.target).siblings('span').children('span:first-child').text()}</span>`);
+                            bindFilterReseters($(newCheckboxFilterDeleter));
+                            $(newCheckboxFilterDeleter).insertBefore('#reset_all');
+                            if (response['checked_filters_len'] > 1)
+                                $('#reset_all').css('visibility', 'visible');
+                        } else {
+                            $(`.category-products__filters-item[data-filter=${$(e.data['target']).prop('name')}][data-val=${$(e.data.target).val()}]`).fadeOut();
+                        }
+
+                    }
+
+                    if (e.data['target_type']==='filters-item'){
+                        $('#input-number-from, #input-number-to').prop('disabled', false);
+                        $(e.data['target']).fadeOut(400, function (){
+                            $(e.data['target']).remove();
+                        });
+                    }
+
+                    if (e.data['target_type']==='price' && !filterPriceNotChanged){
+                        console.log('Create or update RESET PRICE');
+                        if (!$('.category-products__filters-item[data-filter="price"]').length){
+                            console.log('Create RESET PRICE');
+                            const newPriceFilterDeleter = $.parseHTML(`<span class="category-products__filters-item" data-filter="price">Ціна від &nbsp <span class="from">${$('#input-number-from').val()}</span> &nbsp грн до &nbsp <span class="to">${$('#input-number-to').val()}</span> &nbsp грн</span>`);
+                            $(newPriceFilterDeleter).insertBefore('#reset_all');
+                            bindFilterReseters($(newPriceFilterDeleter));
+                        } else {
+                            console.log('update RESET PRICE');
+                            $('.category-products__filters-item .from').text($('#input-number-from').val());
+                            $('.category-products__filters-item .to').text($('#input-number-to').val());
+                        }
+                    }
+
+                    let listing = $.parseHTML(response['listing_html']);
+                    // console.log(response['checked_filters']);
+                    for (let filter of response['ajax_filters_data']) {
+                        for (let val of filter['filter_values']){
+                            let checkbox = $(`input[name=${filter['filter_slug']}][value=${val['value_slug']}]`)
+                            checkbox.siblings('span').children('.category-sidebar__checkbox--total').text(val['total_products']);
+                            if (val['total_products'] == 0 && checkbox.prop('checked') == false) {
+                                checkbox.prop('disabled', true);
+                                checkbox.parent().css('cursor', 'auto');
+                            } else {
+                                checkbox.prop('disabled', false);
+                                checkbox.parent().css('cursor', 'pointer');
+                            }
+                        }
+                    }
+
+                    $('#category__header-info-total').text(response['total']);
+                    $('#category__header-info-total-pages').text(response['total_pages']);
+                    $('#category__header-info-current-page').text(response['current_page']);
+                    $('.category-products__list').html(listing);
+                    initProductItem();
+                    $('.category-products__list .product-list-item').css('opacity', '0');
+                    setTimeout(function (){
+                        $('.category-products__list, .category-sidebar__checkbox, .category__header-info').css('opacity', '100%');
+                        let duration = 100; //'slow'
+                        $('.category-products__list .product-list-item').each(function(index) {
+                            $(this).delay(duration * index).fadeTo('slow', 1);
+                        });
+                    },300)
+                }
+            });
+        });
         $('#filter-form').submit();
+    }
+
+
+    $('input[type=radio]').change(function(){
+        filterFormSubmit(null, null);
     });
 
-    $('.category-sidebar__section-content input[type=checkbox]').click(function(){
+    $('.category-sidebar__section-content input[type=checkbox]').click(function(e){
         $('.category__paginator_item').first().prop( "checked", true );
-        if ($('#slider').data('changed') == false) {
-            $('#input-number-from').prop("disabled", true);
-            $('#input-number-to').prop("disabled", true);
-        }
-        $('#filter-form').submit();
+
+        filterFormSubmit(e.target, 'checkbox');
     });
 
     $('.category-products__display-settings').click(function(){
@@ -273,26 +593,39 @@ $(document).ready(function(){
         }
     });
 
-    $('.category-products__filters-item').click(function(){
-        let filter = $(this).data('filter');
+    $('input[name="listing_sort"]').change(function (e){
+        $('.category-products__display-settings-popup').fadeOut();
+        $('.category-products__display-settings span').text($(e.target).next().text());
+    })
 
-        if (filter != 'price'){
-            let val = $(this).data('val');
-            $('input[name='+filter+'][value='+val+']').prop( "checked", false );
-        }
-        $('.category__paginator_item').first().prop( "checked", true );
-        if ($('#slider').data('changed') == false | filter == 'price') {
-            $('#input-number-from').prop("disabled", true);
-            $('#input-number-to').prop("disabled", true);
-        }
-        $('#filter-form').submit();
-    });
+    function bindFilterReseters(target){
+        // console.log('BIND RESET PRICE CLCK')
+        target.click(function(e){
+            let filter = $(this).data('filter');
+            if (filter == 'price'){
+                $('#slider').data('reset', false);
+                // slider.noUiSlider.set([$('#slider').data('minPrice'), $('#slider').data('maxPrice')]);
+                $('#slider').data('reset', true);
+                setTimeout(function (){
+                    slider.noUiSlider.set([$('#slider').data('minPrice'), $('#slider').data('maxPrice')]);
+                },100)
+                $('#slider').data('priceFrom', $('#slider').data('minPrice'));
+                $('#slider').data('priceTo', $('#slider').data('maxPrice'));
+                $('#input-number-from, #input-number-to').prop('disabled', true);
+            } else {
+                let val = $(this).data('val');
+                $('input[name='+filter+'][value='+val+']').prop( "checked", false );
+            }
+            $('.category__paginator_item').first().prop( "checked", true );
 
-    $('#input-number-from, #input-number-to').change(function(){
-        $('button').fadeIn('fast');
-        $('#slider').data('changed', 'true')
+            filterFormSubmit(this, 'filters-item');
+            // $(e.target).fadeOut();
+        });
+    }
 
-    });
+    //снятие фильтра вверху листинга
+
+    bindFilterReseters($('.category-products__filters-item'));
 
     $.fn.setCursorPosition = function(pos) {
         if ($(this).get(0).setSelectionRange) {
@@ -581,71 +914,6 @@ $(document).ready(function(){
             showBascketWithAutohide(function (){});
     });
 
-
-    $('.product_by_form').submit(function(e){
-        e.preventDefault();
-        $('.preloader.fast').fadeIn('fast');
-        $.ajax({
-            type: "POST",
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            success: function (response) {
-                setTimeout(function () {
-                    $('.preloader.fast').fadeOut();
-                    let htmlNewItem = $.parseHTML(`
-                        <div class="user-content__basket-item" style="display: none">
-                            <div class="user-content__basket-item-img">
-<!--                                <img src="${response['thumb']}">-->
-                                <a href="${response['pr_url']}"><img src="${response['thumb']}"></a>
-                            </div>
-                            <div class="user-content__basket-item-info">
-<!--                                <h4>${response['name']}</h4>-->
-                                <a href="${response['pr_url']}"><h4>${response['name']}</h4></a>
-                                <div class="user-content__basket-item-calculate">
-                                    <div class="user-content__basket-item-price"><span>${response['price']}</span></div>
-                                    <div class="user-content__basket-item-amount">
-                                        <input type="number" min="1" name="amount" value="1" data-product_id="${response['id']}" data-action="change_amount" autocomplete="off">, шт
-                                    </div>
-                                    <div class="user-content__basket-item-total">Всього: <span>${response['price']}</span> ₴</div>
-                                </div>
-                            </div>
-                            <span class="close"><span data-product_id="${response['id']}" data-action="remove_from_basket"></span></span>
-                        </div>`);
-
-                    $(htmlNewItem).find('input').change(changeBasket);
-                    $(htmlNewItem).find('span.close span').click(changeBasket);
-
-                    let byedText = $(e.target).data('byed_text');
-                    $(e.target).find('button').text(byedText);
-                    $(e.target).data('status', 'in_basket');
-                    $('.user-content__basket-list').append(htmlNewItem);
-                    function doWhenOpen(){
-                        $(htmlNewItem).delay(200).slideDown(500);
-                    }
-                    $('#empty_basket').remove();
-                    $('.user-content__basket-total').addClass('visible');
-                    updateTotalBasket(response['total_amount'], response['total_sum']);
-                    if (! $('.sub-header__basket span').length){
-                        $('.sub-header__basket').html('<span>1</span');
-                    }
-                    showBascketWithAutohide(doWhenOpen);
-                }, 200)
-            }
-        });
-    });
-
-
-
-    $('.product_by_form button').click(function(e){
-        let form = $(e.target).parent('form');
-        if (form.data('status') == 'not_in_basket'){
-            form.submit();
-        } else {
-            if(!basketOpen) {
-                showBascketWithAutohide(function (){});
-            }
-        }
-    });
 });
 
 document.body.onload = function() {

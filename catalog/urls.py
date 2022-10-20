@@ -8,7 +8,7 @@ app_name = 'catalog'
 urlpatterns = [
     # path('<slug:slug>/', cache_page(600)(CategoryView.as_view()), name='category'),
     path('<slug:slug>/', CategoryView.as_view(), name='category'),
-    path('product/<slug:slug>/', ProductView.as_view(), name='product'),
+    path('product/<slug:slug>/', ProductView.as_view(), name='product')
 ]
 
 # if settings.DEBUG:

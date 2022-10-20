@@ -79,7 +79,7 @@ class Menu(MPTTModel):
         choices=TYPE_OF_ITEM_MENU, default=4, db_index=True, verbose_name='Тип пункта меню')
     parent = TreeForeignKey('self', blank=True, null=True, default=None, on_delete=models.SET_NULL,
                             related_name='children', db_index=True, verbose_name='Родительский пункт меню')
-    link = models.URLField(max_length=128, blank=True, null=True, default=None, unique=True,
+    link = models.URLField(max_length=1024, blank=True, null=True, default=None, unique=True,
                            verbose_name='Ссылка на которую указывает пункт меню')
     category = TreeForeignKey(Category, blank=True, null=True, default=None, on_delete=models.SET_NULL,
                               verbose_name='Целевая категория товаров')

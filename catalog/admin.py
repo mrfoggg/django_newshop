@@ -195,9 +195,11 @@ class ProductImageInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTa
     sortable_field_name = "position"
     extra = 0
 
+
 class DiscountInline(nested_admin.NestedTabularInline):
     model = Discount
     extra = 0
+
 
 @admin.register(Category)
 class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin, SummernoteModelAdmin):
@@ -209,7 +211,7 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin, Summernot
     save_as = True
     save_as_continue = False
     inlines = (GroupPlacementInline, MainAttributeInLine, ShotAttributeInLine, ProductPlacementInlineForCategory,
-               FilterInline, )
+               FilterInline,)
     actions = [export_as_json]
 
     class Media:
@@ -539,11 +541,16 @@ class CombinationOfCategoryAdmin(nested_admin.NestedModelAdmin):
         }
 
 
-# admin.site.register(Country)
-admin.site.register(Brand)
-admin.site.register(ProductSeries)
+@admin.register(Brand)
+class BrandAdmin(admin.ModelAdmin):
+    prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(ProductSeries)
+class ProductSeriesAdmin(admin.ModelAdmin):
+    prepopulated_fields = {"slug": ("name",)}
+
+
 admin.site.register(OtherShop)
 admin.site.register(ProductImage)
 admin.site.register(Filter)
-# admin.site.register(Discount)
-

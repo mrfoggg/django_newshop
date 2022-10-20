@@ -28,16 +28,16 @@ admin.site.index_title = 'Панель администрирования инт
 
 urlpatterns = [
     path("select2/", include("django_select2.urls")),
-    path('', include('main_page.urls')),
-    # path('catalog/', include('catalog.urls')),
-    path('category/', include('catalog.urls')),
-    path('root_app/', include('ROOTAPP.urls')),
     path('admin/', admin.site.urls),
+    path('root_app/', include('ROOTAPP.urls')),
+    path('', include('main_page.urls')),
+    # path('category/', include('catalog.urls')),
+
+
     path('baton/', include('baton.urls')),
-    # path("select2/", include("django_select2.urls")),
     path('summernote/', include('django_summernote.urls')),
     path('_nested_admin/', include('nested_admin.urls')),
-    path('__debug__/', include('debug_toolbar.urls')),
+    # path('__debug__/', include('debug_toolbar.urls')),
 ]
 
 
