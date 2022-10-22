@@ -65,18 +65,18 @@
                     {% for attr in product.main_attributes %}
                         <li><span>{{ attr.0 }}:</span><span class="dotted"></span><span>{{ attr.1 }}</span></li>
                     {% endfor %}
-{#                    {{ product.main_attributes }}#}
                 </ul>
                 <div class="product__top-data-by">
                     <div class="product__top-data-by-info">
-                        <span class="product__top-data-by-price">{{ product.total_price|floatformat:2 }}</span>
+                        <span class="product__top-data-by-price">
+                            <span class="product__top-data-by-price--old">{{ product.price|floatformat:2 }}</span>
+                            {{ product.total_price|floatformat:2 }}
+                        </span>
                         <span class="product__top-data-by-art">артікул: {{ product.sku }}</span>
-
                     </div>
-{#                    <div class="product__top-data-by-btns">#}
                     <form class="product__top-data-by-btns product_by_form" action="{{ url_product_actions }}" data-by_text="До кошика" data-byed_text="У кошику" data-status="not_in_basket" data-product_id="{{ product.id }}">
                 {% csrf_token %}
-                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="product_id" value="{{ product.id }}" data-id="{{ product.id }}">
                 <input type="hidden" name="action" value="add_basket">
                         <span class="product__top-data-by-btns-checkout" type="submit">Замовити зараз</span>
                         {% if product.id|stringformat:"i" in products_id_in_basket %}
@@ -129,7 +129,7 @@
                         <input type="hidden" name="height" value={{ product.package_height }}>
                         <input type="hidden" name="length" value={{ product.package_length }}>
                         <input type="hidden" name="weight" value={{ product.weight }}>
-                        <input type="hidden" name="price" value={{ product.price.amount }}>
+                        <input type="hidden" name="price" value={{ product.total_price|floatformat }}>
                         <input type="hidden" name="seats_amount" value={{ product.seats_amount }}>
 
                         <div class="input-data-delivery-cost-actions">
@@ -201,7 +201,10 @@
                 </div>
             </div>
             <div class="product__main-data-sidebar">
-                <h3>Супутні товари</h3>
+                <ul class="product__main-data-sidebar__added_products">
+                    <h3>Супутні товари</h3>
+                    <p id="default_message">Оберіть супутні товари</p>
+                </ul>
                 {% for addict_product_category in product.addict_product_category.all %}
                     <div class="product__main-data-sidebar-products-wrapper">
                         <h4>{{ addict_product_category.category.name }}</h4>
@@ -212,7 +215,13 @@
                                         <img src="{{ im.url }}" alt="">
                                     {% endthumbnail %}
                                     <h5>{{ placement.product.name }}</h5>
-                                    <ul class="product__main-data-sidebar-products__characteristics">
+                                    <input class="addict_product" type="radio" name={{ addict_product_category.category.slug }} value={{ placement.product.id }} id={{ placement.product.id }} checked>
+                                    <div class="product__main-data-sidebar-products-item-by">
+                                        <span class="price">{{ placement.total_price }} ₴</span>
+                                        <label for={{ placement.product.id }}>Додати</label>
+                                    </div>
+                                    {% if placement.product.shot_attributes %}
+                                        <ul class="product__main-data-sidebar-products__characteristics">
                                         {% for shot_attr in placement.product.shot_attributes %}
                                             {% if  shot_attr.1 %}
                                             <li class="product-list-item-content__characteristics-item">
@@ -222,6 +231,8 @@
                                             {% endif %}
                                         {% endfor %}
                                     </ul>
+                                    {% endif %}
+
                                 </div>
                             {% endfor %}
                         </div>

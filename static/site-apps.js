@@ -107,10 +107,12 @@ $(document).ready(function(){
         $('.user-content__basket-total--ammount span, .sub-header__basket span').text(total_amount);
         $('.user-content__basket-total--summ span').text(total_sum);
         if (! total_amount){
-            $('.sub-header__basket span, .user-content__basket-total').fadeOut();
+            // $('.sub-header__basket span, .user-content__basket-total').slideUp();
+            $('.sub-header__basket span, .user-content__basket-total').removeClass('visible');
             $('.user-content__basket-list').html($.parseHTML('<h2 id="empty_basket">Кошик порожній</h2>'))
         } else {
-            $('.sub-header__basket span, .user-content__basket-total').fadeIn();
+            // $('.sub-header__basket span, .user-content__basket-total').slideDown();
+            $('.sub-header__basket span, .user-content__basket-total').addClass('visible');
         }
     }
 
@@ -129,51 +131,91 @@ $(document).ready(function(){
         });
 
         $('.product_by_form').submit(function(e){
-        console.log('product_by_form submit');
+            console.log('product_by_form submit');
             e.preventDefault();
             $('.preloader.fast').fadeIn('fast');
+            if ($('.product__main-data-sidebar__added_products li').length) {
+                $('.product_by_form input[name="action"]').val('multi_add_basket');
+                let addictProductIdList = [$('.product_by_form input[name="product_id"]').val()];
+                for (let li of $('.product__main-data-sidebar__added_products li')) {
+                    console.log($(li).data('value'));
+                    addictProductIdList.push(($(li).data('value')).toString());
+                }
+                // console.log(addictProductIdList.join(','));
+                $('.product_by_form input[name="product_id"]').val(addictProductIdList.join(','));
+            } else {
+                if ($('.product_by_form input[name="product_id"]').data('id')) {
+                    $('.product_by_form input[name="product_id"]').val($('.product_by_form input[name="product_id"]').data('id'));
+                    $('.product_by_form input[name="action"]').val('add_basket');
+                }
+
+            }
+
             $.ajax({
                 type: "POST",
                 url: $(this).attr('action'),
                 data: $(this).serialize(),
                 success: function (response) {
+                    // console.log(response);
                     setTimeout(function () {
                         $('.preloader.fast').fadeOut();
-                        let htmlNewItem = $.parseHTML(`
-                            <div class="user-content__basket-item" style="display: none">
-                                <div class="user-content__basket-item-img">
-                                    <a href="${response['pr_url']}"><img src="${response['thumb']}"></a>
-                                </div>
-                                <div class="user-content__basket-item-info">
-                                    <a href="${response['pr_url']}"><h4>${response['name']}</h4></a>
-                                    <div class="user-content__basket-item-calculate">
-                                        <div class="user-content__basket-item-price"><span>${response['price']}</span></div>
-                                        <div class="user-content__basket-item-amount">
-                                            <input type="number" min="1" name="amount" value="1" data-product_id="${response['id']}" data-action="change_amount" autocomplete="off">, шт
-                                        </div>
-                                        <div class="user-content__basket-item-total">Всього: <span>${response['price']}</span> ₴</div>
+                        function addElementsToBasket(element, pricesObj=false) {
+                            console.log('pricesObj: ', pricesObj);
+                            console.log("element['id']: ", pricesObj);
+                            let price = pricesObj ? pricesObj[element['id']] : element['price']
+                            let htmlNewItem = $.parseHTML(`
+                                <div class="user-content__basket-item" style="display: none">
+                                    <div class="user-content__basket-item-img">
+                                        <a href="${element['pr_url']}"><img src="${element['thumb']}"></a>
                                     </div>
-                                </div>
-                                <span class="close"><span data-product_id="${response['id']}" data-action="remove_from_basket"></span></span>
-                            </div>`);
+                                    <div class="user-content__basket-item-info">
+                                        <a href="${element['pr_url']}"><h4>${element['name']}</h4></a>
+                                        <div class="user-content__basket-item-calculate">
+                                            <div class="user-content__basket-item-price"><span>${price}</span>&nbsp₴</div>
+                                            <div class="user-content__basket-item-amount">
+                                                <input type="number" min="1" name="amount" value="1" data-product_id="${element['id']}" data-action="change_amount" autocomplete="off">, шт
+                                            </div>
+                                            <div class="user-content__basket-item-total">Всього: <span>${price}</span> ₴</div>
+                                        </div>
+                                    </div>
+                                    <span class="close"><span data-product_id="${element['id']}" data-action="remove_from_basket"></span></span>
+                                </div>`);
+                            $('.user-content__basket-list').append(htmlNewItem);
 
-                        $(htmlNewItem).find('input').change(changeBasket);
-                        $(htmlNewItem).find('span.close span').click(changeBasket);
+                            $(htmlNewItem).find('input').change(changeBasket);
+                            $(htmlNewItem).find('span.close span').click(changeBasket);
+                            function doWhenOpen(){
+                                $(htmlNewItem).delay(200).slideDown(500);
+                            }
+                            showBascketWithAutohide(doWhenOpen);
+                        }
 
+                        // function doWhenOpen(){
+                        //     $(htmlNewItem).delay(200).slideDown(500);
+                        // }
+
+
+                        if ($('.product__main-data-sidebar__added_products li').length) {
+                            for (let newElemData of response['added_products_data_list']) {
+                                addElementsToBasket(newElemData, response['prices_dict']);
+                            }
+                            if (! $('.sub-header__basket span').length){
+                                $('.sub-header__basket').html(`<span>${response["total_amount"]}</span>`);
+                            }
+                        } else {
+                            addElementsToBasket(response);
+                            if (! $('.sub-header__basket span').length){
+                                $('.sub-header__basket').html('<span>1</span');
+                            }
+                        }
                         let byedText = $(e.target).data('byed_text');
                         $(e.target).find('button').text(byedText);
                         $(e.target).data('status', 'in_basket');
-                        $('.user-content__basket-list').append(htmlNewItem);
-                        function doWhenOpen(){
-                            $(htmlNewItem).delay(200).slideDown(500);
-                        }
                         $('#empty_basket').remove();
+                        updateTotalBasket(response['total_amount'], response['total_sum'] + ' ₴');
+
                         $('.user-content__basket-total').addClass('visible');
-                        updateTotalBasket(response['total_amount'], response['total_sum']);
-                        if (! $('.sub-header__basket span').length){
-                            $('.sub-header__basket').html('<span>1</span');
-                        }
-                        showBascketWithAutohide(doWhenOpen);
+                        // showBascketWithAutohide(doWhenOpen);
                     }, 200)
                 }
             });
@@ -192,7 +234,7 @@ $(document).ready(function(){
             }
         });
 
-        $(".product-list-item-content__icons span").click(favoritesOrCompareActions);
+        // $(".product-list-item-content__icons span").click(favoritesOrCompareActions);
     }
 
     initProductItem();
@@ -741,6 +783,7 @@ $(document).ready(function(){
 
         form.unbind('submit');
         form.submit(function (submitEvent){
+            console.log('form.submit');
             submitEvent.preventDefault();
             $('.preloader.fast').fadeIn('fast');
 
@@ -766,11 +809,40 @@ $(document).ready(function(){
                         target.toggleClass('added', statusWhenSuccess === 'enabled');
                         if (page === 'product')
                             target.text(action.text_when_success);
-                        if (page === 'favorites' && action.code === 'remove_fav')
-                            target.parents('.product-list-item').fadeOut();
+                        if (page === 'favorites' && action.code === 'remove_fav'){
+                            target.parents('.product-list-item').fadeOut(function (){
+                                let thisCategoryList = $(this).parent()
+                                $(this).remove();
+                                if (! $(thisCategoryList).children().length) {
+                                    $(thisCategoryList).parent().prev('a').fadeOut();
+                                    $(thisCategoryList).parent().fadeOut(function () {
+                                        $(this).remove();
+                                        if (! $('.favorites__section').length) {
+                                            $('.favorites h2').after('<h3>Немає обраних товарів</h3>');
+                                        }
+                                    });
+                                }
+                            });
+                        }
+
                         if (page === 'compare') {
                             const product_id = target.data('productId');
-                            $(`td[data-product-id=${product_id}], th[data-product-id=${product_id}]`).fadeOut();
+                            console.log('REMOVE COMP');
+                            $(`td[data-product-id=${product_id}]`).fadeOut();
+                            $(`th[data-product-id=${product_id}]`).fadeOut(function (){
+                                let thisTable = $(this).parents('table');
+                                $(this).remove();
+                                console.log($(thisTable).find('th'));
+                                if ($(thisTable).find('th').length < 2) {
+                                    $(thisTable).prev().fadeOut();
+                                    $(thisTable).fadeOut(function (){
+                                        $(this).remove();
+                                        if (! $('.compare table').length) {
+                                            $('.compare h2').after('<h3>Немає товарів для порівняння</h3>')
+                                        }
+                                    });
+                                }
+                            });
                         }
                         if (mode === 'favorites') {
                             $('.sub-header__favorites').html(`<span>${response['total_fav']}</span>`);
@@ -913,6 +985,36 @@ $(document).ready(function(){
         else
             showBascketWithAutohide(function (){});
     });
+
+
+    $('.product__main-data-sidebar-products-item input').change(function(){
+        $(this).next('div').children('label').text('Додано');
+        $(`input[name=${$(this).prop("name")}]`).not($(this)).next('div').children('label').text('Додати');
+        let addedRow = $.parseHTML(`
+            <li data-name=${$(this).prop('name')} data-value=${$(this).prop('value')} class='product__main-data-sidebar__added_products-item' style='display:none'>
+                <span class="close"></span><span class='name'>${$(this).siblings('h5').text()}</span>, <span class='price'>${$(this).next('div').children('span').text()}</span>
+            </li>
+        `);
+        $('#default_message').slideUp();
+        $(addedRow).children('.close').click(function(){
+            let idToDel = $(this).parent().data('value');
+            let inpToUncheck = $(`input.addict_product[value=${idToDel}]`);
+            $(inpToUncheck).prop('checked', false);
+            $(inpToUncheck).next('div').children('label').text('Додати');
+            $(this).parent().slideUp(function(){
+                $(this).remove();
+            });
+            console.log($('.product__main-data-sidebar__added_products li').length);
+            if ($('.product__main-data-sidebar__added_products li').length < 2) {
+                $('#default_message').slideDown();
+            }
+        });
+        $(`.product__main-data-sidebar__added_products-item[data-name='${$(this).prop("name")}']`).remove();
+
+        $('.product__main-data-sidebar__added_products').append(addedRow);
+        $(addedRow).slideDown();
+        $('.product__main-data-sidebar h3').text('Обрані супутні товари');
+    })
 
 });
 

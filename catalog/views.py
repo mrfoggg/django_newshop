@@ -9,7 +9,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from ROOTAPP.forms import AddressForm
 from ROOTAPP.models import Settlement
-from catalog.models import Category, Brand, ProductSeries, Product, ShotAttribute
+from catalog.models import Category, Brand, ProductSeries, Product, ShotAttribute, CategoryAddictProduct
 from django.views.generic.detail import DetailView
 # from django.views.decorators.csrf import csrf_exempt
 
@@ -27,7 +27,6 @@ class CategoryView(View):
     #     return super(CategoryView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, slug, str_url_data):
-        print('FILTERS:', str_url_data)
         return render(
             request=request, template_name=self.template_name,
             context=self.get_context_data(slug, self.request.GET, 'get', str_url_data)
@@ -63,20 +62,17 @@ class CategoryView(View):
         })
 
     def get_context_data(self, slug, data, type_of_request, str_url_data):
-        print('\n', '=' * 40, '\n')
         context = {}
         category = Category.objects.get(slug=slug)
         input_listing = category.listing
         filter_price_applied = False
 
         url_data = {}
-        print('str_url_data: ', str_url_data)
         while str_url_data:
             pos_key = str_url_data.find('__')
             if pos_key == -1:
                 break
             key = str_url_data[:pos_key]
-            print('key: ', key)
             str_url_data = str_url_data[pos_key + 2:]
             pos_val = str_url_data.find('__')
             if pos_val == -1:
@@ -84,11 +80,9 @@ class CategoryView(View):
             else:
                 val = str_url_data[:pos_val].split('--')
                 # val = str_url_data[:pos_val]
-            print('val: ', val)
             str_url_data = str_url_data[pos_val + 2:]
             url_data[key] = val
 
-        print('url_data: ', url_data)
 
         context |= {
             'category': category,
@@ -113,9 +107,7 @@ class CategoryView(View):
             selected_brand_list_id = []
             for brand in Brand.objects.filter(product__productplacement__category=category).distinct():
                 val_variant_item = {'slug': brand.slug, 'name': brand.name, 'total_products': None, 'is_checked': False}
-                print('list_selected', list_selected)
                 if brand.slug in list_selected:
-                    print('brand.slug in list_selected: ', brand.slug in list_selected)
                     some_filter_checked = True
                     brand_filter_params |= Q(product__brand=brand)
                     val_variant_item['is_checked'] = True
@@ -370,7 +362,9 @@ class ProductView(DetailView):
             'url_product_actions': reverse('root_app:product_actions'),
             'size': True if product.width or product.length or product.height or product.weight else False,
             'package_size': True if product.package_width or product.package_length or product.package_height else False,
-            'address_form': AddressForm,
+            'address_form': AddressForm, 'addict_product_category': CategoryAddictProduct.objects.filter(
+                category__productplacement__product=product
+            ).select_related('category').prefetch_related()
         }
         viewed_dict = self.request.session.get('viewed', list())
         if str(product.id) not in viewed_dict[-5:]:

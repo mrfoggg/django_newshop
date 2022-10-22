@@ -317,20 +317,20 @@ class Product(models.Model):
             # return attr.default_str_value
             return '-'
 
-    # @property
-    # def shot_attributes(self):
-    #     shot_attr_list = []
-    #     if (cc := self.combination_of_categories) and cc.is_active_custom_order_mini_parameters:
-    #         for shot_pl in cc.shot_attr_positions.all():
-    #             if str_val := self.get_attr_string_val(shot_pl.shot_attribute.attribute):
-    #                 shot_attr_list.append([get_shot_attr_name(shot_pl.shot_attribute), str_val])
-    #     else:
-    #         for cat_placement in self.productplacement_set.order_by('category_position'):
-    #             shot_attr_list.extend([[get_shot_attr_name(i), str_val]
-    #                                    for i in cat_placement.category.shot_attributes.prefetch_related('attribute')
-    #                                    if (str_val := self.get_attr_string_val(i.attribute))])
-    #     # print(shot_attr_list)
-    #     return shot_attr_list
+    @property
+    def shot_attributes(self):
+        shot_attr_list = []
+        if (cc := self.combination_of_categories) and cc.is_active_custom_order_mini_parameters:
+            for shot_pl in cc.shot_attr_positions.all():
+                if str_val := self.get_attr_string_val(shot_pl.shot_attribute.attribute):
+                    shot_attr_list.append([get_shot_attr_name(shot_pl.shot_attribute), str_val])
+        else:
+            for cat_placement in self.productplacement_set.order_by('category_position'):
+                shot_attr_list.extend([[get_shot_attr_name(i), str_val]
+                                       for i in cat_placement.category.shot_attributes.prefetch_related('attribute')
+                                       if (str_val := self.get_attr_string_val(i.attribute))])
+        # print(shot_attr_list)
+        return shot_attr_list
 
     @property
     def shot_attributes_id_list(self):

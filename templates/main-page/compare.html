@@ -31,6 +31,20 @@
                     {% endfor %}
                 </thead>
                 <tbody>
+                    <tr>
+                        <td>Вартість товару, грн</td>
+                        {% for product in group.1.products %}
+                            <td data-product-id="{{ product.id }}">{{ product.price|floatformat:2 }}</td>
+                        {% endfor %}
+
+                    </tr>
+                    <tr>
+                        <td>Вартість товару зі знижкою, грн</td>
+                        {% for product in group.1.products %}
+                            <td data-product-id="{{ product.id }}">{{ product.total_price|floatformat:2 }}</td>
+                        {% endfor %}
+
+                    </tr>
                     {% for gr_attr in group.1.category.groupplacement_set.all %}
                         <tr class="group-attributes"><td colspan="{{ group.1.products|length|add:'1' }}">{{ gr_attr.group }}</td></tr>
                         {% for attr in gr_attr.group.attributes.all %}

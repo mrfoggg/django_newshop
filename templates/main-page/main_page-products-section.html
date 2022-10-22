@@ -10,7 +10,7 @@
             </div>
             <div class="{{ section_type }}__content slider-mode">
                 {% for product in products %}
-                    {% include 'product_list_easy_item.html' with old_price=product.price total_price=product.total_price discount_type=product.discount_type discount=product.discount product=product.product page='listing' %}
+                    {% include 'product_list_easy_item.html' with old_price=product.price total_price=product.total_price discount_type=product.discount_type discount=product.annotated_discount product=product.product page='listing' %}
                 {% endfor %}
             </div>
         </div>
@@ -23,7 +23,7 @@
             </div>
             <div class="{{ section_type }}__content grid-mode">
                 {% for product in products %}
-                    {% include 'product_list_easy_item.html' with old_price=product.price total_price=product.total_price discount_type=product.discount_type discount=product.discount product=product.product page='listing' %}
+                    {% include 'product_list_easy_item.html' with old_price=product.price total_price=product.total_price discount_type=product.discount_type discount=product.annotated_discount product=product.product page='listing' %}
                 {% endfor %}
             </div>
         </div>

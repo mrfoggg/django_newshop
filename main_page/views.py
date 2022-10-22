@@ -33,7 +33,7 @@ class MainPageView(TemplateView):
 
 def group_products_by_categories(id_list):
     grouped_dict = dict()
-    for product in Product.objects.filter(id__in=id_list):
+    for product in Product.with_price.filter(id__in=id_list):
         product_main_category = Category.objects.filter(productplacement__product=product).order_by('level').first()
         if product_main_category.slug in grouped_dict.keys():
             grouped_dict[product_main_category.slug]['products'].append(product)

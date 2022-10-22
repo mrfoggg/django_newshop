@@ -17,7 +17,7 @@
             <div class="favorites__section">
                 <div class="category-products__list">
                     {% for product in group.1.products %}
-                        {% include 'product_list_item.html' with product=product  id_list=fav_id_list url=url_product_actions page='favorites'%}
+                        {% include 'product_list_easy_item.html' with product=product old_price=product.price total_price=product.total_price discount_type=product.discount_type discount=product.annotated_discount id_list=fav_id_list url=url_product_actions page='favorites'%}
                     {% endfor %}
                 </div>
             </div>
