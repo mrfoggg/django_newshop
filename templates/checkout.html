@@ -1,7 +1,35 @@
+{% extends 'base.html' %}
 {% load thumbnail %}
-<div class="user-content user-content__basket" id="basket">
-    <div class="user-content__basket-list-wrapper">
-        <div class="user-content__basket-list">
+{% block title %}
+    <title> Сніп-Сноп | Оформлення замовлення</title>
+{% endblock title %}
+
+{% block main_content %}
+<div class="checkout_header">
+    <div class="content-wrapper">
+        <div class="checkout_header__logo">
+            <a href="/">
+                <img src="/media/main_page/header/logo_Snip_Snop.svg" alt="">
+            </a>
+        </div>
+        <ul class="checkout_header__contacts">
+            <li><a href="">viber, </a><a href="">telegramm: </a><a href="">066-666-49-43</a></li>
+            <li><a href="">WhatsUp: </a><a href="">095-125-16-40</a></li>
+        </ul>
+        <span class="checkout_header__back">
+            <a href="">До попередньої сторінки</a>
+        </span>
+
+
+    </div>
+</div>
+
+<div class="content-wrapper checkout">
+    <div class="checkout__main_section">
+        <h2>Оформлення замовлення</h2>
+        <div class="checkout__section checkout__section--products">
+            <h3>Замовлені товари</h3>
+            <div class="user-content__basket-list">
             {% for pr in products_obj_in_basket %}
                 <div class="user-content__basket-item">
                     <div class="user-content__basket-item-img">
@@ -24,35 +52,18 @@
                     </div>
                     <span class="close"><span data-product_id="{{ pr.product.id }}" data-action="remove_from_basket"></span></span>
                 </div>
-            {% empty %}
-                <h2 id="empty_basket">Кошик порожній</h2>
             {% endfor %}
 
-        </div>
+            </div>
+            <form id="update_basket" action="{{ url_product_actions }}">
+                {% csrf_token %}
+                <input type="hidden" name='product_id' value="">
+                <input type="hidden" name="action" value="">
+                <input type="hidden" name="amount" value="">
+            </form>
 
-        <form id="update_basket" action="{{ url_product_actions }}">
-            {% csrf_token %}
-            <input type="hidden" name='product_id' value="">
-            <input type="hidden" name="action" value="">
-            <input type="hidden" name="amount" value="">
-        </form>
-
-    </div>
-    {% if products_obj_in_basket %}
-        <div class="user-content__basket-total visible">
-    {% else %}
-        <div class="user-content__basket-total">
-    {% endif %}
-        <form id='bascet_form' action="">
-            <a href="{{ checkout_link }}">Оформити</a>
-        </form>
-
-        <div class="user-content__basket-total--ammount">
-            <span>{{ basket_total.total_amount }}</span> шт
-        </div>
-        <div class="user-content__basket-total--summ">
-            на суму: <span>{{ basket_total.total_sum|floatformat:2  }} ₴</span>
         </div>
     </div>
-    <div class="hide_status"></div>
+    <div class="checkout__right_section"></div>
 </div>
+{% endblock main_content %}

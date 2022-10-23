@@ -1,0 +1,65 @@
+
+<nav class="top-catalog">
+    <div class="top-catalog__100w-bg"></div>
+    <div class="content-wrapper top-catalog__content-wrapper">
+        <ul class="top-catalog__first-level-list">
+            {% for menu_item_1 in menu_items %}
+                <li class="top-catalog__first-level-item">
+                    {% if  menu_item_1.get_link %}
+                        <a class="top-catalog__first-level-link-wrapper" href={{ menu_item_1.get_link }}>
+                            {% if menu_item_1.image %}
+                                <img src={{menu_item_1.image.url}} alt="alt">
+                            {% endif %}
+                            <h2>{{ menu_item_1.title }}</h2>
+                        </a>
+                    {% else %}
+                        <div class="top-catalog__first-level-link-wrapper">
+                            {% if menu_item_1.image %}
+                                <img src={{menu_item_1.image.url}} alt="alt">
+                            {% endif %}
+                            <h2>{{ menu_item_1.title }}</h2>
+                        </div>
+                    {% endif %}
+                    {% if header_config.menu_height %}
+                        <style>
+                            .top-catalog__first-level-link-wrapper {height: {{ header_config.menu_height }};}
+                        </style>
+                    {% endif %}
+                    <div class="top-catalog__second-level-list-wrapper--w100">
+                        <ul class="top-catalog__second-level-list">
+                            {% for menu_item_2 in menu_item_1.children.all %}
+                                <li class="top-catalog__second-level-item">
+                                    {% if  menu_item_2.get_link %}
+                                        <a href={{ menu_item_2.get_link }}>{{ menu_item_2.title }}</a>
+                                    {% else %}
+                                        {{ menu_item_2.title }}
+                                    {% endif %}
+                                    <ul class="top-catalog__third-level-list">
+                                        {% for menu_item_3 in menu_item_2.children.all %}
+                                            <li class="top-catalog__third-level-item top-catalog__third-level-item">
+                                                {% if  menu_item_3.get_link %}
+                                                    <a href={{ menu_item_3.get_link }}>{{ menu_item_3.title }}</a>
+                                                {% else %}
+                                                    {{ menu_item_3.title }}
+                                                {% endif %}
+                                            <ul class="top-catalog__last-level-list">
+                                                {% for menu_item_4 in menu_item_3.children.all %}
+                                                    {% if  menu_item_4.get_link %}
+                                                        <li><a href={{ menu_item_4.get_link }}>{{ menu_item_4.title }}</a></li>
+                                                    {% else %}
+                                                        {{ menu_item_4.title }}
+                                                    {% endif %}
+                                                    {% endfor %}
+                                                </ul>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>  <!-- top-catalog content-wrapper -->
+</nav>

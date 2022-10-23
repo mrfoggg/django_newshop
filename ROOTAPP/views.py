@@ -6,6 +6,7 @@ import json
 from django.db.models import Case
 from django.db.models.expressions import When, F
 from django.http import HttpResponseRedirect, JsonResponse
+from django.shortcuts import render
 from django.urls import reverse
 import requests
 from django.utils.html import format_html
@@ -378,4 +379,10 @@ class ProductActionsView(View):
         return JsonResponse({'product_id': product_id}, status=200)
 
 
-
+class CheckoutView(View):
+    template_name = 'checkout.html'
+    def get(self, request):
+        print('PREV: ', request.META.get('HTTP_REFERER'))
+        return render(
+            request=request, template_name=self.template_name,
+        )

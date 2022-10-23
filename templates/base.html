@@ -24,24 +24,28 @@
     <div class="preloader slow">
         <div class="loader"></div>
     </div>
-    <div class="preloader fast">
-        <div class="loader"></div>
-    </div>
 
-    <span id="top"></span>
-    <div class="page">
-        <!-- Header -->
-        {% include 'header.html' %}
+{#    <div class="preloader fast">#}
+{#        <div class="loader"></div>#}
+{#    </div>#}
+{##}
+{#    <span id="top"></span>#}
+{#    <div class="page">#}
+{#        <!-- Header -->#}
+{#        {% include 'header.html' %}#}
+{##}
+{#      <!-- Main -->#}
+{#        <main class="main">#}
+{#            {% block content %}#}
+{#            {% endblock content %}#}
+{#        </main>#}
+{#    </div>#}
+{#    {% include 'viewed_products.html' with products=new_products %}#}
+{#    {% include 'footer.html' %}#}
+{#    <a class="scroll-top" href="#top"></a>#}
 
-      <!-- Main -->
-        <main class="main">
-            {% block content %}
-            {% endblock content %}
-        </main>
-    </div>
-    {% include 'viewed_products.html' with products=new_products %}
-    {% include 'footer.html' %}
-    <a class="scroll-top" href="#top"></a>
+    {% block main_content %}
+    {% endblock main_content %}
 
 
     <script src={% static "jquery-3.6.1.min.js" %}></script>

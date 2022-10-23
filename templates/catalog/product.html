@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'template_with_header_footer.html' %}
 {% load thumbnail %}
 
 {% block title %}
@@ -69,7 +69,9 @@
                 <div class="product__top-data-by">
                     <div class="product__top-data-by-info">
                         <span class="product__top-data-by-price">
-                            <span class="product__top-data-by-price--old">{{ product.price|floatformat:2 }}</span>
+                            {% if product.annotated_discount %}
+                                <span class="product__top-data-by-price--old">{{ product.price|floatformat:2 }}</span>
+                            {% endif %}
                             {{ product.total_price|floatformat:2 }}
                         </span>
                         <span class="product__top-data-by-art">артікул: {{ product.sku }}</span>

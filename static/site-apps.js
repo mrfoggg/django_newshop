@@ -107,8 +107,8 @@ $(document).ready(function(){
         $('.user-content__basket-total--ammount span, .sub-header__basket span').text(total_amount);
         $('.user-content__basket-total--summ span').text(total_sum);
         if (! total_amount){
-            // $('.sub-header__basket span, .user-content__basket-total').slideUp();
-            $('.sub-header__basket span, .user-content__basket-total').removeClass('visible');
+            $('.sub-header__basket span').fadeOut();
+            $('.user-content__basket-total').removeClass('visible');
             $('.user-content__basket-list').html($.parseHTML('<h2 id="empty_basket">Кошик порожній</h2>'))
         } else {
             // $('.sub-header__basket span, .user-content__basket-total').slideDown();
@@ -131,7 +131,6 @@ $(document).ready(function(){
         });
 
         $('.product_by_form').submit(function(e){
-            console.log('product_by_form submit');
             e.preventDefault();
             $('.preloader.fast').fadeIn('fast');
             if ($('.product__main-data-sidebar__added_products li').length) {
@@ -148,7 +147,6 @@ $(document).ready(function(){
                     $('.product_by_form input[name="product_id"]').val($('.product_by_form input[name="product_id"]').data('id'));
                     $('.product_by_form input[name="action"]').val('add_basket');
                 }
-
             }
 
             $.ajax({
@@ -160,8 +158,6 @@ $(document).ready(function(){
                     setTimeout(function () {
                         $('.preloader.fast').fadeOut();
                         function addElementsToBasket(element, pricesObj=false) {
-                            console.log('pricesObj: ', pricesObj);
-                            console.log("element['id']: ", pricesObj);
                             let price = pricesObj ? pricesObj[element['id']] : element['price']
                             let htmlNewItem = $.parseHTML(`
                                 <div class="user-content__basket-item" style="display: none">
@@ -223,7 +219,6 @@ $(document).ready(function(){
 
         // $('.product_by_form button').unbind('click');
         $('.product_by_form button').click(function(e){
-            console.log('product_by_form button click');
             let form = $(e.target).parent('form');
             if (form.data('status') == 'not_in_basket'){
                 form.submit();
@@ -563,14 +558,11 @@ $(document).ready(function(){
                     }
 
                     if (e.data['target_type']==='price' && !filterPriceNotChanged){
-                        console.log('Create or update RESET PRICE');
                         if (!$('.category-products__filters-item[data-filter="price"]').length){
-                            console.log('Create RESET PRICE');
                             const newPriceFilterDeleter = $.parseHTML(`<span class="category-products__filters-item" data-filter="price">Ціна від &nbsp <span class="from">${$('#input-number-from').val()}</span> &nbsp грн до &nbsp <span class="to">${$('#input-number-to').val()}</span> &nbsp грн</span>`);
                             $(newPriceFilterDeleter).insertBefore('#reset_all');
                             bindFilterReseters($(newPriceFilterDeleter));
                         } else {
-                            console.log('update RESET PRICE');
                             $('.category-products__filters-item .from').text($('#input-number-from').val());
                             $('.category-products__filters-item .to').text($('#input-number-to').val());
                         }

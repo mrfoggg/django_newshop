@@ -14,6 +14,7 @@ def header_context(request):
         'header_config': HeaderConfiguration.get_solo(), 'photo_plug': PhotoPlug.get_solo().image,
         'favorites_link': reverse('main_page:favorites'),
         'compare_link': reverse('main_page:compare'),
+        'checkout_link': reverse('root_app:checkout'),
         'favorites_count': len(f) if (f := request.session.get('favorites', None)) else 0,
         'compare_count': len(f) if (f := request.session.get('compare', None)) else 0,
     }
@@ -48,7 +49,7 @@ def product_lists_conntext(request):
     for pr in products_id_in_basket.items():
         product = products_in_basket_dict[pr[0]]
         amount = pr[1]
-        total_amount += 1
+        total_amount += int(pr[1])
         sum = round(product.total_price, 2) * int(pr[1])
         total_sum += sum
         pib_list_dicts_with_amount.append({
