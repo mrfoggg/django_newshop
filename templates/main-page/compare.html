@@ -12,12 +12,15 @@
             <li class="breadcrumbs__item"> <a href="/">Головна</a> </li>
             <li class="breadcrumbs__item"> Порівняння товарів </li>
        </ul>
-        <h2>Порівняння товарів</h2>
+        <div class="favorites-compare__title">
+            <h2>Порівняння товарів</h2>
+            <a class="link_back" id="linkBackNotCheckout" href="{{ back_link }}">До попередньої сторінки</a>
+        </div>
         {% for group in grouped_dict.items %}
-            <a href={{ group.1.category.get_absolute_url }}><h3>{{ group.1.category }}</h3></a>
+
             <table>
                 <thead>
-                    <th></th>
+                    <th><a href={{ group.1.category.get_absolute_url }}><h3>{{ group.1.category }}</h3></a></th>
                     {% for product in group.1.products %}
                         <th data-product-id="{{ product.id }}">
                             <a href={{ product.get_absolute_url }}><h3>{{ product }}</h3></a>

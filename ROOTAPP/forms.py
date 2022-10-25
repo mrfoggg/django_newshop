@@ -1,7 +1,8 @@
 from django import forms
+from django.forms import modelform_factory
 from django_select2.forms import ModelSelect2Widget
 
-from ROOTAPP.models import Settlement, SettlementArea
+from ROOTAPP.models import Settlement, SettlementArea, Person
 from django_select2 import forms as s2forms
 
 
@@ -27,3 +28,14 @@ class AddressForm(forms.Form):
             attrs={'data-placeholder': 'назва населеного пункту'}
         )
     )
+
+
+class PersonForm(forms.ModelForm):
+    contact_phone = forms.CharField(label="Номер телефону")
+    class Meta:
+        model = Person
+        fields = ('first_name', 'last_name', 'middle_name', 'contact_phone', 'email')
+        help_texts = {
+            'first_name': "Обов'язкове", 'last_name': "Обов'язкове поле", 'middle_name': "Обов'язкове поле",
+            'email': "Обов'язкове поле"
+        }

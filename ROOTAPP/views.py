@@ -1,10 +1,5 @@
-from decimal import Decimal
-
 from django.contrib import messages
 import json
-
-from django.db.models import Case
-from django.db.models.expressions import When, F
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
@@ -12,6 +7,7 @@ import requests
 from django.utils.html import format_html
 from django.views import View
 
+from ROOTAPP.forms import PersonForm
 from ROOTAPP.models import Settlement, SettlementType, SettlementArea, SettlementRegion
 from catalog.models import Product, get_price_sq
 from sorl.thumbnail import get_thumbnail
@@ -330,7 +326,6 @@ class ProductActionsView(View):
                     'total_amount': total_amount, 'total_sum': total_sum, 'prices_dict': prices_dict
                 })
 
-
             case 'change_amount':
                 new_amount = request.POST.get('amount')
                 basket_dict[product_id] = new_amount
@@ -381,8 +376,21 @@ class ProductActionsView(View):
 
 class CheckoutView(View):
     template_name = 'checkout.html'
+
     def get(self, request):
-        print('PREV: ', request.META.get('HTTP_REFERER'))
         return render(
             request=request, template_name=self.template_name,
+            context={'person_form': PersonForm}
         )
+
+
+class ByNowView(View):
+    def get(self, request):
+        product_id = request.GET.get('product_id')
+        basket_dict = request.session.get('basket', dict())
+        for pr_id in product_id.split(','):
+            if pr_id not in basket_dict.keys():
+                basket_dict[pr_id] = 1
+        request.session['basket'] = basket_dict
+        print('request', request)
+        return HttpResponseRedirect(reverse('root_app:checkout'))

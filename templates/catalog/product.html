@@ -76,11 +76,15 @@
                         </span>
                         <span class="product__top-data-by-art">артікул: {{ product.sku }}</span>
                     </div>
-                    <form class="product__top-data-by-btns product_by_form" action="{{ url_product_actions }}" data-by_text="До кошика" data-byed_text="У кошику" data-status="not_in_basket" data-product_id="{{ product.id }}">
+                    {% if product.id|stringformat:"i" in products_id_in_basket %}
+                        <form class="product__top-data-by-btns product_by_form" action="{{ url_product_actions }}" data-url-by-now="{{ by_now_link }}" data-by_text="До кошика" data-byed_text="У кошику" data-status="in_basket" data-product_id="{{ product.id }}">
+                    {% else %}
+                        <form class="product__top-data-by-btns product_by_form" action="{{ url_product_actions }}" data-url-by-now="{{ by_now_link }}" data-by_text="До кошика" data-byed_text="У кошику" data-status="not_in_basket" data-product_id="{{ product.id }}">
+                    {% endif %}
                 {% csrf_token %}
                 <input type="hidden" name="product_id" value="{{ product.id }}" data-id="{{ product.id }}">
                 <input type="hidden" name="action" value="add_basket">
-                        <span class="product__top-data-by-btns-checkout" type="submit">Замовити зараз</span>
+                        <button class="product__top-data-by-btns-checkout" type="submit" data-by-now="true" >Замовити зараз</button>
                         {% if product.id|stringformat:"i" in products_id_in_basket %}
                             <button class="product__top-data-by-btns-add" type="button">У кошику</button>
                         {% else %}

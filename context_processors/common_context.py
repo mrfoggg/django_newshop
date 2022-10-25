@@ -15,10 +15,11 @@ def header_context(request):
         'favorites_link': reverse('main_page:favorites'),
         'compare_link': reverse('main_page:compare'),
         'checkout_link': reverse('root_app:checkout'),
+        'by_now_link': reverse('root_app:by_now'),
         'favorites_count': len(f) if (f := request.session.get('favorites', None)) else 0,
         'compare_count': len(f) if (f := request.session.get('compare', None)) else 0,
+        'back_link': request.META.get('HTTP_REFERER') if request.META.get('HTTP_REFERER') else '/'
     }
-
     return context
 
 

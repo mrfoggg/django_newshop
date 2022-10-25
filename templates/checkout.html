@@ -1,10 +1,12 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
+{% load custom_tags %}
 {% block title %}
     <title> Сніп-Сноп | Оформлення замовлення</title>
 {% endblock title %}
 
 {% block main_content %}
+{#    <input id ='reloadValue' type = 'hidden' name = 'reloadValue' value = ''/>#}
 <div class="checkout_header">
     <div class="content-wrapper">
         <div class="checkout_header__logo">
@@ -12,24 +14,27 @@
                 <img src="/media/main_page/header/logo_Snip_Snop.svg" alt="">
             </a>
         </div>
-        <ul class="checkout_header__contacts">
-            <li><a href="">viber, </a><a href="">telegramm: </a><a href="">066-666-49-43</a></li>
-            <li><a href="">WhatsUp: </a><a href="">095-125-16-40</a></li>
-        </ul>
-        <span class="checkout_header__back">
-            <a href="">До попередньої сторінки</a>
+        <div class="checkout_header__contacts">
+            {% for contact_phone in contact_phones %}
+                <span class="main-header__phone-type">{{contact_phone.get_chat_links}}</span>
+                <span class="main-header__phone" itemprop="telephone">
+                    <a href="tel:{{ contact_phone.phone }}">{{ contact_phone.phone.number|phone_national }}</a>
+                </span>
+            {% endfor %}
+
+        </div>
+        <span>
+            <a class="link_back" id="link_back" href="{{ back_link }}">На попередню сторінку</a>
         </span>
-
-
     </div>
 </div>
 
 <div class="content-wrapper checkout">
-    <div class="checkout__main_section">
+    <div class="checkout__section checkout__main_section">
         <h2>Оформлення замовлення</h2>
         <div class="checkout__section checkout__section--products">
             <h3>Замовлені товари</h3>
-            <div class="user-content__basket-list">
+            <div class="checkout__section_block user-content__basket-list">
             {% for pr in products_obj_in_basket %}
                 <div class="user-content__basket-item">
                     <div class="user-content__basket-item-img">
@@ -61,9 +66,32 @@
                 <input type="hidden" name="action" value="">
                 <input type="hidden" name="amount" value="">
             </form>
+        </div>
+    <div class="checkout__section">
+        <h3>Контактна інформація</h3>
+        <div class="checkout__section_block">
+            <form action="">
+                <fieldset>
+                    <legend>Замовник</legend>
+                    {{ person_form.as_p }}
+                </fieldset>
+            </form>
 
         </div>
     </div>
-    <div class="checkout__right_section"></div>
+
+    </div>
+    <div class="checkout__section checkout__right_section">
+        <h3>Загалом:</h3>
+        <div class="checkout__section_block">
+            <div class="user-content__basket-total--ammount">
+                товарів: <span>{{ basket_total.total_amount }}</span> шт
+            </div>
+            <div class="user-content__basket-total--summ">
+                на суму: <span>{{ basket_total.total_sum|floatformat:2  }} ₴</span>
+            </div>
+        </div>
+
+    </div>
 </div>
 {% endblock main_content %}

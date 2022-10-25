@@ -63,55 +63,26 @@ $(document).ready(function(){
         },2000, indicator)
     }
 
-    // function increaseLovedCount(){
-    //     let loved_count = $('.sub-header__favorites span').text();
-    //     if (loved_count.length){
-    //             $('.sub-header__favorites span').text(Number(loved_count) + 1);
-    //         } else {
-    //             $('.sub-header__favorites').html('<span>1</span>');
-    //         }
-    //     pulse($('.sub-header__favorites span'));
-    // }
-    //
-    // function decreaseLovedCount(){
-    //     let loved_count = $('.sub-header__favorites span').text();
-    //     if (loved_count > 1){
-    //             $('.sub-header__favorites span').text(Number(loved_count) - 1);
-    //         } else {
-    //             $('.sub-header__favorites span').remove('span');
-    //         }
-    //     pulse($('.sub-header__favorites span'));
-    // }
-    //
-    // function increaseCompareCount(){
-    //     let compare_count = $('.sub-header__compare span').text();
-    //         if (compare_count.length){
-    //             $('.sub-header__compare span').text(Number(compare_count) + 1);
-    //         } else {
-    //             $('.sub-header__compare').html('<span>1</span>');
-    //         };
-    //     pulse($('.sub-header__compare span'));
-    // }
-    //
-    // function decreaseCompareCount(){
-    //     let compare_count = $('.sub-header__compare span').text();
-    //         if (compare_count > 1){
-    //             $('.sub-header__compare span').text(Number(compare_count) - 1);
-    //         } else {
-    //             $('.sub-header__compare span').remove('span');
-    //         }
-    //     pulse($('.sub-header__compare span'));
-    // }
 
     function updateTotalBasket(total_amount, total_sum){
         $('.user-content__basket-total--ammount span, .sub-header__basket span').text(total_amount);
         $('.user-content__basket-total--summ span').text(total_sum);
         if (! total_amount){
-            $('.sub-header__basket span').fadeOut();
-            $('.user-content__basket-total').removeClass('visible');
-            $('.user-content__basket-list').html($.parseHTML('<h2 id="empty_basket">Кошик порожній</h2>'))
+            // прверить не на странице чекаута ли мы
+            if ($('.checkout_header').length) {
+                let url = $('.link_back')[0].href;
+                console.log('url', url);
+                window.history.replaceState({route: url}, "EVILEG", url);
+                $('.link_back')[0].click();
+            } else {
+                $('.sub-header__basket span').fadeOut();
+                $('.user-content__basket-total').removeClass('visible');
+                $('.user-content__basket-list').html($.parseHTML('<h2 id="empty_basket">Кошик порожній</h2>'))
+            }
+
         } else {
             // $('.sub-header__basket span, .user-content__basket-total').slideDown();
+            $('.sub-header__basket span').fadeIn();
             $('.sub-header__basket span, .user-content__basket-total').addClass('visible');
         }
     }
@@ -131,13 +102,80 @@ $(document).ready(function(){
         });
 
         $('.product_by_form').submit(function(e){
-            e.preventDefault();
-            $('.preloader.fast').fadeIn('fast');
+            if (! $(this).data('byNow')){
+                e.preventDefault();
+                $('.preloader.fast').fadeIn('fast');
+                $.ajax({
+                    type: "POST",
+                    url: $(this).attr('action'),
+                    data: $(this).serialize(),
+                    success: function (response) {
+                        // console.log(response);
+                        setTimeout(function () {
+                            $('.preloader.fast').fadeOut();
+                            function addElementsToBasket(element, pricesObj=false) {
+                                let price = pricesObj ? pricesObj[element['id']] : element['price']
+                                let htmlNewItem = $.parseHTML(`
+                                    <div class="user-content__basket-item" style="display: none">
+                                        <div class="user-content__basket-item-img">
+                                            <a href="${element['pr_url']}"><img src="${element['thumb']}"></a>
+                                        </div>
+                                        <div class="user-content__basket-item-info">
+                                            <a href="${element['pr_url']}"><h4>${element['name']}</h4></a>
+                                            <div class="user-content__basket-item-calculate">
+                                                <div class="user-content__basket-item-price"><span>${price}</span>&nbsp₴</div>
+                                                <div class="user-content__basket-item-amount">
+                                                    <input type="number" min="1" name="amount" value="1" data-product_id="${element['id']}" data-action="change_amount" autocomplete="off">, шт
+                                                </div>
+                                                <div class="user-content__basket-item-total">Всього: <span>${price}</span> ₴</div>
+                                            </div>
+                                        </div>
+                                        <span class="close"><span data-product_id="${element['id']}" data-action="remove_from_basket"></span></span>
+                                    </div>`);
+                                $('.user-content__basket-list').append(htmlNewItem);
+
+                                $(htmlNewItem).find('input').change(changeBasket);
+                                $(htmlNewItem).find('span.close span').click(changeBasket);
+                                function doWhenOpen(){
+                                    $(htmlNewItem).delay(200).slideDown(500);
+                                }
+                                showBascketWithAutohide(doWhenOpen);
+                            }
+
+                            if ($('.product__main-data-sidebar__added_products li').length) {
+                                for (let newElemData of response['added_products_data_list']) {
+                                    addElementsToBasket(newElemData, response['prices_dict']);
+                                }
+                                if (! $('.sub-header__basket span').length){
+                                    $('.sub-header__basket').html(`<span>${response["total_amount"]}</span>`);
+                                }
+                            } else {
+                                addElementsToBasket(response);
+                                if (! $('.sub-header__basket span').length){
+                                    $('.sub-header__basket').html('<span>1</span');
+                                }
+                            }
+                            let byedText = $(e.target).data('byed_text');
+                            $(e.target).find('button[type="button"]').text(byedText);
+                            $(e.target).data('status', 'in_basket');
+                            $('#empty_basket').remove();
+                            updateTotalBasket(response['total_amount'], response['total_sum'] + ' ₴');
+
+                            $('.user-content__basket-total').addClass('visible');
+                        }, 200)
+                    }
+                });
+            }
+        });
+
+        $('.product_by_form button').click(function(e){
+
+            let form = $(e.target).parent('form');
+
             if ($('.product__main-data-sidebar__added_products li').length) {
                 $('.product_by_form input[name="action"]').val('multi_add_basket');
                 let addictProductIdList = [$('.product_by_form input[name="product_id"]').val()];
                 for (let li of $('.product__main-data-sidebar__added_products li')) {
-                    console.log($(li).data('value'));
                     addictProductIdList.push(($(li).data('value')).toString());
                 }
                 // console.log(addictProductIdList.join(','));
@@ -149,82 +187,19 @@ $(document).ready(function(){
                 }
             }
 
-            $.ajax({
-                type: "POST",
-                url: $(this).attr('action'),
-                data: $(this).serialize(),
-                success: function (response) {
-                    // console.log(response);
-                    setTimeout(function () {
-                        $('.preloader.fast').fadeOut();
-                        function addElementsToBasket(element, pricesObj=false) {
-                            let price = pricesObj ? pricesObj[element['id']] : element['price']
-                            let htmlNewItem = $.parseHTML(`
-                                <div class="user-content__basket-item" style="display: none">
-                                    <div class="user-content__basket-item-img">
-                                        <a href="${element['pr_url']}"><img src="${element['thumb']}"></a>
-                                    </div>
-                                    <div class="user-content__basket-item-info">
-                                        <a href="${element['pr_url']}"><h4>${element['name']}</h4></a>
-                                        <div class="user-content__basket-item-calculate">
-                                            <div class="user-content__basket-item-price"><span>${price}</span>&nbsp₴</div>
-                                            <div class="user-content__basket-item-amount">
-                                                <input type="number" min="1" name="amount" value="1" data-product_id="${element['id']}" data-action="change_amount" autocomplete="off">, шт
-                                            </div>
-                                            <div class="user-content__basket-item-total">Всього: <span>${price}</span> ₴</div>
-                                        </div>
-                                    </div>
-                                    <span class="close"><span data-product_id="${element['id']}" data-action="remove_from_basket"></span></span>
-                                </div>`);
-                            $('.user-content__basket-list').append(htmlNewItem);
-
-                            $(htmlNewItem).find('input').change(changeBasket);
-                            $(htmlNewItem).find('span.close span').click(changeBasket);
-                            function doWhenOpen(){
-                                $(htmlNewItem).delay(200).slideDown(500);
-                            }
-                            showBascketWithAutohide(doWhenOpen);
-                        }
-
-                        // function doWhenOpen(){
-                        //     $(htmlNewItem).delay(200).slideDown(500);
-                        // }
-
-
-                        if ($('.product__main-data-sidebar__added_products li').length) {
-                            for (let newElemData of response['added_products_data_list']) {
-                                addElementsToBasket(newElemData, response['prices_dict']);
-                            }
-                            if (! $('.sub-header__basket span').length){
-                                $('.sub-header__basket').html(`<span>${response["total_amount"]}</span>`);
-                            }
-                        } else {
-                            addElementsToBasket(response);
-                            if (! $('.sub-header__basket span').length){
-                                $('.sub-header__basket').html('<span>1</span');
-                            }
-                        }
-                        let byedText = $(e.target).data('byed_text');
-                        $(e.target).find('button').text(byedText);
-                        $(e.target).data('status', 'in_basket');
-                        $('#empty_basket').remove();
-                        updateTotalBasket(response['total_amount'], response['total_sum'] + ' ₴');
-
-                        $('.user-content__basket-total').addClass('visible');
-                        // showBascketWithAutohide(doWhenOpen);
-                    }, 200)
-                }
-            });
-        });
-
-        // $('.product_by_form button').unbind('click');
-        $('.product_by_form button').click(function(e){
-            let form = $(e.target).parent('form');
-            if (form.data('status') == 'not_in_basket'){
-                form.submit();
+            if ($(e.target).data('byNow')){
+                console.log($(form).data());
+                console.log($(form).data('urlByNow'));
+                $(form).attr('action', $(form).data('urlByNow'));
+                $(form).data('byNow', true);
+                console.log($(form).attr('action'));
             } else {
-                if(!basketOpen) {
-                    showBascketWithAutohide(function (){});
+                if (form.data('status') === 'not_in_basket') {
+                    form.submit();
+                } else {
+                    if(!basketOpen) {
+                        showBascketWithAutohide(function (){});
+                    }
                 }
             }
         });
@@ -795,10 +770,15 @@ $(document).ready(function(){
                 url: $(this).attr('action'),
                 data: $(this).serialize(),
                 success: function (response) {
-                    target.data('status', statusWhenSuccess);
+                    let targetId = target.siblings('form').children('input[name="product_id"]').val();
+                    let targetType = target.data('mode');
+                    let allSameTargets = $(`input[name="product_id"][value=${targetId}]`).parent('.product_action_form').siblings(`span[data-mode=${targetType}]`);
+                    // менять статус и класс у всех товаров на странице с этим же id
+                    allSameTargets.data('status', statusWhenSuccess);
                     setTimeout(function (){
                         $('.preloader.fast').fadeOut('fast');
-                        target.toggleClass('added', statusWhenSuccess === 'enabled');
+                        allSameTargets.toggleClass('added', statusWhenSuccess === 'enabled');
+                        // target.toggleClass('added', statusWhenSuccess === 'enabled');
                         if (page === 'product')
                             target.text(action.text_when_success);
                         if (page === 'favorites' && action.code === 'remove_fav'){
@@ -806,11 +786,11 @@ $(document).ready(function(){
                                 let thisCategoryList = $(this).parent()
                                 $(this).remove();
                                 if (! $(thisCategoryList).children().length) {
-                                    $(thisCategoryList).parent().prev('a').fadeOut();
-                                    $(thisCategoryList).parent().fadeOut(function () {
+                                    $(thisCategoryList).parent().prev('h3').fadeOut();
+                                    $(thisCategoryList).parent().slideUp(function () {
                                         $(this).remove();
                                         if (! $('.favorites__section').length) {
-                                            $('.favorites h2').after('<h3>Немає обраних товарів</h3>');
+                                            $('.favorites-compare__title').after('<h3>Немає обраних товарів</h3>');
                                         }
                                     });
                                 }
@@ -819,18 +799,15 @@ $(document).ready(function(){
 
                         if (page === 'compare') {
                             const product_id = target.data('productId');
-                            console.log('REMOVE COMP');
                             $(`td[data-product-id=${product_id}]`).fadeOut();
                             $(`th[data-product-id=${product_id}]`).fadeOut(function (){
                                 let thisTable = $(this).parents('table');
                                 $(this).remove();
-                                console.log($(thisTable).find('th'));
                                 if ($(thisTable).find('th').length < 2) {
-                                    $(thisTable).prev().fadeOut();
-                                    $(thisTable).fadeOut(function (){
+                                    $(thisTable).slideUp("slow", function (){
                                         $(this).remove();
                                         if (! $('.compare table').length) {
-                                            $('.compare h2').after('<h3>Немає товарів для порівняння</h3>')
+                                            $('.favorites-compare__title').after('<h3>Немає товарів для порівняння</h3>')
                                         }
                                     });
                                 }
@@ -951,7 +928,7 @@ $(document).ready(function(){
                             $(e.data.this_input).parents('.user-content__basket-item').fadeOut();
                             const productForm = $(`form.product_by_form[data-product_id="${product_id}"]`);
                             productForm.data('status', "not_in_basket");
-                            productForm.children('button').text(productForm.data('by_text'));
+                            productForm.children('button[type="button"]').text(productForm.data('by_text'));
                         }
                         updateTotalBasket(response['total_amount'], response['total_sum']);
                         $('#basket').removeClass('disabled');
@@ -1006,7 +983,26 @@ $(document).ready(function(){
         $('.product__main-data-sidebar__added_products').append(addedRow);
         $(addedRow).slideDown();
         $('.product__main-data-sidebar h3').text('Обрані супутні товари');
-    })
+    });
+
+    if($('.checkout_header').length && !$('.user-content__basket-item').length){
+        $('.link_back')[0].click();
+    }
+
+    if($('.content-wrapper.compare').length){
+        $('.sub-header__compare').css('cursor', 'auto');
+        $('.sub-header__compare').click(function (e){
+            e.preventDefault();
+        })
+    }
+
+    if($('.content-wrapper.favorites').length){
+        $('.sub-header__favorites').css('cursor', 'auto');
+        $('.sub-header__favorites').click(function (e){
+            e.preventDefault();
+        })
+    }
+
 
 });
 
