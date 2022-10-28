@@ -80,8 +80,8 @@ class Person(models.Model):
     is_supplier = models.BooleanField('Является поставщиком', default=False)
 
     class Meta:
-        verbose_name = 'Контрагент'
-        verbose_name_plural = 'Контрагенты'
+        verbose_name = 'Контактное лицо'
+        verbose_name_plural = 'Контактные лица'
 
     def __str__(self):
         return f'N{self.id} - {self.last_name} {self.first_name} {self.middle_name}'

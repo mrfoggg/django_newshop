@@ -1,3 +1,4 @@
+from adminsortable2.admin import CustomInlineFormSet
 from django import forms
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ValidationError
@@ -108,7 +109,7 @@ class ProductPlacementInlineForProductFS(forms.models.BaseInlineFormSet):
                 self.duplicate_check()
 
 
-class GroupPlacementInlineFS(forms.models.BaseInlineFormSet):
+class GroupPlacementInlineFS(CustomInlineFormSet, forms.models.BaseInlineFormSet):
     def clean(self):
         if check_change_field_in_fs(self, "group"):
             groups = []

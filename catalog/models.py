@@ -105,6 +105,7 @@ class Category(MPTTModel):
     class Meta:
         verbose_name = "Категория товаров"
         verbose_name_plural = "Категории товаров"
+        # ordering = ['name']
 
     def __str__(self):
         return self.name

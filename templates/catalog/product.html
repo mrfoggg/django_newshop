@@ -95,7 +95,13 @@
 {#                    </div>#}
                     <div class="product__top-data-by-onclick">
                         <p class="product__top-data-by-onclick-header">Проконсультуємо і оформимо замовлення по телефону:</p>
-                        <span>+38 (0</span><input class="phone-number-input" type="text"><button disabled id="ok_button" >Відправити</button>
+                        <form id="by_one_click_action" action="{{ by_one_click_link_action }}">
+                            {% csrf_token %}
+                            <span>+38 (0</span><input class="phone-number-input" name="phonenumber" type="text"><button disabled id="ok_button" >Відправити</button>
+                            <span id="errNumber" style="color: red; display: none">&nbsp Невірний номер</span>
+                            <span id="okNumber" style="color: green; display: none">&nbsp Прийнято </span>
+                            <input type="hidden" name="product_id" value="{{ product.id }}">
+                        </form>
                     </div>
                 </div>
                 <div class="product__top-data-aсtions">
@@ -247,7 +253,7 @@
             </div>
         </div>
     </div>
-    <a href="#delivery-cost-popup" class="open-delivery-cost-popup"></a>
+    <a href="#delivery-cost-popup" class="open-delivery-cost-popup" style="visibility: hidden"></a>
     <div class="delivery-cost-popup mfp-hide" id="delivery-cost-popup">
         <h3>Результати розрахунку вартості доставки. </h3>
         <h4>З населеного пункту {{ settlement_from }}</h4>
@@ -297,5 +303,19 @@
     <a href="#delivery-cost-popup-error" class="open-delivery-cost-popup-error"></a>
     <div class="delivery-cost-popup mfp-hide" id="delivery-cost-popup-error">
         <h3>Не можливо здійснити запит, відсутній інтернет або сервер не відовідає</h3>
+    </div>
+
+    <a href="#popup_onclick_result" class="popup_onclick_result_link">popup_onclick_result</a>
+    <div id="popup_onclick_result" class="popup_onclick_result mfp-hide">
+        <h2>Заявку №3417 прийнято</h2>
+        <h3>Товар вказаний в заявці:</h3>
+        <li>{{ product }}</li>
+        <h3>Номер телефону вказаний для зв'язку з Вами::</h3>
+        <li id="oneClickPhone"></li>
+        <div class="popup_onclick_description">
+            <p>Найближчим часом згідно графіку роботи нашого магазину з Вами зв'яжеться один з наших менеджерів.</p>
+            <h3>Дякуємо за звернення!</h3>
+        </div>
+
     </div>
 {% endblock content %}

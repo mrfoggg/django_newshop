@@ -15,6 +15,9 @@
     {% load static %}
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     {{ address_form.media.css }}
+{#ВРЕМЕННО ВМЕСТО ВЕРХНЕГО НА СЛУЧАЙ ОТКЛЮЧЕНИЯ ИНЕТА#}
+<link rel="stylesheet" href={% static "select2.min.css" %}>
+    <link rel="stylesheet" href={% static "site-styles.css" %}>
     <link href={% static "magnific_popup/magnific-popup.css" %} rel="stylesheet">
     <link rel="stylesheet" href={% static "site-styles.css" %}>
 
@@ -49,14 +52,27 @@
 
 
     <script src={% static "jquery-3.6.1.min.js" %}></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js" integrity="sha512-XtmMtDEcNz2j7ekrtHvOVR4iwwaD6o/FUJe6+Zq+HgcCsk3kj4uSQQR8weQ2QVj1o0Pk6PwYLohm206ZzNfubg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.0/nouislider.min.js" integrity="sha512-1mDhG//LAjM3pLXCJyaA+4c+h5qmMoTc7IuJyuNNPaakrWT9rVTxICK4tIizf7YwJsXgDC2JP74PGCc7qxLAHw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.maskedinput/1.4.1/jquery.maskedinput.min.js" integrity="sha512-d4KkQohk+HswGs6A1d6Gak6Bb9rMWtxjOa0IiY49Q3TeFd5xAzjWXDCBW9RS7m86FQ4RzM2BdHmdJnnKRYknxw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+{#    <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js" integrity="sha512-XtmMtDEcNz2j7ekrtHvOVR4iwwaD6o/FUJe6+Zq+HgcCsk3kj4uSQQR8weQ2QVj1o0Pk6PwYLohm206ZzNfubg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>#}
+    <script src={% static "slick.min.js" %}></script>
+
+{#    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.0/nouislider.min.js" integrity="sha512-1mDhG//LAjM3pLXCJyaA+4c+h5qmMoTc7IuJyuNNPaakrWT9rVTxICK4tIizf7YwJsXgDC2JP74PGCc7qxLAHw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>#}
+    <script src={% static "nouislider.min.js" %}></script>
+
+{#    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.maskedinput/1.4.1/jquery.maskedinput.min.js" integrity="sha512-d4KkQohk+HswGs6A1d6Gak6Bb9rMWtxjOa0IiY49Q3TeFd5xAzjWXDCBW9RS7m86FQ4RzM2BdHmdJnnKRYknxw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>#}
+    <script src={% static "jquery.maskedinput.min.js" %}></script>
+
     <script src={% static "zoomsl.min.js" %}></script>
     <script src={% static "jquery.malihu.PageScroll2id.min.js" %}></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/js/select2.min.js"></script>
+
+{#    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/js/select2.min.js"></script>#}
+    <script src={% static "select2.min.js" %}></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/uk.min.js" integrity="sha512-TDV/1TfxlJAwv/y8HVjHO/AbxfEi3JzUJhQ9HL8GqMprZTcgRggSavorvX2bYzpWyJLrav/Ub/ikmK1sd3eyTw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src={% static "uk.min.js" %}></script>
+
     {{ address_form.media.js }}
+{#    <script src={% static "select2.min.js" %}></script>#}
+
     <script src={% static "magnific_popup/jquery.magnific-popup.min.js" %}></script>
     <script src={% static "site-apps.js" %}></script>
 </body>

@@ -8,6 +8,7 @@ from django import forms
 
 # from .services.telegram_servises import get_tg_username
 # from asgiref.sync import sync_to_async
+from orders.models import ByOneclick
 
 admin.site.register(Messenger)
 
@@ -23,6 +24,13 @@ class PersonSettlementInline(nested_admin.SortableHiddenMixin, nested_admin.Nest
     sortable_field_name = 'priority'
     ordering = ('priority',)
     autocomplete_fields = ('settlement',)
+
+
+class PersonOneClickInline(nested_admin.NestedTabularInline):
+    model = ByOneclick
+    readonly_fields = ('product', 'created', 'updated', 'status')
+    fields = ('product', 'created', 'updated', 'status')
+    extra = 0
 
 
 class PhoneAdminForm(forms.ModelForm):
@@ -49,9 +57,9 @@ class PhoneAdmin(admin.ModelAdmin):
 
 @admin.register(Person)
 class PersonAdmin(nested_admin.NestedModelAdmin):
-    fields = ('last_name', 'first_name', 'middle_name', 'email', ('is_customer', 'is_supplier'))
+    fields = (('last_name', 'first_name', 'middle_name'), 'email', ('is_customer', 'is_supplier'))
     search_fields = ('last_name', 'first_name', 'middle_name')
-    inlines = (PersonPhoneInlineAdmin, PersonSettlementInline)
+    inlines = (PersonPhoneInlineAdmin, PersonSettlementInline, PersonOneClickInline)
     list_display = ('__str__', 'is_customer', 'is_supplier')
     list_filter = ('is_customer', 'is_supplier')
 

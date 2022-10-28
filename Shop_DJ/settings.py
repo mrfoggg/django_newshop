@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'catalog',
     'finance',
     'main_page',
+    'orders',
     'baton.autodiscover',
     'django_svg_image_form_field',
     'solo',

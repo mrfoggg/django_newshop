@@ -20,17 +20,18 @@
             }
         })
         function setUkraineFormat() {
+            console.log('setUkraineFormat');
             if ($('#id_number_0').val()==='UA') {
 
                 $('#id_number_1').prop('maxlength', '9').mask("99  999-99-99", );
             } else {
-                $('.field-phone input').prop('maxlength', '16').unmask()
+                $('#id_number_1').prop('maxlength', '16').unmask();
             }
         }
         if ($('#id_number_0').val()==='') {
             $('#id_number_0').children('[value=UA]').prop('selected', true);
         }
-        setUkraineFormat()
+        setUkraineFormat();
         $('#id_number_0').change(function (){
             setUkraineFormat()
         })

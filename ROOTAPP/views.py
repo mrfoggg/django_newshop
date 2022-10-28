@@ -2,16 +2,19 @@ from django.contrib import messages
 import json
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
-from django.urls import reverse
+from django.urls import reverse, resolve
 import requests
 from django.utils.html import format_html
 from django.views import View
+from phonenumber_field.phonenumber import PhoneNumber
+from phonenumbers import geocoder
 
 from ROOTAPP.forms import PersonForm
-from ROOTAPP.models import Settlement, SettlementType, SettlementArea, SettlementRegion
+from ROOTAPP.models import Settlement, SettlementType, SettlementArea, SettlementRegion, Phone, PersonPhone
 from catalog.models import Product, get_price_sq
 from sorl.thumbnail import get_thumbnail
 
+from orders.models import ByOneclick
 from servises import get_products_annotated_prices
 
 url_np = 'https://api.novaposhta.ua/v2.0/json/'
@@ -392,5 +395,26 @@ class ByNowView(View):
             if pr_id not in basket_dict.keys():
                 basket_dict[pr_id] = 1
         request.session['basket'] = basket_dict
-        print('request', request)
+        return HttpResponseRedirect(reverse('root_app:checkout'))
+
+
+class ByOneClickView(View):
+    def post(self, request):
+        clean_phone_str = ''.join(x for x in request.POST.get('phonenumber') if x.isdigit())
+        number = PhoneNumber.from_string(clean_phone_str, region='UA')
+        if not geocoder.description_for_number(number, "ru"):
+            return JsonResponse({'result': False}, status=200)
+        else:
+            phone_obj = Phone.objects.get_or_create(number=number.as_e164)[0]
+            persons = PersonPhone.objects.filter(phone=phone_obj)
+            if persons.count() == 1:
+                # print('persons: ', persons.values_list('person', flat=True)[0])
+                ByOneclick.objects.create(
+                    phone=phone_obj, product_id=int(request.POST.get('product_id')),
+                    contact_id=persons.values_list('person', flat=True)[0]
+                )
+            else:
+                ByOneclick.objects.create(phone=phone_obj, product_id=int(request.POST.get('product_id')))
+                print('phone:', str(phone_obj))
+            return JsonResponse({'result': True, 'phone': str(phone_obj)}, status=200)
         return HttpResponseRedirect(reverse('root_app:checkout'))

@@ -357,7 +357,7 @@ class ProductView(DetailView):
         context |= {
             'last_categories': (last_cat := categories[max(categories.keys())]),
             'category': last_cat[0],
-            'type_category': 'product',
+            'type_category': 'product', 'by_one_click_link_action': reverse('root_app:by_one_click'),
             'url_get_delivery_cost': reverse('root_app:get_delivery_cost'),
             'url_product_actions': reverse('root_app:product_actions'),
             'size': True if product.width or product.length or product.height or product.weight else False,

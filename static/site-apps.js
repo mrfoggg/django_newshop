@@ -656,6 +656,34 @@ $(document).ready(function(){
         completed: function(){
             $("#ok_button").prop("disabled", false)
         }
+    }).keyup(function (){
+        if ($(this).val().replace(/\D+/g,"").length < 9) {
+            $('#errNumber, #okNumber').fadeOut();
+            $("#ok_button").prop("disabled", true);
+        }
+    })
+
+    $('#by_one_click_action').submit(function (e){
+        e.preventDefault();
+        $('.preloader.fast').fadeIn('fast');
+        $.ajax({
+                type: "POST",
+                url: $(this).attr('action'),
+                data: $(this).serialize(),
+
+                success: function (response){
+                    $('.preloader.fast').fadeOut('fast');
+                    console.log(response['result']);
+                    $("#ok_button").prop("disabled", true);
+                    if (! response['result']) {
+                        $('#errNumber').fadeIn();
+                    } else {
+                        // $('#okNumber').fadeIn();
+                        $('#oneClickPhone').text(response['phone']);
+                        $('.popup_onclick_result_link').trigger('click');
+                    }
+                }
+        });
     });
 
     $('.product__top-gallery-img-wrapper img').imagezoomsl({
@@ -731,6 +759,10 @@ $(document).ready(function(){
     });
 
     $('.open-delivery-cost-popup-error').magnificPopup({
+        type:'inline',
+        midClick: true // Allow opening popup on middle mouse click. Always set it to true if you don't provide alternative source in href.
+    });
+    $('.popup_onclick_result_link').magnificPopup({
         type:'inline',
         midClick: true // Allow opening popup on middle mouse click. Always set it to true if you don't provide alternative source in href.
     });
@@ -973,7 +1005,6 @@ $(document).ready(function(){
             $(this).parent().slideUp(function(){
                 $(this).remove();
             });
-            console.log($('.product__main-data-sidebar__added_products li').length);
             if ($('.product__main-data-sidebar__added_products li').length < 2) {
                 $('#default_message').slideDown();
             }

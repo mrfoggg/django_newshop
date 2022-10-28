@@ -1,5 +1,6 @@
 import copy
 import nested_admin
+from adminsortable2.admin import SortableAdminBase, SortableTabularInline, SortableAdminMixin, SortableInlineAdminMixin
 from django.contrib import admin
 from django.contrib.admin.actions import delete_selected
 from django.core.exceptions import ValidationError
@@ -51,7 +52,7 @@ class CategoryAddictProductInlineAdmin(nested_admin.NestedTabularInline):
     extra = 0
 
 
-class ProductPlacementInlineForCategory(nested_admin.NestedTabularInline):
+class ProductPlacementInlineForCategory(SortableTabularInline):
     readonly_fields = ('product', 'category_placement')
     model = ProductPlacement
     extra = 0
@@ -90,23 +91,20 @@ class ProductSupplierInline(nested_admin.SortableHiddenMixin, nested_admin.Neste
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-class GroupPlacementInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+class GroupPlacementInline(SortableInlineAdminMixin, admin.TabularInline):
     formset = GroupPlacementInlineFS
     readonly_fields = ('attributes_list',)
     model = GroupPlacement
     extra = 0
     fields = ('group', 'attributes_list', 'position')
-    sortable_field_name = 'position'
-    ordering = ('position',)
-
-    # autocomplete_fields = ('group',)
-
+    ordering = ['position']
     @admin.display(description='Содержжит атрибуты')
     def attributes_list(self, obj):
         return obj.group.attributes_list
 
 
-class AttributeInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+class AttributeInline(SortableTabularInline):
+# class AttributeInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     model = Attribute
     # readonly_fields = ('name', 'type_of_value', 'unit_of_measure', 'fixed_values_list',)
     readonly_fields = ('fixed_values_list',)
@@ -122,9 +120,10 @@ class FixedTextValueInline(nested_admin.SortableHiddenMixin, nested_admin.Nested
     extra = 0
 
 
-class FilterInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+class FilterInline(SortableTabularInline):
     model = Filter
     extra = 0
+    ordering = ['position']
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'attribute':
@@ -151,8 +150,9 @@ class GroupPositionInCombinationOfCategoryInLine(nested_admin.SortableHiddenMixi
     # can_delete = False
 
 
-class MainAttributeInLine(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+class MainAttributeInLine(SortableTabularInline):
     model = MainAttribute
+    ordering = ['position']
     extra = 0
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -161,9 +161,10 @@ class MainAttributeInLine(nested_admin.SortableHiddenMixin, nested_admin.NestedT
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-class ShotAttributeInLine(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+class ShotAttributeInLine(SortableTabularInline):
     model = ShotAttribute
     extra = 0
+    ordering = ['position']
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'attribute':
@@ -202,7 +203,7 @@ class DiscountInline(nested_admin.NestedTabularInline):
 
 
 @admin.register(Category)
-class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin, SummernoteModelAdmin):
+class CategoryAdmin(DraggableMPTTAdmin, SummernoteModelAdmin, SortableAdminBase, admin.ModelAdmin, ):
     form = CategoryForm
     save_on_top = True
     list_display = ('tree_actions', 'indented_title', 'groups_list',)
@@ -215,6 +216,10 @@ class CategoryAdmin(DraggableMPTTAdmin, nested_admin.NestedModelAdmin, Summernot
     actions = [export_as_json]
 
     class Media:
+        ordering = ['name']
+        default_order_field = 'name'
+        default_order_direction = ''
+
         css = {
             "all": ("category_admin.css",)
         }
@@ -421,7 +426,8 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
 
 
 @admin.register(Group)
-class GroupAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin, ):
+# class GroupAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin, ):
+class GroupAdmin(DeleteQSMixin, SortableAdminBase, admin.ModelAdmin):
     form = GroupForm
     list_display = ('name', 'attributes_list')
     inlines = (AttributeInline,)
