@@ -11,6 +11,8 @@ from ROOTAPP.forms import AddressForm
 from ROOTAPP.models import Settlement
 from catalog.models import Category, Brand, ProductSeries, Product, ShotAttribute, CategoryAddictProduct
 from django.views.generic.detail import DetailView
+
+
 # from django.views.decorators.csrf import csrf_exempt
 
 
@@ -33,7 +35,6 @@ class CategoryView(View):
         )
 
     def post(self, request, slug, str_url_data):
-
 
         full_context = self.get_context_data(slug, self.request.POST, 'post', str_url_data)
 
@@ -82,7 +83,6 @@ class CategoryView(View):
                 # val = str_url_data[:pos_val]
             str_url_data = str_url_data[pos_val + 2:]
             url_data[key] = val
-
 
         context |= {
             'category': category,
@@ -357,7 +357,7 @@ class ProductView(DetailView):
         context |= {
             'last_categories': (last_cat := categories[max(categories.keys())]),
             'category': last_cat[0],
-            'type_category': 'product', 'by_one_click_link_action': reverse('root_app:by_one_click'),
+            'type_category': 'product', 'by_one_click_link_action': reverse('orders:by_one_click'),
             'url_get_delivery_cost': reverse('root_app:get_delivery_cost'),
             'url_product_actions': reverse('root_app:product_actions'),
             'size': True if product.width or product.length or product.height or product.weight else False,
@@ -372,4 +372,5 @@ class ProductView(DetailView):
         if len(viewed_dict) > 30:
             viewed_dict.pop(0)
         self.request.session['viewed'] = viewed_dict
+        # print(self.request.headers)
         return context

@@ -97,7 +97,7 @@
                         <p class="product__top-data-by-onclick-header">Проконсультуємо і оформимо замовлення по телефону:</p>
                         <form id="by_one_click_action" action="{{ by_one_click_link_action }}">
                             {% csrf_token %}
-                            <span>+38 (0</span><input class="phone-number-input" name="phonenumber" type="text"><button disabled id="ok_button" >Відправити</button>
+                            <span>+38 (0</span><input class="phone-number-input" name="phonenumber" type="text" autocomplete="off"><button disabled id="ok_button" >Відправити</button>
                             <span id="errNumber" style="color: red; display: none">&nbsp Невірний номер</span>
                             <span id="okNumber" style="color: green; display: none">&nbsp Прийнято </span>
                             <input type="hidden" name="product_id" value="{{ product.id }}">
@@ -307,7 +307,7 @@
 
     <a href="#popup_onclick_result" class="popup_onclick_result_link">popup_onclick_result</a>
     <div id="popup_onclick_result" class="popup_onclick_result mfp-hide">
-        <h2>Заявку №3417 прийнято</h2>
+        <h2 id="oneClickId"></h2>
         <h3>Товар вказаний в заявці:</h3>
         <li>{{ product }}</li>
         <h3>Номер телефону вказаний для зв'язку з Вами::</h3>

@@ -31,11 +31,9 @@ urlpatterns = [
     path("select2/", include("django_select2.urls")),
     path('admin/', admin.site.urls),
     path('root_app/', include('ROOTAPP.urls')),
+    path('orders/', include('orders.urls')),
     path('', include('main_page.urls')),
     # path('category/', include('catalog.urls')),
-
-
-
     path('summernote/', include('django_summernote.urls')),
     path('_nested_admin/', include('nested_admin.urls')),
     # path('__debug__/', include('debug_toolbar.urls')),

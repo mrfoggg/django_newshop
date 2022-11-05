@@ -1,0 +1,6 @@
+.change-form #content form .tabular.inline-related tr.dynamic-byoneclickpersonalcomment_set textarea {
+    width: 100%;
+    /*border: none;*/
+    /*background: grey;*/
+    resize: none;
+}

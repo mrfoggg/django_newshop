@@ -398,23 +398,4 @@ class ByNowView(View):
         return HttpResponseRedirect(reverse('root_app:checkout'))
 
 
-class ByOneClickView(View):
-    def post(self, request):
-        clean_phone_str = ''.join(x for x in request.POST.get('phonenumber') if x.isdigit())
-        number = PhoneNumber.from_string(clean_phone_str, region='UA')
-        if not geocoder.description_for_number(number, "ru"):
-            return JsonResponse({'result': False}, status=200)
-        else:
-            phone_obj = Phone.objects.get_or_create(number=number.as_e164)[0]
-            persons = PersonPhone.objects.filter(phone=phone_obj)
-            if persons.count() == 1:
-                # print('persons: ', persons.values_list('person', flat=True)[0])
-                ByOneclick.objects.create(
-                    phone=phone_obj, product_id=int(request.POST.get('product_id')),
-                    contact_id=persons.values_list('person', flat=True)[0]
-                )
-            else:
-                ByOneclick.objects.create(phone=phone_obj, product_id=int(request.POST.get('product_id')))
-                print('phone:', str(phone_obj))
-            return JsonResponse({'result': True, 'phone': str(phone_obj)}, status=200)
-        return HttpResponseRedirect(reverse('root_app:checkout'))
+

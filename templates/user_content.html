@@ -56,3 +56,30 @@
     </div>
     <div class="hide_status"></div>
 </div>
+
+<div class="user-content user-content__personal" id="userContent">
+    <div class="user-content__personal-nav">
+        <span class="user-content__personal-nav-item personal-nav_item--active" id="oneClick">Мої заявки (<span>{{ one_click_obj_list.count }}</span>)</span>
+        <span class="user-content__personal-nav-item" id="orders">Мої замовлення (0)</span>
+        <span class="user-content__personal-nav-item" id="cabinet">Мій кабінет</span>
+    </div>
+    <div class="user-content__personal-content">
+        <div class="user-content__personal-tab tab-active" data-id="oneClick">
+            <div class="user-content__personal-oneclick">
+                {% for oneclick in one_click_obj_list%}
+                    {% include "one_click_user_section_item.html" %}
+                    <h3 id="noOneclicks" style="display: none">Немає активних заявок з цього пристрою</h3>
+                    {% empty %}
+                    <h3 id="noOneclicks">Немає активних заявок з цього пристрою</h3>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="user-content__personal-tab" data-id="orders">
+
+        </div>
+        <div class="user-content__personal-tab" data-id="cabinet">
+            <h2>Ваш кабінет</h2>
+            {{ one_click_obj_list }}
+        </div>
+    </div>
+</div>

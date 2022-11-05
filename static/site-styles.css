@@ -6280,6 +6280,7 @@ header {
   max-width: 94rem;
   margin: 3rem auto;
   border-radius: 2rem;
+  padding: 3rem;
 }
 .popup_onclick_result strong {
   font-weight: 600;
@@ -6363,6 +6364,7 @@ header {
 .popup_onclick_result li {
   font-size: 2.1rem;
   margin-bottom: 2.5rem;
+  margin-left: 2rem;
 }
 .popup_onclick_description {
   border-top: 1px solid #A93CF3;
@@ -7125,7 +7127,185 @@ footer {
   text-decoration: none;
   color: inherit;
 }
-
+.user-content__personal {
+  width: 80rem;
+  right: 195px;
+  padding: 0;
+  padding-top: 0.8rem;
+  text-align: left;
+}
+.user-content__personal h3 {
+  font-size: 2rem;
+  margin: 2rem;
+  text-align: center;
+}
+.user-content__personal-nav {
+  display: flex;
+  justify-content: space-around;
+  font-size: 2rem;
+  border-radius: 1rem;
+}
+.user-content__personal-nav-item {
+  color: #4d4d4d;
+  padding: 0.5rem 0;
+  background-color: #A93CF3;
+  transition: background-color 0.2s linear;
+  flex-basis: 34%;
+  cursor: pointer;
+  text-align: center;
+}
+.user-content__personal-nav-item.personal-nav_item--active {
+  background-color: #C786F3;
+  color: #3d2525;
+  cursor: auto;
+}
+.user-content__personal-content {
+  padding: 1rem 2rem;
+  font-size: 1.4rem;
+  max-height: 650px;
+  overflow: auto;
+}
+.user-content__personal-tab {
+  display: none;
+}
+.user-content__personal-tab.tab-active {
+  display: block;
+}
+.user-content__personal-item {
+  margin-bottom: 2rem;
+  border: 2px solid #A93CF3;
+  padding: 1rem;
+  border-radius: 1rem;
+  opacity: 1;
+  transition: opacity 0.2s linear;
+}
+.user-content__personal-item.disabled {
+  opacity: 50%;
+}
+.user-content__personal-item .oneclick_id, .user-content__personal-item .status-type {
+  flex: 0 0 12rem;
+}
+.user-content__personal-item .onelick-date, .user-content__personal-item .status-date {
+  flex: 0 0 21%;
+}
+.user-content__personal-item-title, .user-content__personal-item-status, .user-content__personal-item-actions {
+  display: flex;
+  padding: 0.5rem;
+}
+.user-content__personal-item-title div, .user-content__personal-item-status div, .user-content__personal-item-actions div {
+  display: inline-flex;
+}
+.user-content__personal-item-title {
+  background: #FFED9F;
+  align-items: center;
+  border-radius: 0.5rem;
+  font-size: 1.7rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+.user-content__personal-item-title .name {
+  text-decoration: underline;
+  font-size: 2rem;
+  width: 70%;
+  padding-left: 1rem;
+}
+.user-content__personal-item-title .order_info {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  flex: 0 1 25%;
+  align-items: flex-start;
+}
+.user-content__personal-item-title .order_id {
+  justify-content: center;
+  font-size: 2rem;
+}
+.user-content__personal-item-title .collapser {
+  height: 3rem;
+  width: 3rem;
+  flex-shrink: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-image: url("/media/icons/chevron-down.svg");
+  cursor: pointer;
+  transition: transform 0.2s linear;
+}
+.user-content__personal-item-title .collapser.active {
+  transform: scale(1, -1);
+}
+.user-content__personal-item-statuses_section {
+  background-color: rgba(244, 228, 255, 0.4);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  display: none;
+  max-height: 250px;
+  overflow: auto;
+}
+.user-content__personal-item-status:last-child {
+  background-color: #cd94f4;
+  border-radius: 0.3rem;
+}
+.user-content__personal-item-actions {
+  justify-content: space-around;
+  font-size: 1.8rem;
+  margin-top: 1rem;
+}
+.user-content__personal-item-actions button {
+  padding: 0.5rem 2rem;
+  border-radius: 2rem;
+  box-shadow: 0.2rem 0.5rem 1rem rgba(56, 56, 56, 0.5);
+  background-image: linear-gradient(0deg, #AC47F0, #AC47F0 25%, #C682F3);
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+.user-content__personal-item-actions button:hover {
+  transform: scale(1.02);
+}
+.user-content__personal-item-actions .comment-write {
+  border: 2px solid #FBD83E;
+}
+.user-content__personal-item-actions .order-cancel {
+  border: 2px solid #DE728E;
+}
+.user-content__personal-item-comment {
+  display: none;
+  margin: 2rem 0;
+  background-color: rgba(244, 228, 255, 0.4);
+  border-radius: 0.5rem;
+}
+.user-content__personal-item-comment-section {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.user-content__personal-item-comment-section button {
+  border: none;
+  background-color: transparent;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  margin: 0.5rem;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url("/media/icons/send-symbol-svgrepo-com.svg");
+}
+.user-content__personal-item-comment-field {
+  flex-basis: 100%;
+  align-self: center;
+  border: none;
+  height: 100%;
+  resize: none;
+  background-color: transparent;
+  font-family: inherit;
+  color: inherit;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+}
 .hide_status {
   display: none;
   height: 0.3rem;

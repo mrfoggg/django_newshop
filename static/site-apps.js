@@ -1,5 +1,6 @@
 $(document).ready(function(){
     let basketOpen = false;
+    let userContentOpen = false;
     let autohideTimer;
 
     function hideFlowingViewed(){
@@ -56,6 +57,20 @@ $(document).ready(function(){
         });
     }
 
+    function showUserContent(){
+        $('#userContent').slideDown(function(){
+            userContentOpen = true;
+        });
+        $('.sub-header__user').addClass('active');
+    }
+
+    function hideUserContent(){
+        $('#userContent').slideUp(function(){
+            userContentOpen = false;
+        });
+        $('.sub-header__user').removeClass('active');
+    }
+
     function pulse(indicator){
         indicator.addClass('animated');
         setTimeout(function (element){
@@ -71,7 +86,6 @@ $(document).ready(function(){
             // прверить не на странице чекаута ли мы
             if ($('.checkout_header').length) {
                 let url = $('.link_back')[0].href;
-                console.log('url', url);
                 window.history.replaceState({route: url}, "EVILEG", url);
                 $('.link_back')[0].click();
             } else {
@@ -100,7 +114,7 @@ $(document).ready(function(){
         }, function(){
             $(this).slick('slickGoTo',0, true);
         });
-
+        $(".product-list-item-content__icons span, .product__top-data-aсtions span, .compare th span").click(favoritesOrCompareActions);
         $('.product_by_form').submit(function(e){
             if (! $(this).data('byNow')){
                 e.preventDefault();
@@ -336,8 +350,6 @@ $(document).ready(function(){
         slider.noUiSlider.on('end', function (){
              console.log('END SET SLIDER');
         });
-
-
     }
 
     function filterFormSubmit(target, target_type){
@@ -663,26 +675,38 @@ $(document).ready(function(){
         }
     })
 
+
+
     $('#by_one_click_action').submit(function (e){
         e.preventDefault();
         $('.preloader.fast').fadeIn('fast');
         $.ajax({
-                type: "POST",
-                url: $(this).attr('action'),
-                data: $(this).serialize(),
+            type: "POST",
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
 
-                success: function (response){
-                    $('.preloader.fast').fadeOut('fast');
-                    console.log(response['result']);
-                    $("#ok_button").prop("disabled", true);
-                    if (! response['result']) {
-                        $('#errNumber').fadeIn();
-                    } else {
-                        // $('#okNumber').fadeIn();
-                        $('#oneClickPhone').text(response['phone']);
-                        $('.popup_onclick_result_link').trigger('click');
-                    }
+            success: function (response){
+                $('.preloader.fast').fadeOut('fast');
+                $("#ok_button").prop("disabled", true);
+                if (response['result']) {
+                    $('#oneClickPhone').text(response['phone']);
+                    $('#oneClickId').text('Заявку №' + response['one_click_id'] + ' прийнято');
+                    $('.popup_onclick_result_link').trigger('click');
+                    let newOneclickSection =  $.parseHTML(response['new_item_html']);
+                    bindOneClickShowAddComment($(newOneclickSection).find('.comment-write'));
+                    bindOneClickWideStatuses($(newOneclickSection).find('.user-content__personal-item-title'));
+                    bindOnclickAddComment($(newOneclickSection).find('form.user-content__personal-item-comment'));
+                    bindCancelOnclick($(newOneclickSection).find('.user-content__personal-item-actions form'));
+                    let oneClickSection = $('.user-content__personal-oneclick');
+                    oneClickSection.append(newOneclickSection);
+                    let oneClickAmount = response["one_clicks_amount"];
+                    $('.sub-header__user').html(`<span>${oneClickAmount}</span>`);
+                    $('.user-content__personal-nav-item').first().children().text(oneClickAmount);
+                    $('#noOneclicks').fadeOut();
+                } else {
+                    $('#errNumber').fadeIn();
                 }
+            }
         });
     });
 
@@ -764,7 +788,13 @@ $(document).ready(function(){
     });
     $('.popup_onclick_result_link').magnificPopup({
         type:'inline',
-        midClick: true // Allow opening popup on middle mouse click. Always set it to true if you don't provide alternative source in href.
+        midClick: true, // Allow opening popup on middle mouse click. Always set it to true if you don't provide alternative source in href.
+        callbacks: {
+            close: function (){
+                $('.sub-header__user, #oneClick').trigger('click');
+
+            }
+        }
     });
 
     $('.product__main-data-sidebar-products-slider').slick({
@@ -813,20 +843,24 @@ $(document).ready(function(){
                         // target.toggleClass('added', statusWhenSuccess === 'enabled');
                         if (page === 'product')
                             target.text(action.text_when_success);
-                        if (page === 'favorites' && action.code === 'remove_fav'){
-                            target.parents('.product-list-item').fadeOut(function (){
-                                let thisCategoryList = $(this).parent()
-                                $(this).remove();
-                                if (! $(thisCategoryList).children().length) {
-                                    $(thisCategoryList).parent().prev('h3').fadeOut();
-                                    $(thisCategoryList).parent().slideUp(function () {
-                                        $(this).remove();
-                                        if (! $('.favorites__section').length) {
-                                            $('.favorites-compare__title').after('<h3>Немає обраних товарів</h3>');
-                                        }
-                                    });
-                                }
-                            });
+
+                        if (page === 'favorites'){
+                            if (action.code === 'remove_fav') {
+                                target.parents('.product-list-item').fadeOut(function (){
+                                    let thisCategoryList = $(this).parent()
+                                    $(this).remove();
+                                    if (! $(thisCategoryList).children().length) {
+                                        $(thisCategoryList).parent().prev('h3').fadeOut();
+                                        $(thisCategoryList).parent().slideUp(function () {
+                                            $(this).remove();
+                                            if (! $('.favorites__section').length) {
+                                                $('.favorites-compare__title').after('<h3>Немає обраних товарів</h3>');
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+
                         }
 
                         if (page === 'compare') {
@@ -863,10 +897,11 @@ $(document).ready(function(){
         form.submit();
     }
 
-    $(".product-list-item-content__icons span, .product__top-data-aсtions span, .compare th span").click(favoritesOrCompareActions);
+    // $(".product-list-item-content__icons span, .product__top-data-aсtions span, .compare th span").click(favoritesOrCompareActions);
 
     $(window).scroll(function(){
         hideFlowingViewed();
+        hideBasket();
         hideBasket();
         makeSubheaderFlowing();
         let scrollBottom = $(document).height() - $(window).height() - $(window).scrollTop();
@@ -978,6 +1013,8 @@ $(document).ready(function(){
         if (!$(e.target).closest('#basket').length && !$(e.target).closest('.sub-header__basket').length && basketOpen) {
             hideBasket();
         }
+        if (!$(e.target).closest('#userContent').length && !$(e.target).closest('.sub-sub-header__user').length && userContentOpen)
+            hideUserContent();
     });
 
     $('.sub-header__basket').click(function(){
@@ -986,6 +1023,14 @@ $(document).ready(function(){
         else
             showBascketWithAutohide(function (){});
     });
+
+    $('.sub-header__user').click(function(){
+        if (userContentOpen)
+            hideUserContent();
+        else
+            showUserContent();
+
+    })
 
 
     $('.product__main-data-sidebar-products-item input').change(function(){
@@ -1033,8 +1078,124 @@ $(document).ready(function(){
             e.preventDefault();
         })
     }
+    
+    $('.user-content__personal-nav-item').click(function(){
+        $(this).addClass('personal-nav_item--active');
+        $('.user-content__personal-nav-item').not(this).removeClass('personal-nav_item--active');
+        $(`.user-content__personal-tab[data-id="${$(this).prop('id')}"]`).addClass('tab-active');
+        $('.user-content__personal-tab').not($(`.user-content__personal-tab[data-id="${$(this).prop('id')}"]`)).removeClass('tab-active');
+    });
 
 
+    function bindOneClickShowAddComment(elements){
+        elements.click(function(){
+            let thisTitle = $(this).parent().siblings('.user-content__personal-item-title');
+            let thisCollapseIndicator = thisTitle.children('.collapser');
+            let thisStatusesList = thisTitle.siblings('.user-content__personal-item-statuses_section');
+            let thisWriteCommentSections = thisTitle.siblings('.user-content__personal-item-comment');
+
+            let otherCollapseIndicators = $('.collapser').not(thisCollapseIndicator);
+            let otherStatusesLists = $('.user-content__personal-item-statuses_section').not(thisStatusesList);
+            let otherWriteCommentSections = $('.user-content__personal-item-comment').not(thisWriteCommentSections);
+
+            thisWriteCommentSections.slideToggle();
+            otherCollapseIndicators.removeClass('active');
+            otherStatusesLists.slideUp();
+            otherWriteCommentSections.slideUp();
+        });
+    }
+    bindOneClickShowAddComment($('.comment-write'));
+
+    function bindOneClickWideStatuses(elements){
+        elements.click(function(){
+            let thisCollapseIndicator = $(this).children('.collapser');
+            let thisStatusesList = $(this).siblings('.user-content__personal-item-statuses_section');
+
+            let otherTitles = $('.user-content__personal-item-title').not(this);
+            let otherCollapseIndicators = $('.collapser').not(thisCollapseIndicator);
+            let otherStatusesLists = $('.user-content__personal-item-statuses_section').not(thisStatusesList);
+            let otherWriteCommentSections = otherTitles.siblings('.user-content__personal-item-comment');
+
+            thisCollapseIndicator.toggleClass('active');
+            thisStatusesList.slideToggle();
+            otherCollapseIndicators.removeClass('active');
+            otherStatusesLists.slideUp();
+            otherWriteCommentSections.slideUp();
+        });
+    }
+    bindOneClickWideStatuses($('.user-content__personal-item-title'));
+
+    function bindCancelOnclick(elements){
+        elements.submit(function (e){
+            e.preventDefault();
+            let section = $(e.target).parents('.user-content__personal-item');
+            section.addClass('disabled');
+            $.ajax({
+                type: "POST",
+                url: $(this).attr('action'),
+                data: $(this).serialize(),
+                success: function (response) {
+                    section.text(response['cancel_text']);
+                    let oneClickAmount = response["one_clicks_amount"];
+                    $('.sub-header__user').html(`<span>${oneClickAmount}</span>`);
+                    $('.user-content__personal-nav-item').first().children().text(oneClickAmount);
+                    pulse($('.sub-header__user span'));
+                    if (! oneClickAmount){
+                        $('#noOneclicks').fadeIn();
+                        $('.sub-header__user span').fadeOut();
+                    }
+
+                }
+            });
+        });
+    }
+
+    bindCancelOnclick($('.user-content__personal-item-actions form'));
+
+    function bindOnclickAddComment(elements){
+        elements.submit(function (e){
+            e.preventDefault();
+            let section = $(e.target).parents('.user-content__personal-item');
+            section.addClass('disabled');
+            $.ajax({
+                type: "POST",
+                url: $(this).attr('action'),
+                data: $(this).serialize(),
+                success: function (response) {
+                    let newCommentRow = $.parseHTML(`
+                        <div class="user-content__personal-item-status" style="display: none">
+    <!--                    <div class="user-content__personal-item-status">-->
+                            <div class="status-type">Ваш коментар</div>
+                            <div class="status-date">${response['posted_time']}</div>
+                            <div class="one-click-status">${response['posted_text']}</div>
+                        </div>                
+                        `)
+                    let comments = section.children('.user-content__personal-item-statuses_section');
+                    comments.append(newCommentRow);
+                    comments.scrollTop(comments.prop('scrollHeight'));
+                    setTimeout(function (){
+                        section.removeClass('disabled');
+                        $(e.target).find('textarea').val('');
+                        section.find('.collapser').addClass('active');
+                        section.find('.user-content__personal-item-statuses_section').slideDown();
+                        $(newCommentRow).slideDown(function (){
+                            comments.scrollTop(comments.prop('scrollHeight'));
+                        });
+                    }, 200)
+                }
+            })
+        });
+    }
+
+    bindOnclickAddComment($('form.user-content__personal-item-comment'));
+
+    const commentInput = document.getElementById('commentText');
+    const commentInputH = commentInput.offsetHeight;
+
+    commentInput.addEventListener('input', function(e){
+        e.target.style.height = commentInputH + 'px';
+        e.target.style.height = e.target.scrollHeight + 'px';
+    });
 });
 
 document.body.onload = function() {

@@ -1,0 +1,48 @@
+<div class="user-content__personal-item">
+    <div class="user-content__personal-item-title">
+
+        <div class="order_info">
+            <div class="order_id">#{{ oneclick.id }}</div>
+            {% if oneclick.user_comments.last %}
+                <div class="order_status">{{ oneclick.client_display_status }}</div>
+            {% else %}
+                <div class="order_status">очікує обробки</div>
+            {% endif %}
+        </div>
+
+        <div class="name"><a href="{{ oneclick.product.get_absolute_url }}">{{ oneclick.product }}</a></div>
+        <div class="collapser"></div>
+    </div>
+    <div class="user-content__personal-item-statuses_section">
+        <div class="user-content__personal-item-status">
+            <div class="status-type">Подача заявки</div>
+            <div class="status-date">{{ oneclick.created|date:"Y-m-d H:i" }}</div>
+            <div class="one-click-status"> Статус: очікує обробки</div>
+        </div>
+        {% for comment in  oneclick.user_comments.all %}
+            <div class="user-content__personal-item-status">
+                <div class="status-type">{{ comment.get_comment_type_display }}</div>
+                <div class="status-date">{{ comment.created|date:"Y-m-d H:i" }}</div>
+                <div class="one-click-status">{{ comment.description }}</div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="user-content__personal-item-actions">
+        <button class="comment-write">Додати коментар</button>
+        <form action={{ cancel_oneclick_action_url }}>
+            {% csrf_token %}
+            <input type="hidden" name="one_click_id" value="{{ oneclick.id }}">
+            <button class="order-cancel" type="submit">Відмінтити заявку</button>
+        </form>
+    </div>
+
+    <form class="user-content__personal-item-comment" action="{{ oneclick_add_comment_action_url }}">
+        {% csrf_token %}
+        <input type="hidden" name="one_click_id" value="{{ oneclick.id }}">
+        <div class="user-content__personal-item-comment-section">
+            <textarea rows="1" class="user-content__personal-item-comment-field" name="comment_text" id="commentText" placeholder="введіть текст вашого коментаря"></textarea>
+            <button type="submit"></button>
+        </div>
+    </form>
+</div>

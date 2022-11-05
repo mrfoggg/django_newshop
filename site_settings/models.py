@@ -1,7 +1,6 @@
 from django.db import models
 from solo.models import SingletonModel
 
-
 # Create your models here.
 from ROOTAPP.models import Person
 
@@ -52,3 +51,24 @@ class NpAPI(models.Model):
     class Meta:
         verbose_name = "Учетная запись кабинета новой почты"
         verbose_name_plural = "Учетные записи кабинетов новой почты"
+
+
+class APIkeyIpInfo(SingletonModel):
+    api_key = models.CharField('Ключ API', max_length=128, unique=True)
+
+    def __str__(self):
+        return f"ключ API сервиса ipinfo.io- {self.api_key}"
+
+    class Meta:
+        verbose_name = "ключ API сервиса ipinfo.io"
+
+
+class OAuthGoogle(SingletonModel):
+    json_auth_data_file = models.FileField("Учетные данные", upload_to='uploads/', null=True)
+    email = models.EmailField("Єлектронная почта", null=True)
+
+    def __str__(self):
+        return self.email
+
+    class Meta:
+        verbose_name = "OAuth 2.0 сервисов Google"

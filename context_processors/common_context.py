@@ -2,6 +2,7 @@ from django.db.models import Subquery, OuterRef, Case, When, F
 from django.urls import reverse
 from catalog.models import Product, ProductImage
 from main_page.models import SitePhone, Schedule, Menu
+from orders.models import ByOneclick
 from servises import get_products_annotated_prices
 from site_settings.models import HeaderConfiguration, PhotoPlug
 
@@ -18,7 +19,8 @@ def header_context(request):
         'by_now_link': reverse('root_app:by_now'),
         'favorites_count': len(f) if (f := request.session.get('favorites', None)) else 0,
         'compare_count': len(f) if (f := request.session.get('compare', None)) else 0,
-        'back_link': request.META.get('HTTP_REFERER') if request.META.get('HTTP_REFERER') else '/'
+        'back_link': request.META.get('HTTP_REFERER') if request.META.get('HTTP_REFERER') else '/',
+        # 'session': request.session
     }
     return context
 
@@ -62,7 +64,12 @@ def product_lists_conntext(request):
     context = {
         'fav_id_list': request.session.get('favorites', list()),
         'comp_id_list': request.session.get('compare', list()),
+        # 'one_click_id_list': (one_click_id_list := request.session.get('one_click_id_list', list())),
+        'one_click_obj_list': ByOneclick.objects.filter(
+            session_key=request.session.session_key, is_active=True).order_by('created'),
         'url_product_actions': reverse('root_app:product_actions'),
+        'oneclick_add_comment_action_url': reverse('orders:oneclick_add_comment'),
+        'cancel_oneclick_action_url': reverse('orders:cancel_oneclick'),
         'viewed_products': viewed,
         'viewed_mode': ' viewed_slider_mode' if len(viewed) > 5 else ' viewed_grid_mode' if len(viewed) else '',
         'products_obj_in_basket': pib_list_dicts_with_amount,
