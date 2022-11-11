@@ -1,21 +1,32 @@
 from django.contrib import messages
 import json
-from django.http import HttpResponseRedirect, JsonResponse
+
+from django.contrib.auth import login, logout
+from django.contrib.auth.models import User
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse, resolve
 import requests
 from django.utils.html import format_html
 from django.views import View
+from otp_twilio.models import TwilioSMSDevice
 from phonenumber_field.phonenumber import PhoneNumber
 from phonenumbers import geocoder
 
 from ROOTAPP.forms import PersonForm
-from ROOTAPP.models import Settlement, SettlementType, SettlementArea, SettlementRegion, Phone, PersonPhone
+from ROOTAPP.models import Settlement, SettlementType, SettlementArea, SettlementRegion, Phone, PersonPhone, Person, \
+    get_phone_full_str
+from Shop_DJ import settings
 from catalog.models import Product, get_price_sq
 from sorl.thumbnail import get_thumbnail
 
 from orders.models import ByOneclick
 from servises import get_products_annotated_prices
+
+import google.oauth2.credentials
+import google_auth_oauthlib.flow
+
+from site_settings.models import OAuthGoogle
 
 url_np = 'https://api.novaposhta.ua/v2.0/json/'
 
@@ -398,4 +409,108 @@ class ByNowView(View):
         return HttpResponseRedirect(reverse('root_app:checkout'))
 
 
+def request_google_auth(request):
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+        OAuthGoogle.get_solo().json_auth_data_file.path,
+        scopes=['https://www.googleapis.com/auth/contacts'])
 
+    flow.redirect_uri = reverse('root_app:google_response')
+    authorization_url, state = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true')
+    return HttpResponseRedirect(authorization_url)
+
+
+def google_response(request):
+    state = request.GET.get('state')
+    code = request.GET.get('code')
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+        OAuthGoogle.get_solo().json_auth_data_file.path,
+        scopes=['https://www.googleapis.com/auth/contacts'],
+        state=state)
+    flow.redirect_uri = reverse('root_app:oauth2callback')
+    authorization_response = request.build_absolute_uri()
+    flow.fetch_token(authorization_response=authorization_response)
+    credentials = flow.credentials
+    return HttpResponse(request)
+
+
+def oauth2callback(request):
+    pass
+
+
+# https://django-otp-official.readthedocs.io/en/stable/overview.html
+# https://django-otp-twilio.readthedocs.io/en/latest/_modules/otp_twilio/models.html#TwilioSMSDevice
+def get_and_check_registration_phone(request):
+    data = request.POST
+    clean_phone_str = ''.join(x for x in data.get('phonenumber') if x.isdigit())
+    number = PhoneNumber.from_string(clean_phone_str, region='UA')
+    if not geocoder.description_for_number(number, "ru"):
+        return JsonResponse({'phone_is_valid': False}, status=200)
+    phone_full_str = get_phone_full_str(number)
+    print('phone_full_str: ', phone_full_str)
+    user, is_created_user = User.objects.get_or_create(username=number.as_e164)
+    attempt_to_enter_data = request.session['attempt_to_enter_data'] = {
+        'user_id_to_login': user.id, 'phone_full_str': phone_full_str
+    }
+    request.session.save()
+    # print('session_key: ', request.session.session_key)
+
+    device = TwilioSMSDevice.objects.get_or_create(number=number.as_e164, name=request.session.session_key,
+                                                   user=user, confirmed=False)[0]
+    print('SMS token: ', device.generate_challenge())
+    attempt_to_enter_data['device_id_to_login'] = device.id
+    request.session['attempt_to_enter_data'] = attempt_to_enter_data
+    return JsonResponse({'phone_is_valid': True, 'is_created_user': is_created_user,
+                         'next_title_text': f"Номер {phone_full_str} доступний для регістрації. Вкажіть Ваше ім'я"},
+                        status=200)
+
+
+def get_registration_name(request):
+    name = request.POST.get('name').title()
+    user = User.objects.get(id=request.session.get('attempt_to_enter_data')['user_id_to_login'])
+    print('User: ', user)
+    user.first_name = name
+    user.save(update_fields=['first_name'])
+    return JsonResponse(
+        {'next_title_text':
+             f'{name}, для того щоб переконатись що вказаний вами номер '
+             f'{request.session.get("attempt_to_enter_data")["phone_full_str"]} належить саме Вам введіть одноразовий пароль з СМС'
+         }, status=200)
+
+
+def regenerate_sms_token(request):
+    # device = TwilioSMSDevice.objects.get(
+    #     id=request.session.get('attempt_to_enter_data')['device_id_to_login'])
+    # print(device.tro)
+    code = TwilioSMSDevice.objects.get(
+        id=request.session.get('attempt_to_enter_data')['device_id_to_login']).generate_challenge()
+    print('New code: ', code)
+    return JsonResponse({'next_title_text': f'ВІдправлено новий одноразовий пароль',}, status=200)
+
+
+def verify_sms_token(request):
+    device = TwilioSMSDevice.objects.get(
+        id=request.session.get('attempt_to_enter_data')['device_id_to_login'])
+    result = device.verify_token(request.POST.get('token'))
+    print('result: ', result)
+    if result:
+        device.confirmed = True
+        device.save()
+        user = User.objects.get(id=request.session.get('attempt_to_enter_data')['user_id_to_login'])
+        login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
+
+        return JsonResponse({'next_title_text': f'{user.first_name} ви успішно зареєструвались і увійшли в систему.',
+                             'result': result}, status=200)
+    else:
+        return JsonResponse({'next_title_text': f'Невірний одноразовий пароль', 'result': result}, status=200)
+
+
+def logout_view(request):
+    logout(request)
+    device = TwilioSMSDevice.objects.get(
+        id=request.session.get('attempt_to_enter_data')['device_id_to_login'])
+    device.confirmed = False
+    device.save()
+    del request.session['attempt_to_enter_data']
+    return JsonResponse({'next_title_text': 'ви вийшли з облікового запису'}, status=200)

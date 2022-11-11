@@ -77,9 +77,79 @@
         <div class="user-content__personal-tab" data-id="orders">
 
         </div>
-        <div class="user-content__personal-tab" data-id="cabinet">
-            <h2>Ваш кабінет</h2>
-            {{ one_click_obj_list }}
+
+        <div class="user-content__personal-tab cabinet" data-id="cabinet">
+            {% if user.is_authenticated %}
+                <h3 class='user-content__personal-item-title' id="loginTitle">Вітаємо {{ user.last_name }} {{ user.first_name }}. Ви увійшли в систему за допомогою номера телефону {{ user.username }}</h3>
+                <form action={{ logout_action_url }} id='logoutForm'>
+                    <div class="cabinet__login-section user-content__personal-item">
+                        {% csrf_token %}
+                        <button type="submit">Вийти</button>
+                    </div>
+                </form>
+            {% else %}
+                <h3 class='user-content__personal-item-title' id="loginTitle">Для входу в кабінет або щоб створити обліковий запис вкажіть ваш номер телефону</h3>
+                <form action={{ get_and_check_registration_phone_action_url }} id="sendRegistrationPhoneForm">
+                    {% csrf_token %}
+                    <label class='cabinet__login-section user-content__personal-item'>
+                        +38(0
+                        <input class="phone-number-input" name="phonenumber" type="text" autocomplete="off" maxlength="9">
+                        <div>
+                            <button type="submit">Підтвердити</button>
+                        </div>
+                        <h3 id="wrongRegistrationPhone" style="display: none;">Такий номер не існує</h3>
+                    </label>
+                </form>
+
+                <form action={{ get_registration_name_action_url }} id="sendRegistrationNameForm" style="display: none;">
+                    {% csrf_token %}
+                    <label class='cabinet__login-section user-content__personal-item'>
+                        Ваше ім'я
+                        <input type="text" name="name" id="registrationNameInput">
+                        <div>
+                            <button type="submit">Підтвердити</button>
+                        </div>
+                    </label>
+                </form>
+
+                <form action={{ verify_sms_token_action_url }} id="verifySmsTokenForm" style="display: none;">
+                    {% csrf_token %}
+                    <label class='cabinet__login-section user-content__personal-item'>
+                        Одноразвоий пароль  з СМС
+                        <input type="text" name="token" id="tokenInput" maxlength="6">
+                        <div>
+                            <button type="submit">Підтвердити</button>
+                        </div>
+                        <span class="get_token_actions" id="regenerateSmsTokenBtn">Відправити код підтвердження ще раз</span>
+                        <span class="get_token_actions" id="changeNumber">Вказати інший номер телефону</span>
+                    </label>
+                </form>
+                <form action={{ regenerate_sms_token_action_url }} id='regenerateSmsTokenForm'>
+                    {% csrf_token %}
+                </form>
+
+
+                <form action={{ logout_action_url }} id='logoutForm' style="display: none;">
+                    <div class="cabinet__login-section user-content__personal-item">
+                        {% csrf_token %}
+                        <button type="submit" id='logoutBtn'>Вийти</button>
+                    </div>
+                </form>
+
+
+                <div id="loginBySocial">
+                    <div class="cabinet__separator">
+                        <hr>
+                        <span>або авторизутесь через соціальні мережі</span>
+                        <hr>
+                    </div>
+                </div>
+            {% endif %}
+
+
+
         </div>
+
+
     </div>
 </div>

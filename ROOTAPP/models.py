@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 from django.contrib import admin
 from django.utils.html import format_html
@@ -27,6 +28,21 @@ class Messenger(models.Model):
         verbose_name_plural = "Мессенжеры"
 
 
+def get_phone_full_str(number):
+    region_code = region_code_for_number(number)
+    if carrier.name_for_number(number, "ru"):
+        phone_info = carrier.name_for_number(number, "ru")
+
+    elif geocoder.description_for_number(number, "ru"):
+        phone_info = geocoder.description_for_number(number, "ru")
+    else:
+        phone_info = None
+    phone_str = str(number)
+    formatted_phone = f"{phone_str[0:3]} ({phone_str[3:6]}) {phone_str[6:9]} {phone_str[9:11]} {phone_str[11:]}"
+    phone = formatted_phone if region_code == 'UA' else phone_str
+    return str(f'{phone} ({region_code}, {phone_info})')
+
+
 class Phone(models.Model):
     number = PhoneNumberField(blank=True, help_text='Номер телефона')
     messengers = models.ManyToManyField(
@@ -35,18 +51,7 @@ class Phone(models.Model):
                                          verbose_name='Имя пользователя в телеграмм')
 
     def __str__(self):
-        region_code = region_code_for_number(self.number)
-        if carrier.name_for_number(self.number, "ru"):
-            phone_info = carrier.name_for_number(self.number, "ru")
-
-        elif geocoder.description_for_number(self.number, "ru"):
-            phone_info = geocoder.description_for_number(self.number, "ru")
-        else:
-            phone_info = None
-        phone_str = str(self.number)
-        formatted_phone = f"{phone_str[0:3]} ({phone_str[3:6]}) {phone_str[6:9]} {phone_str[9:11]} {phone_str[11:]}"
-        phone = formatted_phone if region_code == 'UA' else phone_str
-        return str(f'{phone} ({region_code}, {phone_info})')
+        return get_phone_full_str(self.number)
 
     @property
     @admin.display(description="Ссылки на мессенжеры")
@@ -75,9 +80,11 @@ class Person(models.Model):
     first_name = models.CharField('Имя', max_length=128, default=None, unique=True, db_index=True)
     last_name = models.CharField('Фамилия', max_length=128, default=None, unique=True, db_index=True)
     middle_name = models.CharField('Отчество', max_length=128, default=None, unique=True, db_index=True)
-    email = models.EmailField('Электронная почта', max_length=128, null=True, blank=True, unique=True, db_index=True)
+    email = models.EmailField('Элетронная почта', max_length=128, default=None, unique=True, null=True, blank=True)
     is_customer = models.BooleanField('Является покупателем', default=True)
     is_supplier = models.BooleanField('Является поставщиком', default=False)
+    user = models.OneToOneField(User, verbose_name='Учетная запись польователя', blank=True, null=True, default=None,
+                                on_delete=models.CASCADE, related_name='person')
 
     class Meta:
         verbose_name = 'Контактное лицо'
@@ -88,7 +95,7 @@ class Person(models.Model):
 
 
 class PersonPhone(models.Model):
-    person = models.ForeignKey(Person, null=True, blank=True, on_delete=models.SET_NULL)
+    person = models.ForeignKey(Person, null=True, blank=True, on_delete=models.SET_NULL, related_name='phones')
     phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.SET_NULL)
     is_nova_poshta = models.BooleanField('Привязан к новой почте', default=False)
 

@@ -41,6 +41,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -55,6 +56,26 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'django_extensions',
+    'django.contrib.sites',  # новый
+
+    'allauth',  # новый
+    'allauth.account',  # новый
+    'allauth.socialaccount',  # новый
+    'allauth.socialaccount.providers.github',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.instagram',
+    'allauth.socialaccount.providers.linkedin',
+    'allauth.socialaccount.providers.twitter',
+
+    # 'django_otp',
+    # 'django_otp.plugins.otp_totp',
+    # 'django_otp.plugins.otp_hotp',
+    # 'django_otp.plugins.otp_static',
+    'otp_twilio',
+
     'mptt',
     # 'django_json_widget',
     'django_select2',
@@ -70,12 +91,13 @@ INSTALLED_APPS = [
     'finance',
     'main_page',
     'orders',
-    'baton.autodiscover',
+
     'django_svg_image_form_field',
     'solo',
     'site_settings',
     'phonenumber_field',
     'babel',
+    'baton.autodiscover',
 
 ]
 
@@ -193,7 +215,6 @@ CACHES = {
         }
     }
 }
-
 
 # Tell select2 which cache configuration to use:
 SELECT2_CACHE_BACKEND = "select2"
@@ -336,3 +357,19 @@ BATON = {
 # PHONENUMBER_DEFAULT_REGION = 'UA'
 # PHONENUMBER_DB_FORMAT = 'NATIONAL'
 # PHONENUMBER_DB_FORMAT = 'INTERNATIONAL'
+
+
+AUTHENTICATION_BACKENDS = (
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+)
+
+SITE_ID = 1
+
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+LOGIN_REDIRECT_URL = '/'
+
+OTP_TWILIO_NO_DELIVERY = True
+OTP_TWILIO_CHALLENGE_MESSAGE = '{token}'
+OTP_TWILIO_THROTTLE_FACTOR = 4

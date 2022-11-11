@@ -5934,8 +5934,6 @@ header {
   border-radius: 0.4rem;
   padding: 0.5rem 1rem;
   background-color: #F4E4FF;
-}
-.product__top-data-by-onclick button:disabled {
   display: none;
 }
 .product__top-data-by-onclick button:hover {
@@ -7132,6 +7130,7 @@ footer {
   right: 195px;
   padding: 0;
   padding-top: 0.8rem;
+  padding-bottom: 2rem;
   text-align: left;
 }
 .user-content__personal h3 {
@@ -7159,10 +7158,28 @@ footer {
   color: #3d2525;
   cursor: auto;
 }
+.user-content__personal button {
+  padding: 0.5rem 2rem;
+  border-radius: 2rem;
+  box-shadow: 0.2rem 0.5rem 1rem rgba(56, 56, 56, 0.5);
+  background-image: linear-gradient(0deg, #AC47F0, #AC47F0 25%, #C682F3);
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  border: 2px solid #FBD83E;
+}
+.user-content__personal button:hover {
+  transform: scale(1.02);
+}
+.user-content__personal .order-cancel {
+  border: 2px solid #DE728E;
+}
 .user-content__personal-content {
   padding: 1rem 2rem;
   font-size: 1.4rem;
-  max-height: 650px;
+  max-height: 500px;
   overflow: auto;
 }
 .user-content__personal-tab {
@@ -7251,26 +7268,6 @@ footer {
   font-size: 1.8rem;
   margin-top: 1rem;
 }
-.user-content__personal-item-actions button {
-  padding: 0.5rem 2rem;
-  border-radius: 2rem;
-  box-shadow: 0.2rem 0.5rem 1rem rgba(56, 56, 56, 0.5);
-  background-image: linear-gradient(0deg, #AC47F0, #AC47F0 25%, #C682F3);
-  cursor: pointer;
-  font-family: inherit;
-  color: inherit;
-  font-size: inherit;
-  font-weight: inherit;
-}
-.user-content__personal-item-actions button:hover {
-  transform: scale(1.02);
-}
-.user-content__personal-item-actions .comment-write {
-  border: 2px solid #FBD83E;
-}
-.user-content__personal-item-actions .order-cancel {
-  border: 2px solid #DE728E;
-}
 .user-content__personal-item-comment {
   display: none;
   margin: 2rem 0;
@@ -7306,6 +7303,65 @@ footer {
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
 }
+.user-content__personal .cabinet__login-title {
+  margin-top: 0;
+}
+.user-content__personal .cabinet__login-section {
+  display: block;
+  margin: 0 auto;
+  text-align: center;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 2.2rem;
+}
+.user-content__personal .cabinet__login-section input {
+  border: none;
+  font: inherit;
+  width: 17rem;
+  height: 3rem;
+  background-color: rgba(244, 228, 255, 0.4);
+  border-radius: 0.4rem;
+  margin-right: 2rem;
+}
+.user-content__personal .cabinet__login-section button {
+  display: none;
+  margin: 2rem auto;
+}
+.user-content__personal .cabinet__login-section .get_token_actions {
+  font-size: 1.6rem;
+  display: block;
+  margin: 2rem auto;
+  width: 40rem;
+  border: 1px solid #FFED9F;
+  border-radius: 0.6rem;
+  padding: 0.5rem;
+  background-color: #cfcfcf;
+  cursor: pointer;
+}
+.user-content__personal .cabinet__login-section #logoutBtn {
+  display: block;
+}
+.user-content__personal .cabinet #verifySmsTokenForm input {
+  width: 11rem;
+  padding: 1rem;
+  text-align: center;
+}
+.user-content__personal .cabinet__separator {
+  display: flex;
+  align-items: center;
+  margin: 2rem;
+}
+.user-content__personal .cabinet__separator span {
+  flex-shrink: 0;
+  padding: 1rem;
+  font-size: 1.8rem;
+}
+.user-content__personal .cabinet__separator hr {
+  width: 100%;
+  height: 0;
+  flex-shrink: 1;
+}
+
 .hide_status {
   display: none;
   height: 0.3rem;

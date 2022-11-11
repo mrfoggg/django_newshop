@@ -1,6 +1,9 @@
 from django.urls import path
 
-from ROOTAPP.views import (update_cities, get_delivery_cost, ProductActionsView, CheckoutView, ByNowView,)
+from ROOTAPP.views import (update_cities, get_delivery_cost, ProductActionsView, CheckoutView, ByNowView,
+                           request_google_auth, google_response, get_and_check_registration_phone,
+                           get_registration_name, verify_sms_token, regenerate_sms_token, logout_view,
+                           )
 
 app_name = 'root_app'
 urlpatterns = [
@@ -9,5 +12,11 @@ urlpatterns = [
     path('product_actions/', ProductActionsView.as_view(), name='product_actions'),
     path('checkout/', CheckoutView.as_view(), name='checkout'),
     path('by_now/', ByNowView.as_view(), name='by_now'),
-
+    path('get_and_check_registration_phone/', get_and_check_registration_phone, name='get_and_check_registration_phone'),
+    path('get_registration_name/', get_registration_name, name='get_registration_name'),
+    path('regenerate_sms_token/', regenerate_sms_token, name='regenerate_sms_token'),
+    path('verify_sms_token/', verify_sms_token, name='verify_sms_token'),
+    path('logout/', logout_view, name='logout'),
+    # path('request_google_auth/', request_google_auth, name='request_google_auth'),
+    # path('google_response/', google_response, name='google_response'),
 ]

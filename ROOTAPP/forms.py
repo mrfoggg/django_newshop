@@ -32,6 +32,10 @@ class AddressForm(forms.Form):
 
 class PersonForm(forms.ModelForm):
     contact_phone = forms.CharField(label="Номер телефону")
+    first_name = forms.CharField(label='Прізвище')
+    last_name = forms.CharField(label="Ім'я")
+    middle_name = forms.CharField(label="По-батькові")
+    email = forms.EmailField(label="Електронна пошта")
     class Meta:
         model = Person
         fields = ('first_name', 'last_name', 'middle_name', 'contact_phone', 'email')

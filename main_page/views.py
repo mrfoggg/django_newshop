@@ -80,3 +80,8 @@ def dispatch_view(request, slug, str_url_data=None):
         if model.objects.filter(slug=slug).exists():
             return {'product': ProductView, 'category': CategoryView}.get(
                 model.__name__.lower()).as_view()(request, slug=slug, str_url_data=str_url_data)
+
+
+class Login2View(TemplateView):
+    template_name = 'login2.html'
+

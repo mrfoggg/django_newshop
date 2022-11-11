@@ -14,7 +14,6 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-
 from django.conf import settings
 from django.conf.urls.static import static
 # from django.contrib import admin
@@ -27,9 +26,11 @@ admin.site.site_title = "Главная страница"
 admin.site.index_title = 'Панель администрирования интернет-магазина "Снип-Сноп"'
 
 urlpatterns = [
-    path('baton/', include('baton.urls')),
+
     path("select2/", include("django_select2.urls")),
     path('admin/', admin.site.urls),
+    path('baton/', include('baton.urls')),
+    path('accounts/', include('allauth.urls')),
     path('root_app/', include('ROOTAPP.urls')),
     path('orders/', include('orders.urls')),
     path('', include('main_page.urls')),
@@ -38,7 +39,6 @@ urlpatterns = [
     path('_nested_admin/', include('nested_admin.urls')),
     # path('__debug__/', include('debug_toolbar.urls')),
 ]
-
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -666,12 +666,14 @@ $(document).ready(function(){
         }
     }).prop('maxlength', '9').mask("99)  999-99-99", {
         completed: function(){
-            $("#ok_button").prop("disabled", false)
+            $(this).siblings('button').slideDown();
+            $(this).siblings('div').children('button').slideDown();
         }
     }).keyup(function (){
         if ($(this).val().replace(/\D+/g,"").length < 9) {
-            $('#errNumber, #okNumber').fadeOut();
-            $("#ok_button").prop("disabled", true);
+            $('#errNumber, #wrongRegistrationPhone').fadeOut();
+            $(this).siblings('button').slideUp();
+            $(this).siblings('div').children('button').slideUp();
         }
     })
 
@@ -1135,7 +1137,7 @@ $(document).ready(function(){
                 url: $(this).attr('action'),
                 data: $(this).serialize(),
                 success: function (response) {
-                    section.text(response['cancel_text']);
+                    section.text(response['cancel_text']).delay(900).fadeOut();
                     let oneClickAmount = response["one_clicks_amount"];
                     $('.sub-header__user').html(`<span>${oneClickAmount}</span>`);
                     $('.user-content__personal-nav-item').first().children().text(oneClickAmount);
@@ -1144,7 +1146,6 @@ $(document).ready(function(){
                         $('#noOneclicks').fadeIn();
                         $('.sub-header__user span').fadeOut();
                     }
-
                 }
             });
         });
@@ -1190,12 +1191,119 @@ $(document).ready(function(){
     bindOnclickAddComment($('form.user-content__personal-item-comment'));
 
     const commentInput = document.getElementById('commentText');
-    const commentInputH = commentInput.offsetHeight;
+    if (commentInput) {
+        const commentInputH = commentInput.offsetHeight;
+        commentInput.addEventListener('input', function(e){
+            e.target.style.height = commentInputH + 'px';
+            e.target.style.height = e.target.scrollHeight + 'px';
+        });
+    }
 
-    commentInput.addEventListener('input', function(e){
-        e.target.style.height = commentInputH + 'px';
-        e.target.style.height = e.target.scrollHeight + 'px';
+
+
+
+    // $('preCreateOrderForm').submit(function (e){
+    //     e.preventDefault();
+    //     $.ajax({
+    //         type: "POST",
+    //         url: $(this).attr('action'),
+    //         data: $(this).serialize(),
+    //         success: function () {
+    //
+    //         }
+    //     }, 200)
+    // });
+
+    $('#sendRegistrationPhoneForm').submit(function (e){
+        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            success: function (response) {
+                if (response['phone_is_valid']){
+                    if (response['is_created_user']) {
+                        $('#wrongRegistrationPhone').slideUp();
+                        $('#sendRegistrationPhoneForm').slideUp();
+                        $('#sendRegistrationNameForm').slideDown();
+                        $('#loginTitle').text(response['next_title_text']);
+                    }
+                } else {
+                    $('#wrongRegistrationPhone').slideDown();
+                }
+            }
+        }, 200);
     });
+
+
+    $('#sendRegistrationNameForm').submit(function (e){
+        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            success: function (response) {
+                $('#loginTitle').text(response['next_title_text']);
+                $('#sendRegistrationNameForm').slideUp();
+                $('#verifySmsTokenForm').slideDown();
+            }
+        }, 200);
+    });
+
+    $('#registrationNameInput').keyup(function (){
+        let btn = $(this).siblings('div').children('button');
+        if($(this).val().length > 2) {
+            btn.slideDown();
+        } else {
+            btn.slideUp();
+        }
+    });
+
+    $('#tokenInput').keyup(function (){
+        let btn = $(this).siblings('div').children('button');
+        if($(this).val().length > 5) {
+            btn.slideDown();
+        } else {
+            btn.slideUp();
+        }
+    });
+
+    $('#regenerateSmsTokenBtn').click(function (){
+        console.log('click');
+        $('#regenerateSmsTokenForm').submit();
+    });
+
+    $('#regenerateSmsTokenForm').submit(function (e){
+        e.preventDefault();
+        console.log('regenerateSmsTokenForm');
+        $.ajax({
+            type: "POST",
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            success: function (response) {
+                $('#loginTitle').text(response['next_title_text']);
+            }
+        }, 200);
+    });
+
+    $('#verifySmsTokenForm').submit(function (e){
+        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            success: function (response) {
+                $('#loginTitle').text(response['next_title_text']);
+                if (response['result']){
+                    $('#verifySmsTokenForm, #loginBySocial').slideUp();
+                    $('#logoutForm').slideDown();
+                }
+            }
+        }, 200);
+    });
+
+
+
 });
 
 document.body.onload = function() {

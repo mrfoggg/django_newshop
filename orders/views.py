@@ -12,7 +12,8 @@ from oauth2client.client import AccessTokenCredentials, Credentials
 from phonenumber_field.phonenumber import PhoneNumber
 from phonenumbers import geocoder
 # Create your views here.
-from ROOTAPP.models import Phone, PersonPhone
+from ROOTAPP.models import Phone, PersonPhone, Person
+# from ROOTAPP.services.google_services import create_contact
 from orders.models import OneClickUserSectionComment, ByOneclick
 from site_settings.models import APIkeyIpInfo, OAuthGoogle
 
@@ -35,11 +36,8 @@ def create_one_click_order(request):
 
         access_token = APIkeyIpInfo.get_solo().api_key
         handler = ipinfo.getHandler(access_token)
-        try:
-            details_ip = handler.getDetails(ip).details
-        except:
-            raise Exception("ipinfo недоступен")
-            details_ip = ip
+
+        details_ip = ip
 
         one_click = ByOneclick(phone=phone_obj, product_id=int(request.POST.get('product_id')),
                                session_key=request.session.session_key, user_ip_info=details_ip)
@@ -52,6 +50,7 @@ def create_one_click_order(request):
         new_item_html = render_to_string(
             'one_click_user_section_item.html', {'oneclick': one_click}, request
         )
+        # create_contact()
         return JsonResponse({'result': True, 'phone': str(phone_obj), 'one_click_id': one_click.id,
                              'product': one_click.product.name, 'new_item_html': new_item_html,
                              'one_clicks_amount': one_clicks_amount}, status=200)
@@ -76,3 +75,12 @@ def cancel_oneclick(request):
     oneclick.save()
     one_clicks_amount = ByOneclick.objects.filter(session_key=request.session.session_key, is_active=True).count()
     return JsonResponse({'cancel_text': 'Заявку відмінено', 'one_clicks_amount': one_clicks_amount}, status=200)
+
+
+def pre_create_order(request):
+    new_contact = Person(
+        first_name=request.POST.get('first_name'), last_name=request.POST.get('first_name'),
+
+    )
+    print(request)
+    return JsonResponse({}, status=200)

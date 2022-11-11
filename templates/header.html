@@ -68,7 +68,12 @@
                 </ul>
             </div>
             <div class="sub-header__userlinks">
-                <span class="sub-header__user"></span>
+                {% if one_click_total_amount %}
+                    <span class="sub-header__user"><span>{{ one_click_total_amount }}</span></span>
+                    {% else %}
+                    <span class="sub-header__user"></span>
+                {% endif %}
+
                 {% if favorites_count %}
                     <a class="sub-header__favorites" href="{{ favorites_link }}"><span>{{ favorites_count }}</span></a>
                 {% else %}

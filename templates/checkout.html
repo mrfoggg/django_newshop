@@ -70,11 +70,12 @@
     <div class="checkout__section">
         <h3>Контактна інформація</h3>
         <div class="checkout__section_block">
-            <form action="">
+            <form action="" id="preCreateOrderForm">
                 <fieldset>
                     <legend>Замовник</legend>
                     {{ person_form.as_p }}
                 </fieldset>
+                <button type="submit" id="preCreateOrderBtn">ОК</button>
             </form>
 
         </div>
@@ -91,6 +92,7 @@
                 на суму: <span>{{ basket_total.total_sum|floatformat:2  }} ₴</span>
             </div>
         </div>
+        <button type="submit"></button>
 
     </div>
 </div>

@@ -70,10 +70,18 @@ def product_lists_conntext(request):
         'url_product_actions': reverse('root_app:product_actions'),
         'oneclick_add_comment_action_url': reverse('orders:oneclick_add_comment'),
         'cancel_oneclick_action_url': reverse('orders:cancel_oneclick'),
+        'pre_create_order_action_url': reverse('orders:pre_create_order'),
+        'get_and_check_registration_phone_action_url': reverse('root_app:get_and_check_registration_phone'),
+        'get_registration_name_action_url': reverse('root_app:get_registration_name'),
+        'verify_sms_token_action_url': reverse('root_app:verify_sms_token'),
+        'regenerate_sms_token_action_url': reverse('root_app:regenerate_sms_token'),
+        'logout_action_url': reverse('root_app:logout'),
         'viewed_products': viewed,
         'viewed_mode': ' viewed_slider_mode' if len(viewed) > 5 else ' viewed_grid_mode' if len(viewed) else '',
         'products_obj_in_basket': pib_list_dicts_with_amount,
         'products_id_in_basket': products_id_in_basket,
-        'basket_total': {'total_amount': total_amount, 'total_sum': total_sum}
+        'basket_total': {'total_amount': total_amount, 'total_sum': total_sum},
+        'one_click_total_amount': ByOneclick.objects.filter(
+            session_key=request.session.session_key, is_active=True).count()
     }
     return context

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load thumbnail %}
+{% load custom_tags %}
+{% block title %}
+    <title> Сніп-Сноп | Логин</title>
+{% endblock title %}
+
+{% block main_content %}
+    {% load socialaccount %}
+
+    <h1>Django Allauth Tutorial</h1>
+    {% if user.is_authenticated %}
+        <p>Привіт {{ user.username }} !!!</p>
+    {% else %}
+        <a href="{% provider_login_url 'github' %}">Увійти</a>
+    {% endif %}
+{% endblock %}

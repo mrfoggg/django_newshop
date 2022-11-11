@@ -57,7 +57,7 @@ class PhoneAdmin(admin.ModelAdmin):
 
 @admin.register(Person)
 class PersonAdmin(nested_admin.NestedModelAdmin):
-    fields = (('last_name', 'first_name', 'middle_name'), 'email', ('is_customer', 'is_supplier'))
+    fields = (('last_name', 'first_name', 'middle_name'), 'email', ('is_customer', 'is_supplier'), 'user')
     search_fields = ('last_name', 'first_name', 'middle_name')
     inlines = (PersonPhoneInlineAdmin, PersonSettlementInline, PersonOneClickInline)
     list_display = ('__str__', 'is_customer', 'is_supplier')

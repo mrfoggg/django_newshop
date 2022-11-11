@@ -1,6 +1,7 @@
 import ipinfo
 import requests
 from django.contrib import admin
+from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
 from django.utils.html import format_html_join
@@ -43,7 +44,8 @@ STATUSES_CLIENT_DISPLAY = {
 
 class ByOneclick(models.Model):
     product = models.ForeignKey(Product, verbose_name='Товар', on_delete=models.SET_NULL, null=True)
-    price = MoneyField('Цена на момент создания заявки', max_digits=14, decimal_places=2, default_currency='UAH', default=0)
+    price = MoneyField('Цена на момент создания заявки', max_digits=14, decimal_places=2, default_currency='UAH',
+                       default=0)
     phone = models.ForeignKey(Phone, verbose_name='Телефон', on_delete=models.SET_NULL, null=True)
     is_active = models.BooleanField(default=True, verbose_name='Активно')
     created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name='Добавлено')
@@ -87,12 +89,12 @@ class ByOneclick(models.Model):
     def this_session_oneclicks(self):
         # return ByOneclick.objects.filter(session_key=self.session_key).exclude(id=self.id)
         return format_html_join(
-                '', "<a href={}>{}</a> </br>",
-                (
-                    (reverse('admin:orders_byoneclick_change', args=[o.id]), o)
-                    for o in ByOneclick.objects.filter(session_key=self.session_key).exclude(id=self.id)
-                )
-            ) if ByOneclick.objects.filter(session_key=self.session_key).exclude(id=self.id).exists() else "отстутствуют"
+            '', "<a href={}>{}</a> </br>",
+            (
+                (reverse('admin:orders_byoneclick_change', args=[o.id]), o)
+                for o in ByOneclick.objects.filter(session_key=self.session_key).exclude(id=self.id)
+            )
+        ) if ByOneclick.objects.filter(session_key=self.session_key).exclude(id=self.id).exists() else "отстутствуют"
 
     @property
     def client_display_status(self):
@@ -133,3 +135,7 @@ class ByOneclickPersonalComment(models.Model):
 
     def __str__(self):
         return str(self.created)
+
+
+class Basket(models.Model):
+    customer = models.ForeignKey(User, verbose_name="Пользователь", on_delete=models.SET_NULL, null=True)
