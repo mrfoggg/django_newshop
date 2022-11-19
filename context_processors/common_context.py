@@ -20,6 +20,10 @@ def header_context(request):
         'favorites_count': len(f) if (f := request.session.get('favorites', None)) else 0,
         'compare_count': len(f) if (f := request.session.get('compare', None)) else 0,
         'back_link': request.META.get('HTTP_REFERER') if request.META.get('HTTP_REFERER') else '/',
+        'cabinet_title_text': f"Вітаємо { request.user.last_name } { request.user.first_name }. "
+                              f"Ви увійшли в систему за допомогою "
+                              f"номера телефону { request.user.username }" if request.user.is_authenticated else
+        "Для входу в кабінет або щоб створити обліковий запис вкажіть ваш номер телефону"
         # 'session': request.session
     }
     return context

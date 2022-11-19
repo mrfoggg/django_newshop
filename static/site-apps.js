@@ -680,6 +680,7 @@ $(document).ready(function(){
 
 
     $('#by_one_click_action').submit(function (e){
+        console.log('oneclick sumbit');
         e.preventDefault();
         $('.preloader.fast').fadeIn('fast');
         $.ajax({
@@ -1200,19 +1201,25 @@ $(document).ready(function(){
     }
 
 
-
-
-    // $('preCreateOrderForm').submit(function (e){
-    //     e.preventDefault();
-    //     $.ajax({
-    //         type: "POST",
-    //         url: $(this).attr('action'),
-    //         data: $(this).serialize(),
-    //         success: function () {
-    //
-    //         }
-    //     }, 200)
-    // });
+    let validityTimer;
+    function runValidityTimer(interval){
+        clearInterval(validityTimer);
+        let indicator = $('#tokenValidityTimerIndicator span');
+        indicator.text(interval);
+        $('#tokenValidityTimerIndicator').fadeIn();
+        validityTimer = setInterval(function (){
+            --interval;
+            indicator.text(interval);
+            if (interval===0) {
+                clearInterval(validityTimer);
+                $('#loginTitle').text('Срок дії паролю вичерпано. Запросіть новий пароль');
+                $('#regenerateSmsTokenBtn').prev().slideUp();
+                $('#tokenInput').val('');
+                $('#loginTitle').next('h3').slideUp();
+                clearInterval(resendTimer);
+            }
+        }, 1000)
+    }
 
     $('#sendRegistrationPhoneForm').submit(function (e){
         e.preventDefault();
@@ -1222,11 +1229,16 @@ $(document).ready(function(){
             data: $(this).serialize(),
             success: function (response) {
                 if (response['phone_is_valid']){
-                    if (response['is_created_user']) {
-                        $('#wrongRegistrationPhone').slideUp();
-                        $('#sendRegistrationPhoneForm').slideUp();
+                    $('#sendRegistrationPhoneForm').slideUp();
+                    $('#loginTitle').text(response['next_title_text']);
+                    $('#wrongRegistrationPhone').slideUp();
+                    // clearInterval(reverifyTimer);
+                    if (response['ask_name']) {
                         $('#sendRegistrationNameForm').slideDown();
-                        $('#loginTitle').text(response['next_title_text']);
+                    } else {
+                        $('#regenerateSmsTokenBtn').prev().slideDown();
+                        $('#verifySmsTokenForm').slideDown();
+                        runValidityTimer(response['validity_time']);
                     }
                 } else {
                     $('#wrongRegistrationPhone').slideDown();
@@ -1244,8 +1256,10 @@ $(document).ready(function(){
             data: $(this).serialize(),
             success: function (response) {
                 $('#loginTitle').text(response['next_title_text']);
+                $('#regenerateSmsTokenBtn').prev().slideDown();
                 $('#sendRegistrationNameForm').slideUp();
                 $('#verifySmsTokenForm').slideDown();
+                runValidityTimer(response['validity_time']);
             }
         }, 200);
     });
@@ -1259,7 +1273,7 @@ $(document).ready(function(){
         }
     });
 
-    $('#tokenInput').keyup(function (){
+    $('#tokenInput').on('keyup paste', function (){
         let btn = $(this).siblings('div').children('button');
         if($(this).val().length > 5) {
             btn.slideDown();
@@ -1269,23 +1283,73 @@ $(document).ready(function(){
     });
 
     $('#regenerateSmsTokenBtn').click(function (){
-        console.log('click');
+        if (!$(this).prop('disabled'))
         $('#regenerateSmsTokenForm').submit();
     });
 
+    let resendTimer;
+    function runResendCodeTimer(resendInterval) {
+        console.log('runResendCodeTimer', resendInterval);
+        $('#regenerateSmsTokenBtn').slideUp();
+        $('#regenerateSmsTokenTimer span').text(resendInterval);
+        $('#regenerateSmsTokenTimer').slideDown();
+        $('#regenerateSmsTokenBtn').prev().slideDown();
+        console.log('CONTROL');
+        resendTimer = setInterval(function (){
+            --resendInterval;
+            console.log(resendInterval);
+            $('#regenerateSmsTokenTimer span').text(resendInterval);
+            if (resendInterval===0) {
+                clearInterval(resendTimer);
+                $('#regenerateSmsTokenBtn').slideDown();
+                $('#regenerateSmsTokenTimer').slideUp();
+            }
+
+        },1000)
+    }
+
+    function delResendCodeTimer(){
+        $('#regenerateSmsTokenBtn').slideDown();
+        $('#regenerateSmsTokenTimer').slideUp();
+        $('#regenerateSmsTokenBtn').prev().slideUp();
+    }
+
     $('#regenerateSmsTokenForm').submit(function (e){
         e.preventDefault();
-        console.log('regenerateSmsTokenForm');
+        clearInterval(validityTimer);
         $.ajax({
             type: "POST",
             url: $(this).attr('action'),
             data: $(this).serialize(),
             success: function (response) {
                 $('#loginTitle').text(response['next_title_text']);
+                // let resendInterval = response['resent_time'];
+                // $('#regenerateSmsTokenBtn').slideUp();
+                // $('#regenerateSmsTokenTimer span').text(resendInterval);
+                // $('#regenerateSmsTokenTimer').slideDown();
+                // $('#regenerateSmsTokenBtn').prev().slideDown();
+                // let resendTimer = setInterval(function (){
+                //     --resendInterval;
+                //     $('#regenerateSmsTokenTimer span').text(resendInterval);
+                //     if (resendInterval===0) {
+                //         clearInterval(resendTimer);
+                //         $('#regenerateSmsTokenBtn').slideDown();
+                //         $('#regenerateSmsTokenTimer').slideUp();
+                //     }
+                //
+                // },1000)
+                runResendCodeTimer(response['resent_time']);
+                runValidityTimer(response['validity_time']);
+                $('#loginTitle').next('h3').slideUp();
+                clearInterval(validityTimer);
+                $('#verifySmsTokenForm label').css('opacity', '100%');
+                $('#verifySmsTokenForm label button').prop('disabled', false);
             }
         }, 200);
     });
 
+
+    let reverifyTimer;
     $('#verifySmsTokenForm').submit(function (e){
         e.preventDefault();
         $.ajax({
@@ -1297,12 +1361,53 @@ $(document).ready(function(){
                 if (response['result']){
                     $('#verifySmsTokenForm, #loginBySocial').slideUp();
                     $('#logoutForm').slideDown();
+                    $('input[name="csrfmiddlewaretoken"]').val(response['csrf']);
+                    clearInterval(validityTimer);
+                } else {
+                    let tokenFormElements = $('#verifySmsTokenForm label');
+                    tokenFormElements.css('opacity', '30%');
+                    let tokenFormButtons = tokenFormElements.find('button');
+                    tokenFormButtons.prop('disabled', true);
+                    let interval = response['interval']
+                    $('#loginTitle').after(`<h3> через <span>${interval}</span> секунд </h3> `);
+                    clearInterval(reverifyTimer);
+                    reverifyTimer = setInterval(function (){
+                        --interval;
+                        $('#loginTitle').next().children().text(interval);
+                        if (interval===0) {
+                            clearInterval(reverifyTimer);
+                            $('#loginTitle').next().remove();
+                            tokenFormElements.css('opacity', '100%');
+                            tokenFormButtons.prop('disabled', false);
+                        }
+
+                    },1000)
                 }
             }
         }, 200);
     });
 
+    $('#logoutForm').submit(function (e){
+        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            success: function (response) {
+                // console.log(response);
+                $('#loginTitle').text(response['next_title_text']);
+                $('#sendRegistrationPhoneForm').slideDown();
+                $('#logoutForm').slideUp();
+            }
+        }, 200);
+    });
 
+    $('#changeNumber').click(function (){
+        $('#verifySmsTokenForm').slideUp();
+        $('#tokenInput').val('');
+        $('#sendRegistrationPhoneForm').slideDown();
+        $('input[name="change_number"]').val(true);
+    })
 
 });
 

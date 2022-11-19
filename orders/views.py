@@ -63,6 +63,7 @@ def oneclick_add_comment(request):
     # credentials = AccessTokenCredentials('<an access token>',
     #                                      'my-user-agent/1.0')
     new_user_comment.save()
+    # print('django.middleware.csrf.get_token(request) === ', django.middleware.csrf.get_token(request))
     return JsonResponse({'posted_time': new_user_comment.created.strftime("%Y-%m-%d %H:%M"),
                          'posted_text': new_user_comment.description, 'csrf': django.middleware.csrf.get_token(request)
                          }, status=200)

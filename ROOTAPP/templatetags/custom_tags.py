@@ -14,3 +14,8 @@ def phone_national(value):
 @register.filter
 def get_attr_str_value(product, attribute):
     return product.get_attr_string_val(attribute)
+
+
+@register.simple_tag
+def values_by_condition(condition, value_1, value_2=''):
+    return value_1 if condition else value_2

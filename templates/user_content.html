@@ -1,4 +1,5 @@
 {% load thumbnail %}
+{% load custom_tags %}
 <div class="user-content user-content__basket" id="basket">
     <div class="user-content__basket-list-wrapper">
         <div class="user-content__basket-list">
@@ -6,13 +7,11 @@
                 <div class="user-content__basket-item">
                     <div class="user-content__basket-item-img">
                         {% thumbnail pr.product.thumb "80" as im %}
-{#                            <img src="{{ im.url }}">#}
                             <a href={{ pr.product.get_absolute_url }}><img src="{{ im.url }}"></a>
                         {% endthumbnail %}
                     </div>
 
                     <div class="user-content__basket-item-info">
-{#                        <h4>{{ pr.product }}</h4>#}
                         <a href={{ pr.product.get_absolute_url }}><h4>{{ pr.product }}</h4></a>
                         <div class="user-content__basket-item-calculate">
                             <div class="user-content__basket-item-price">{{ pr.price }} ₴</div>
@@ -27,7 +26,6 @@
             {% empty %}
                 <h2 id="empty_basket">Кошик порожній</h2>
             {% endfor %}
-
         </div>
 
         <form id="update_basket" action="{{ url_product_actions }}">
@@ -38,14 +36,14 @@
         </form>
 
     </div>
-    {% if products_obj_in_basket %}
-        <div class="user-content__basket-total visible">
-    {% else %}
-        <div class="user-content__basket-total">
-    {% endif %}
-        <form id='bascet_form' action="">
-            <a href="{{ checkout_link }}">Оформити</a>
-        </form>
+{#    {% if products_obj_in_basket %}#}
+{#        <div class="user-content__basket-total visible">#}
+{#    {% else %}#}
+{#        <div class="user-content__basket-total">#}
+{#    {% endif %}#}
+{#    <div class="user-content__basket-total {{ products_obj_in_basket | variants:'visible'}}">#}
+    <div class="user-content__basket-total {% values_by_condition products_obj_in_basket 'visible' %}">
+        <a href="{{ checkout_link }}">Оформити</a>
 
         <div class="user-content__basket-total--ammount">
             <span>{{ basket_total.total_amount }}</span> шт
@@ -79,77 +77,70 @@
         </div>
 
         <div class="user-content__personal-tab cabinet" data-id="cabinet">
-            {% if user.is_authenticated %}
-                <h3 class='user-content__personal-item-title' id="loginTitle">Вітаємо {{ user.last_name }} {{ user.first_name }}. Ви увійшли в систему за допомогою номера телефону {{ user.username }}</h3>
-                <form action={{ logout_action_url }} id='logoutForm'>
-                    <div class="cabinet__login-section user-content__personal-item">
-                        {% csrf_token %}
-                        <button type="submit">Вийти</button>
+            <h3 class='user-content__personal-item-title' id="loginTitle">{{ cabinet_title_text }}</h3>
+            <form action={{ get_and_check_registration_phone_action_url }} id="sendRegistrationPhoneForm" style="{% values_by_condition user.is_authenticated 'display: none;' %}">
+                {% csrf_token %}
+                <input type="hidden" name="change_number" value="false">
+                <label class='cabinet__login-section user-content__personal-item'>
+                    +38(0
+                    <input class="phone-number-input" name="phonenumber" type="text" autocomplete="off" maxlength="9">
+                    <div>
+                        <button type="submit">Підтвердити</button>
                     </div>
-                </form>
-            {% else %}
-                <h3 class='user-content__personal-item-title' id="loginTitle">Для входу в кабінет або щоб створити обліковий запис вкажіть ваш номер телефону</h3>
-                <form action={{ get_and_check_registration_phone_action_url }} id="sendRegistrationPhoneForm">
-                    {% csrf_token %}
-                    <label class='cabinet__login-section user-content__personal-item'>
-                        +38(0
-                        <input class="phone-number-input" name="phonenumber" type="text" autocomplete="off" maxlength="9">
-                        <div>
-                            <button type="submit">Підтвердити</button>
-                        </div>
-                        <h3 id="wrongRegistrationPhone" style="display: none;">Такий номер не існує</h3>
-                    </label>
-                </form>
+                    <h3 id="wrongRegistrationPhone" style="display: none;">Такий номер не існує</h3>
+                </label>
+            </form>
 
-                <form action={{ get_registration_name_action_url }} id="sendRegistrationNameForm" style="display: none;">
-                    {% csrf_token %}
-                    <label class='cabinet__login-section user-content__personal-item'>
-                        Ваше ім'я
-                        <input type="text" name="name" id="registrationNameInput">
-                        <div>
-                            <button type="submit">Підтвердити</button>
-                        </div>
-                    </label>
-                </form>
+            <form action={{ get_registration_name_action_url }} id="sendRegistrationNameForm" style="display: none;">
+                {% csrf_token %}
+                <label class='cabinet__login-section user-content__personal-item'>
+                    Ваше ім'я
+                    <input type="text" name="name" id="registrationNameInput">
+                    <div>
+                        <button type="submit">Підтвердити</button>
+                    </div>
+                </label>
+            </form>
 
-                <form action={{ verify_sms_token_action_url }} id="verifySmsTokenForm" style="display: none;">
-                    {% csrf_token %}
-                    <label class='cabinet__login-section user-content__personal-item'>
+            <form action={{ verify_sms_token_action_url }} id="verifySmsTokenForm" style="display: none;">
+                {% csrf_token %}
+                <div class='cabinet__login-section user-content__personal-item'>
+                    <label>
                         Одноразвоий пароль  з СМС
                         <input type="text" name="token" id="tokenInput" maxlength="6">
+                        <span id="tokenValidityTimerIndicator" style="display: none">(дійсний &nbsp<span></span>c)</span>
                         <div>
                             <button type="submit">Підтвердити</button>
                         </div>
-                        <span class="get_token_actions" id="regenerateSmsTokenBtn">Відправити код підтвердження ще раз</span>
-                        <span class="get_token_actions" id="changeNumber">Вказати інший номер телефону</span>
                     </label>
-                </form>
-                <form action={{ regenerate_sms_token_action_url }} id='regenerateSmsTokenForm'>
-                    {% csrf_token %}
-                </form>
 
 
-                <form action={{ logout_action_url }} id='logoutForm' style="display: none;">
-                    <div class="cabinet__login-section user-content__personal-item">
-                        {% csrf_token %}
-                        <button type="submit" id='logoutBtn'>Вийти</button>
-                    </div>
-                </form>
-
-
-                <div id="loginBySocial">
-                    <div class="cabinet__separator">
-                        <hr>
-                        <span>або авторизутесь через соціальні мережі</span>
-                        <hr>
-                    </div>
+                    <span class="get_token_actions" id="regenerateSmsTokenBtn">Відправити новий код підтвердження</span>
+                    <span class="get_token_actions" id="regenerateSmsTokenTimer" style="display: none; cursor: auto; opacity: 50%">Запросити код ще раз можливо через <span></span> с</span>
+                    <span class="get_token_actions" id="changeNumber">Вказати інший номер телефону</span>
                 </div>
-            {% endif %}
+            </form>
+            <form action={{ regenerate_sms_token_action_url }} id='regenerateSmsTokenForm'>
+                {% csrf_token %}
+            </form>
 
 
+            <form action={{ logout_action_url }} id='logoutForm' style="{% values_by_condition user.is_authenticated '' 'display: none;' %}">
 
+                <div class="cabinet__login-section user-content__personal-item">
+                    {% csrf_token %}
+                    <button type="submit" id='logoutBtn'>Вийти</button>
+                </div>
+            </form>
+
+
+            <div id="loginBySocial">
+                <div class="cabinet__separator">
+                    <hr>
+                    <span>або авторизутесь через соціальні мережі</span>
+                    <hr>
+                </div>
+            </div>
         </div>
-
-
     </div>
 </div>

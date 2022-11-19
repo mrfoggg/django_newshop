@@ -97,7 +97,7 @@
                         <p class="product__top-data-by-onclick-header">Проконсультуємо і оформимо замовлення по телефону:</p>
                         <form id="by_one_click_action" action="{{ by_one_click_link_action }}">
                             {% csrf_token %}
-                            <span>+38 (0</span><input class="phone-number-input" name="phonenumber" type="text" autocomplete="off"><button disabled>Відправити</button>
+                            <span>+38 (0</span><input class="phone-number-input" name="phonenumber" type="text" autocomplete="off"><button type="submit">Відправити</button>
                             <span id="errNumber" style="color: red; display: none">&nbsp Невірний номер</span>
                             <span id="okNumber" style="color: green; display: none">&nbsp Прийнято </span>
                             <input type="hidden" name="product_id" value="{{ product.id }}">

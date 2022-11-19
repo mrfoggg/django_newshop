@@ -1,3 +1,7 @@
+from datetime import datetime, timezone
+
+import django
+import pytz
 from django.contrib import messages
 import json
 
@@ -5,10 +9,12 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render
+from django.template.context_processors import csrf
 from django.urls import reverse, resolve
 import requests
 from django.utils.html import format_html
 from django.views import View
+from jsonview.decorators import json_view
 from otp_twilio.models import TwilioSMSDevice
 from phonenumber_field.phonenumber import PhoneNumber
 from phonenumbers import geocoder
@@ -269,7 +275,7 @@ def get_delivery_cost(request):
         except requests.exceptions.Timeout:
             number_of_attempts += 1
             print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
-    return JsonResponse({}, status=500)
+    return response('')
 
 
 def calculate_basket(request, basket_dict, product_id=None):
@@ -439,6 +445,16 @@ def oauth2callback(request):
     pass
 
 
+def get_verify_allow_time_delta(device):
+    if device.verify_is_allowed()[0]:
+        return None
+    else:
+        now = datetime.now().astimezone(pytz.timezone('Europe/Kiev'))
+        next_allowed_time = device.verify_is_allowed()[1]['locked_until'].astimezone(pytz.timezone('Europe/Kiev'))
+        return round((next_allowed_time - now).total_seconds())
+
+
+@json_view
 # https://django-otp-official.readthedocs.io/en/stable/overview.html
 # https://django-otp-twilio.readthedocs.io/en/latest/_modules/otp_twilio/models.html#TwilioSMSDevice
 def get_and_check_registration_phone(request):
@@ -446,71 +462,128 @@ def get_and_check_registration_phone(request):
     clean_phone_str = ''.join(x for x in data.get('phonenumber') if x.isdigit())
     number = PhoneNumber.from_string(clean_phone_str, region='UA')
     if not geocoder.description_for_number(number, "ru"):
-        return JsonResponse({'phone_is_valid': False}, status=200)
+        return {'phone_is_valid': False}
     phone_full_str = get_phone_full_str(number)
-    print('phone_full_str: ', phone_full_str)
-    user, is_created_user = User.objects.get_or_create(username=number.as_e164)
-    attempt_to_enter_data = request.session['attempt_to_enter_data'] = {
-        'user_id_to_login': user.id, 'phone_full_str': phone_full_str
-    }
-    request.session.save()
-    # print('session_key: ', request.session.session_key)
+    response = {'phone_is_valid': True}
+    if request.session.session_key:
+        if request.POST.get('change_number') and \
+                request.session['attempt_to_enter_data']['clean_phone_str'] == clean_phone_str:
+            response['change_number_same_number'] = True
+    else:
+        request.session.save()
 
+    user, is_created_user = User.objects.get_or_create(username=number.as_e164)
     device = TwilioSMSDevice.objects.get_or_create(number=number.as_e164, name=request.session.session_key,
                                                    user=user, confirmed=False)[0]
-    print('SMS token: ', device.generate_challenge())
-    attempt_to_enter_data['device_id_to_login'] = device.id
-    request.session['attempt_to_enter_data'] = attempt_to_enter_data
-    return JsonResponse({'phone_is_valid': True, 'is_created_user': is_created_user,
-                         'next_title_text': f"Номер {phone_full_str} доступний для регістрації. Вкажіть Ваше ім'я"},
-                        status=200)
+    response['allow_verify_time_delta'] = get_verify_allow_time_delta(device)
+    ask_name = is_created_user or not len(user.first_name)
+    if ask_name:
+        response |= {
+            'ask_name': ask_name,
+            'next_title_text': f"Номер {phone_full_str} доступний для регістрації. Вкажіть Ваше ім'я"
+        }
+    else:
+        print('SMS token: ', device.generate_challenge())
+        response |= {
+            'next_title_text': f'Знайдено обліковий запис з вказаним номером {phone_full_str}.'
+                               ' Для відновлення доступу, вкажіть одноразовий пароль з СМС'
+                               f' який діє {(validity_time := settings.OTP_TWILIO_TOKEN_VALIDITY)} секунд',
+            'validity_time': validity_time, 'input_same_number': False
+        }
+
+    request.session['attempt_to_enter_data'] = {
+        'user_id_to_login': user.id, 'phone_full_str': phone_full_str, 'is_created_user': is_created_user,
+        'device_id_to_login': device.id, 'clean_phone_str': clean_phone_str
+    }
+    return response
 
 
+@json_view
 def get_registration_name(request):
     name = request.POST.get('name').title()
     user = User.objects.get(id=request.session.get('attempt_to_enter_data')['user_id_to_login'])
-    print('User: ', user)
     user.first_name = name
     user.save(update_fields=['first_name'])
-    return JsonResponse(
-        {'next_title_text':
-             f'{name}, для того щоб переконатись що вказаний вами номер '
-             f'{request.session.get("attempt_to_enter_data")["phone_full_str"]} належить саме Вам введіть одноразовий пароль з СМС'
-         }, status=200)
+
+    device = TwilioSMSDevice.objects.get(id=request.session['attempt_to_enter_data']['device_id_to_login'])
+    print('SMS token: ', device.generate_challenge())
+    return {'next_title_text':
+                f'{name}, для того щоб переконатись що вказаний вами номер '
+                f'{request.session.get("attempt_to_enter_data")["phone_full_str"]} '
+                f'належить саме Вам введіть одноразовий пароль з СМС'
+                f' який діє {(validity_time := settings.OTP_TWILIO_TOKEN_VALIDITY)} секунд',
+            'validity_time': validity_time
+            }
 
 
+@json_view
 def regenerate_sms_token(request):
-    # device = TwilioSMSDevice.objects.get(
-    #     id=request.session.get('attempt_to_enter_data')['device_id_to_login'])
-    # print(device.tro)
-    code = TwilioSMSDevice.objects.get(
-        id=request.session.get('attempt_to_enter_data')['device_id_to_login']).generate_challenge()
-    print('New code: ', code)
-    return JsonResponse({'next_title_text': f'ВІдправлено новий одноразовий пароль',}, status=200)
+    allow_timer = False
+    resent_time = settings.OTP_TWILIO_RESENT_TIME
+    is_token_regenerated = 'token_time_last_regenerated' in request.session['attempt_to_enter_data']
+    if is_token_regenerated:
+        token_time_last_regenerated = request.session['attempt_to_enter_data']['token_time_last_regenerated']
+        old_date = datetime.fromtimestamp(token_time_last_regenerated)
+        time_delta = (datetime.now() - old_date).total_seconds()
+        if time_delta > resent_time:
+            allow_timer = True
+    if not is_token_regenerated or allow_timer:
+        device = TwilioSMSDevice.objects.get(
+            id=request.session.get('attempt_to_enter_data')['device_id_to_login'])
+        request.session['attempt_to_enter_data']['token_time_last_regenerated'] = datetime.now().timestamp()
+        request.session.save()
 
-
-def verify_sms_token(request):
-    device = TwilioSMSDevice.objects.get(
-        id=request.session.get('attempt_to_enter_data')['device_id_to_login'])
-    result = device.verify_token(request.POST.get('token'))
-    print('result: ', result)
-    if result:
-        device.confirmed = True
-        device.save()
-        user = User.objects.get(id=request.session.get('attempt_to_enter_data')['user_id_to_login'])
-        login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
-
-        return JsonResponse({'next_title_text': f'{user.first_name} ви успішно зареєструвались і увійшли в систему.',
-                             'result': result}, status=200)
+        code = device.generate_challenge()
+        device.throttle_reset()
+        print('CODE: ', code)
+        return {'next_title_text': f'ВІдправлено новий одноразовий пароль ' \
+                                   f' який діє {(validity_time := settings.OTP_TWILIO_TOKEN_VALIDITY)} секунд',
+                'resent_time': resent_time, 'validity_time': validity_time}
     else:
-        return JsonResponse({'next_title_text': f'Невірний одноразовий пароль', 'result': result}, status=200)
+        return {'next_title_text': 'В даний момент не можливо здійснити запит'}
 
 
+@json_view
+def verify_sms_token(request):
+    attempt_to_enter_data = request.session.get('attempt_to_enter_data')
+    device = TwilioSMSDevice.objects.get(id=attempt_to_enter_data['device_id_to_login'])
+    print('device.verify_is_allowed(): ', device.verify_is_allowed())
+    if device.verify_is_allowed()[0]:
+        print("проверка возможна")
+        result = device.verify_token(request.POST.get('token'))
+        if result:
+            device.confirmed = True
+            device.save()
+            user = User.objects.get(id=request.session.get('attempt_to_enter_data')['user_id_to_login'])
+            login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
+            if attempt_to_enter_data['is_created_user']:
+                next_title_text = f'{user.get_full_name()} ви успішно зареєструвались і увійшли в систему.'
+            else:
+                next_title_text = f'{user.get_full_name()} ви увійшли в свій особоистий кабінет'
+
+            return {'next_title_text': next_title_text, 'result': result,
+                    'csrf': django.middleware.csrf.get_token(request)}
+        else:
+
+            return {'next_title_text': f'Невірний одноразовий пароль, ви можете повторити спробу ',
+                    'result': result, 'interval': get_verify_allow_time_delta(device)}
+    else:
+        print("проверка НЕвозможна")
+        now = datetime.now().astimezone(pytz.timezone('Europe/Kiev'))
+        next_allowed_time = device.verify_is_allowed()[1]['locked_until'].astimezone(pytz.timezone('Europe/Kiev'))
+        print('type next_allowed_time', type(next_allowed_time))
+        print('type datetime.now()', type(datetime.now()))
+        print('Проверка возможна через: ', (next_allowed_time - now).total_seconds())
+        return {'next_title_text': 'В даний момент не можливо здійснити запит', }
+
+
+@json_view
 def logout_view(request):
+    if 'attempt_to_enter_data' in request.session.keys():
+        device = TwilioSMSDevice.objects.get(
+            id=request.session.get('attempt_to_enter_data')['device_id_to_login'])
+        device.confirmed = False
+        device.save()
     logout(request)
-    device = TwilioSMSDevice.objects.get(
-        id=request.session.get('attempt_to_enter_data')['device_id_to_login'])
-    device.confirmed = False
-    device.save()
-    del request.session['attempt_to_enter_data']
-    return JsonResponse({'next_title_text': 'ви вийшли з облікового запису'}, status=200)
+    next_title_text = 'Ви вийшли з облікового запису. Для входу в кабінет або щоб створити обліковий запис вкажіть ваш номер телефону'
+    return {'next_title_text': next_title_text}

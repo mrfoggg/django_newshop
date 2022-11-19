@@ -99,6 +99,7 @@ INSTALLED_APPS = [
     'babel',
     'baton.autodiscover',
 
+
 ]
 
 ROOT_URLCONF = 'Shop_DJ.urls'
@@ -218,6 +219,9 @@ CACHES = {
 
 # Tell select2 which cache configuration to use:
 SELECT2_CACHE_BACKEND = "select2"
+SOLO_CACHE = 'default'
+SOLO_CACHE_TIMEOUT = 60*5  # 5 mins
+SOLO_CACHE_PREFIX = 'solo'
 
 BATON = {
     'SITE_HEADER': 'Baton',
@@ -372,4 +376,12 @@ LOGIN_REDIRECT_URL = '/'
 
 OTP_TWILIO_NO_DELIVERY = True
 OTP_TWILIO_CHALLENGE_MESSAGE = '{token}'
-OTP_TWILIO_THROTTLE_FACTOR = 4
+OTP_TWILIO_THROTTLE_FACTOR = 2
+OTP_TWILIO_TOKEN_VALIDITY = 30
+# добавил такую настройку
+OTP_TWILIO_RESENT_TIME = 5
+
+OTP_TWILIO_ACCOUNT = 'AC00452becddd687f236c1f01e457d58ef'
+OTP_TWILIO_AUTH = '033011fe9a93cf9ea7a0fd2df5e4ad21'
+
+OTP_TWILIO_FROM = '+16154374918'
