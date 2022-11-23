@@ -454,6 +454,11 @@ def get_verify_allow_time_delta(device):
         return round((next_allowed_time - now).total_seconds())
 
 
+def get_validity_time_delta(device):
+    valid_until = device.valid_until.astimezone(pytz.timezone('Europe/Kiev'))
+    return round((valid_until - datetime.now().astimezone(pytz.timezone('Europe/Kiev'))).total_seconds())
+
+
 @json_view
 # https://django-otp-official.readthedocs.io/en/stable/overview.html
 # https://django-otp-twilio.readthedocs.io/en/latest/_modules/otp_twilio/models.html#TwilioSMSDevice
@@ -465,11 +470,7 @@ def get_and_check_registration_phone(request):
         return {'phone_is_valid': False}
     phone_full_str = get_phone_full_str(number)
     response = {'phone_is_valid': True}
-    if request.session.session_key:
-        if request.POST.get('change_number') and \
-                request.session['attempt_to_enter_data']['clean_phone_str'] == clean_phone_str:
-            response['change_number_same_number'] = True
-    else:
+    if not request.session.session_key:
         request.session.save()
 
     user, is_created_user = User.objects.get_or_create(username=number.as_e164)
@@ -483,17 +484,21 @@ def get_and_check_registration_phone(request):
             'next_title_text': f"Номер {phone_full_str} доступний для регістрації. Вкажіть Ваше ім'я"
         }
     else:
-        print('SMS token: ', device.generate_challenge())
+        validity_time = get_validity_time_delta(device)
+        if not device.token or validity_time < 5:
+            print('SMS token: ', clean_phone_str, device.generate_challenge())
+            validity_time = get_validity_time_delta(device)
         response |= {
             'next_title_text': f'Знайдено обліковий запис з вказаним номером {phone_full_str}.'
                                ' Для відновлення доступу, вкажіть одноразовий пароль з СМС'
-                               f' який діє {(validity_time := settings.OTP_TWILIO_TOKEN_VALIDITY)} секунд',
+                               f' який діє {settings.OTP_TWILIO_TOKEN_VALIDITY} секунд',
             'validity_time': validity_time, 'input_same_number': False
         }
 
+    print('get_verify_allow_time_delta: ', get_verify_allow_time_delta(device))
     request.session['attempt_to_enter_data'] = {
         'user_id_to_login': user.id, 'phone_full_str': phone_full_str, 'is_created_user': is_created_user,
-        'device_id_to_login': device.id, 'clean_phone_str': clean_phone_str
+        'device_id_to_login': device.id,
     }
     return response
 
@@ -511,7 +516,7 @@ def get_registration_name(request):
                 f'{name}, для того щоб переконатись що вказаний вами номер '
                 f'{request.session.get("attempt_to_enter_data")["phone_full_str"]} '
                 f'належить саме Вам введіть одноразовий пароль з СМС'
-                f' який діє {(validity_time := settings.OTP_TWILIO_TOKEN_VALIDITY)} секунд',
+                f' який діє {(validity_time := get_validity_time_delta(device))} секунд',
             'validity_time': validity_time
             }
 
@@ -536,8 +541,8 @@ def regenerate_sms_token(request):
         code = device.generate_challenge()
         device.throttle_reset()
         print('CODE: ', code)
-        return {'next_title_text': f'ВІдправлено новий одноразовий пароль ' \
-                                   f' який діє {(validity_time := settings.OTP_TWILIO_TOKEN_VALIDITY)} секунд',
+        validity_time = get_validity_time_delta(device)
+        return {'next_title_text': f'ВІдправлено новий одноразовий пароль  який діє {validity_time} секунд',
                 'resent_time': resent_time, 'validity_time': validity_time}
     else:
         return {'next_title_text': 'В даний момент не можливо здійснити запит'}
@@ -547,9 +552,7 @@ def regenerate_sms_token(request):
 def verify_sms_token(request):
     attempt_to_enter_data = request.session.get('attempt_to_enter_data')
     device = TwilioSMSDevice.objects.get(id=attempt_to_enter_data['device_id_to_login'])
-    print('device.verify_is_allowed(): ', device.verify_is_allowed())
     if device.verify_is_allowed()[0]:
-        print("проверка возможна")
         result = device.verify_token(request.POST.get('token'))
         if result:
             device.confirmed = True
@@ -564,16 +567,15 @@ def verify_sms_token(request):
             return {'next_title_text': next_title_text, 'result': result,
                     'csrf': django.middleware.csrf.get_token(request)}
         else:
+            if device.verify_is_allowed()[1]['locked_until'] > device.valid_until:
 
-            return {'next_title_text': f'Невірний одноразовий пароль, ви можете повторити спробу ',
-                    'result': result, 'interval': get_verify_allow_time_delta(device)}
+                return {'next_title_text': f'Спроби вводу паролю вичерпано. Ви можете запросити новий пароль ',
+                        'result': result, 'interval': -1}
+            else:
+                return {'next_title_text': f'Невірний одноразовий пароль, ви можете повторити спробу ',
+                        'result': result, 'interval': get_verify_allow_time_delta(device)}
     else:
         print("проверка НЕвозможна")
-        now = datetime.now().astimezone(pytz.timezone('Europe/Kiev'))
-        next_allowed_time = device.verify_is_allowed()[1]['locked_until'].astimezone(pytz.timezone('Europe/Kiev'))
-        print('type next_allowed_time', type(next_allowed_time))
-        print('type datetime.now()', type(datetime.now()))
-        print('Проверка возможна через: ', (next_allowed_time - now).total_seconds())
         return {'next_title_text': 'В даний момент не можливо здійснити запит', }
 
 
