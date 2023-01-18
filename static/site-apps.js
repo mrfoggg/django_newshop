@@ -123,6 +123,7 @@ $(document).ready(function(){
                     type: "POST",
                     url: $(this).attr('action'),
                     data: $(this).serialize(),
+                    headers: {'X-CSRFToken': getCookie('csrftoken')},
                     success: function (response) {
                         // console.log(response);
                         setTimeout(function () {
@@ -404,7 +405,7 @@ $(document).ready(function(){
                 type: "POST",
                 url: (readyHumanUrl) ? $(this).attr('action') + readyHumanUrl + '/' : $(this).attr('action'),
                 data: $(this).serialize(),
-
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
                 success: function (response){
                     $('#input-number-to, #input-number-from').prop('disabled', false);
                     $('#default_sort').prop('disabled', false);
@@ -662,12 +663,14 @@ $(document).ready(function(){
 
     function moveLeftCursor(inp) {
         let pos = inp.selectionStart - 1;
-        console.log('pos: ', pos);
-        console.log(/[0-9]/.test($(inp).val().charAt(pos)));
-        if (!/[0-9]/.test($(inp).val().charAt(pos)))
+        let val = $(inp).val();
+        let leftChar = val.charAt(pos);
+        let leftLeftChar = val.charAt(pos-1);
+        let leftLeftLeftChar = val.charAt(pos-2);
+        if (leftChar==='_' || leftChar===' ' && !/[0-9]/.test(leftLeftLeftChar) ||  '-)'.includes(leftChar) && !/[0-9]/.test(leftLeftChar)) {
             $(inp).setCursorPosition(pos);
-            if (!/[0-9]/.test($(inp).val().charAt(pos)))
-                moveLeftCursor(inp);
+            moveLeftCursor(inp);
+        }
     }
 
     $('.phone-number-input').click(function(){
@@ -676,7 +679,7 @@ $(document).ready(function(){
         } else if (this.selectionStart > 0) {
             moveLeftCursor(this);
         }
-    }).prop('maxlength', '9').mask("99)  999-99-99", {
+    }).prop('maxlength', '9').mask("99) 999-99-99", {
         completed: function(){
             $(this).siblings('button').slideDown();
             $(this).siblings('div').children('button').slideDown();
@@ -699,7 +702,7 @@ $(document).ready(function(){
             type: "POST",
             url: $(this).attr('action'),
             data: $(this).serialize(),
-
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function (response){
                 $('.preloader.fast').fadeOut('fast');
                 $("#ok_button").prop("disabled", true);
@@ -766,6 +769,7 @@ $(document).ready(function(){
             type: "POST",
             url: $(this).data('url'),
             data: $(this).serialize(),
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function (response){
                 const cost_redelivery = parseInt(response['cost_redelivery']);
                 const CostWarehouseWarehouse = parseInt(response['CostWarehouseWarehouse']);
@@ -846,6 +850,7 @@ $(document).ready(function(){
                 type: "POST",
                 url: $(this).attr('action'),
                 data: $(this).serialize(),
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
                 success: function (response) {
                     let targetId = target.siblings('form').children('input[name="product_id"]').val();
                     let targetType = target.data('mode');
@@ -1002,6 +1007,7 @@ $(document).ready(function(){
                 type: "POST",
                 url: $(this).attr('action'),
                 data: $(this).serialize(),
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
                 success: function (response) {
                     setTimeout(function (){
                         if (action === 'change_amount')
@@ -1149,6 +1155,7 @@ $(document).ready(function(){
                 type: "POST",
                 url: $(this).attr('action'),
                 data: $(this).serialize(),
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
                 success: function (response) {
                     section.text(response['cancel_text']).delay(900).fadeOut();
                     let oneClickAmount = response["one_clicks_amount"];
@@ -1175,6 +1182,7 @@ $(document).ready(function(){
                 type: "POST",
                 url: $(this).attr('action'),
                 data: $(this).serialize(),
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
                 success: function (response) {
                     let newCommentRow = $.parseHTML(`
                         <div class="user-content__personal-item-status" style="display: none">
@@ -1286,6 +1294,7 @@ $(document).ready(function(){
             type: "POST",
             url: $(this).attr('action'),
             data: $(this).serialize(),
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function (response) {
                 if (response['phone_is_valid']){
                     $('#loginTitle').text(response['next_title_text']);
@@ -1300,6 +1309,7 @@ $(document).ready(function(){
                         if (allowVerifyTimeDelta) {
                             runReverifyTimer(allowVerifyTimeDelta);
                         }
+                        $('#tokenInput').val('');
                         $('#verifySmsTokenForm').slideDown();
                         $('#regenerateSmsTokenBtn').prev().slideDown();
                         runValidityTimer(response['validity_time']);
@@ -1318,10 +1328,12 @@ $(document).ready(function(){
             type: "POST",
             url: $(this).attr('action'),
             data: $(this).serialize(),
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function (response) {
                 $('#loginTitle').text(response['next_title_text']);
                 $('#regenerateSmsTokenBtn').prev().slideDown();
                 $('#sendRegistrationNameForm').slideUp();
+                $('#tokenInput').val('');
                 $('#verifySmsTokenForm').slideDown();
                 runValidityTimer(response['validity_time']);
             }
@@ -1360,6 +1372,7 @@ $(document).ready(function(){
             type: "POST",
             url: $(this).attr('action'),
             data: $(this).serialize(),
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function (response) {
                 $('#loginTitle').text(response['next_title_text']);
                 runResendCodeTimer(response['resent_time']);
@@ -1367,6 +1380,7 @@ $(document).ready(function(){
                 $('#loginTitle').next('h3').slideUp();
                 $('#verifySmsTokenForm label').css('opacity', '100%');
                 $('#verifySmsTokenForm label button').prop('disabled', false);
+                $('#tokenInput').val('');
             }
         }, 200);
     });
@@ -1379,13 +1393,21 @@ $(document).ready(function(){
             type: "POST",
             url: $(this).attr('action'),
             data: $(this).serialize(),
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function (response) {
                 $('#loginTitle').text(response['next_title_text']);
                 if (response['result']){
-                    $('#verifySmsTokenForm, #loginBySocial').slideUp();
-                    $('#logoutForm').slideDown();
+                    $('#verifySmsTokenForm, #socialLoginSection, .cabinet__social-section').slideUp();
+                    $('#logoutForm, #socialSettingsSection').slideDown();
+                    $('.cabinet__separator').fadeOut();
                     $('input[name="csrfmiddlewaretoken"]').val(response['csrf']);
                     clearInterval(validityTimer);
+                    if (response['show_email_login_section'])
+                        $('.email_login_section').slideDown();
+                    if (response['show_set_passw_link'])
+                        $('.set_password_section').slideDown();
+                    if (response['show_change_password_link'])
+                        $('.change_password_section').slideDown();
                 } else {
                     let interval = response['interval'];
                     let tokenFormElements = $('#verifySmsTokenForm label');
@@ -1409,11 +1431,15 @@ $(document).ready(function(){
             type: "POST",
             url: $(this).attr('action'),
             data: $(this).serialize(),
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function (response) {
                 // console.log(response);
                 $('#loginTitle').text(response['next_title_text']);
-                $('#sendRegistrationPhoneForm').slideDown();
-                $('#logoutForm').slideUp();
+                $('#sendRegistrationPhoneForm, #socialLoginSection').slideDown();
+                $('.cabinet__social-section, .cabinet__social').slideDown();
+                $('.cabinet__separator').fadeIn();
+                $('#logoutForm, #socialSettingsSection, .email_login_section, .set_password_section, .change_password_section').slideUp();
+                $('#socialSeparatorText').text('або авторизутесь через соціальні мережі');
             }
         }, 200);
     });
@@ -1426,9 +1452,78 @@ $(document).ready(function(){
         $('#loginTitle').next('h3').slideUp();
         $('#verifySmsTokenForm label').css('opacity', '100%');
         $('#verifySmsTokenForm label button').prop('disabled', false);
-    })
+    });
+    $('#emailLoginSectionButton').click(function (){
+        $(this).parent().next().slideToggle();
+    });
+
+    const notificationAddEmail = new Notyf({
+        duration: 8000,
+        dismissible: true,
+        position: {
+            x: 'right',
+            y: 'top'
+        },
+        types: [
+            {
+                type: 'success',
+                className: 'success_notify',
+                background: "#FFED9F"
+            },
+            {
+                type: 'error',
+                className: 'success_notify',
+                background: "#DE728E"
+            }
+        ]
+    });
+
+    $('#addEmail').submit(function (e){
+        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function (response) {
+                if (response['result']) {
+                    notificationAddEmail.success(response['result_text']);
+                    $('.email_login_section').slideUp();
+                    $('.set_password_section').slideDown();
+                } else {
+                    for (let err of response['result_text']) {
+                        notificationAddEmail.error(err);
+                    }
+                }
+            }
+        }, 200);
+    });
+
+    let prf = $('.password_reset')
+    let prd = prf.data('currentEmail');
+    if (prd)
+        // console.log(prf.find('#id_email'));
+        prf.find('#id_email').val(prd);
+        // console.log('password_reset_data: ', prd);
 
 });
+
+https://stackoverflow.com/questions/70501339/django-using-ajax-for-login-how-do-should-i-update-a-forms-csrf-token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 
 document.body.onload = function() {
     setTimeout(function(){$('.preloader.slow').fadeOut(300)}, 100)

@@ -7,6 +7,7 @@ import json
 
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
+from django.forms import modelform_factory
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.template.context_processors import csrf
@@ -14,12 +15,13 @@ from django.urls import reverse, resolve
 import requests
 from django.utils.html import format_html
 from django.views import View
+from django.views.generic.edit import FormView
 from jsonview.decorators import json_view
 from otp_twilio.models import TwilioSMSDevice
 from phonenumber_field.phonenumber import PhoneNumber
 from phonenumbers import geocoder
 
-from ROOTAPP.forms import PersonForm
+from ROOTAPP.forms import PersonForm, PersonEmailForm
 from ROOTAPP.models import Settlement, SettlementType, SettlementArea, SettlementRegion, Phone, PersonPhone, Person, \
     get_phone_full_str
 from Shop_DJ import settings
@@ -250,12 +252,12 @@ def get_delivery_cost(request):
             "CityRecipient": request.POST.get("settlement"),
             "Weight": request.POST.get("weight"),
             "ServiceType": '',
-            "Cost": request.POST.get("price")[:-3],
+            "Cost": request.POST.get("price"),
             "CargoType": "Cargo",
             "SeatsAmount": request.POST.get("seats_amount"),
             'RedeliveryCalculate': {
                 'CargoType': 'Money',
-                'Amount': request.POST.get("price")[:-3]
+                'Amount': request.POST.get("price")
             }
         }
     }
@@ -269,7 +271,7 @@ def get_delivery_cost(request):
                 'cost_redelivery': response_dict['data'][0]['CostRedeliveryWarehouseWarehouse'],
                 'CostWarehouseWarehouse': response_dict['data'][0]['CostWarehouseWarehouse'],
                 'CostWarehouseDoors': response_dict['data'][0]['CostWarehouseDoors'],
-                'Cost': request.POST.get("price")[:-3],
+                'Cost': request.POST.get("price"),
             }, status=200)
             break
         except requests.exceptions.Timeout:
@@ -466,6 +468,7 @@ def get_and_check_registration_phone(request):
     data = request.POST
     clean_phone_str = ''.join(x for x in data.get('phonenumber') if x.isdigit())
     number = PhoneNumber.from_string(clean_phone_str, region='UA')
+    print(number)
     if not geocoder.description_for_number(number, "ru"):
         return {'phone_is_valid': False}
     phone_full_str = get_phone_full_str(number)
@@ -473,7 +476,12 @@ def get_and_check_registration_phone(request):
     if not request.session.session_key:
         request.session.save()
 
-    user, is_created_user = User.objects.get_or_create(username=number.as_e164)
+    phone = Phone.objects.get_or_create(number=number.as_e164)[0]
+    print('PHONE', phone)
+    if Person.objects.filter(main_phone=phone).exists():
+        user, is_created_user = Person.objects.get_or_create(main_phone=phone, is_customer=True)
+    else:
+        user, is_created_user = Person.objects.get_or_create(main_phone=phone, username=number, is_customer=True)
     device = TwilioSMSDevice.objects.get_or_create(number=number.as_e164, name=request.session.session_key,
                                                    user=user, confirmed=False)[0]
     response['allow_verify_time_delta'] = get_verify_allow_time_delta(device)
@@ -506,7 +514,7 @@ def get_and_check_registration_phone(request):
 @json_view
 def get_registration_name(request):
     name = request.POST.get('name').title()
-    user = User.objects.get(id=request.session.get('attempt_to_enter_data')['user_id_to_login'])
+    user = Person.objects.get(id=request.session.get('attempt_to_enter_data')['user_id_to_login'])
     user.first_name = name
     user.save(update_fields=['first_name'])
 
@@ -557,15 +565,18 @@ def verify_sms_token(request):
         if result:
             device.confirmed = True
             device.save()
-            user = User.objects.get(id=request.session.get('attempt_to_enter_data')['user_id_to_login'])
+            user = Person.objects.get(id=request.session.get('attempt_to_enter_data')['user_id_to_login'])
             login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
             if attempt_to_enter_data['is_created_user']:
                 next_title_text = f'{user.get_full_name()} ви успішно зареєструвались і увійшли в систему.'
             else:
                 next_title_text = f'{user.get_full_name()} ви увійшли в свій особоистий кабінет'
-
-            return {'next_title_text': next_title_text, 'result': result,
-                    'csrf': django.middleware.csrf.get_token(request)}
+            show_email = request.user.is_authenticated and not request.user.password and not request.user.email
+            show_set_passw_link = request.user.is_authenticated and request.user.email and not request.user.password
+            show_change_password_link = request.user.is_authenticated and request.user.email and request.user.password
+            return {'next_title_text': next_title_text, 'result': result, 'show_email_login_section': show_email,
+                    'csrf': django.middleware.csrf.get_token(request), 'show_set_passw_link': show_set_passw_link,
+                    'show_change_password_link': show_change_password_link}
         else:
             if device.verify_is_allowed()[1]['locked_until'] > device.valid_until:
 
@@ -589,3 +600,40 @@ def logout_view(request):
     logout(request)
     next_title_text = 'Ви вийшли з облікового запису. Для входу в кабінет або щоб створити обліковий запис вкажіть ваш номер телефону'
     return {'next_title_text': next_title_text}
+
+
+@json_view
+def add_email(request):
+    form = PersonEmailForm(request.POST)
+    if form.is_valid():
+        email = form.cleaned_data['email']
+        if Person.objects.filter(email=email).exists():
+            print('EXIST')
+            return {'result': False, 'result_text': [
+                'Електронну пошту не додано',
+                f'Електронну пошту {email} вже зареєстровано на інший акаунт',
+                'Вкажіть іншу електронну пошту або увійдіть в інший акаунт'
+            ]}
+        else:
+            request.user.email = email
+            request.user.save()
+            return {'result': True, 'result_text': f'Електронну пошту {email} успішно додано'}
+    else:
+        return {'result': False, 'result_text': form.errors['email']}
+
+
+class AddEmailView(FormView):
+    template_name = 'main-page/index.html'
+    form_class = modelform_factory(
+        Person,
+        fields=('email',)
+    )
+
+    def form_valid(self, form):
+        email = form.cleaned_data['email']
+        form.save()
+        return JsonResponse({'email': email}, status=200)
+
+    def form_invalid(self, form):
+        errors = form.errors.as_json()
+        return JsonResponse({'errors': errors}, status=400)

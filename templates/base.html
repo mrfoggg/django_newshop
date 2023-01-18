@@ -13,13 +13,14 @@
     {% endblock title %}
 
     {% load static %}
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    {{ address_form.media.css }}
+{#    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">#}
+{#    {{ address_form.media.css }}#}
 {#ВРЕМЕННО ВМЕСТО ВЕРХНЕГО НА СЛУЧАЙ ОТКЛЮЧЕНИЯ ИНЕТА#}
 <link rel="stylesheet" href={% static "select2.min.css" %}>
     <link rel="stylesheet" href={% static "site-styles.css" %}>
     <link href={% static "magnific_popup/magnific-popup.css" %} rel="stylesheet">
     <link rel="stylesheet" href={% static "site-styles.css" %}>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
 
 {#    {{ form.media }}#}
 </head>
@@ -67,13 +68,14 @@
 {#    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/js/select2.min.js"></script>#}
     <script src={% static "select2.min.js" %}></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/uk.min.js" integrity="sha512-TDV/1TfxlJAwv/y8HVjHO/AbxfEi3JzUJhQ9HL8GqMprZTcgRggSavorvX2bYzpWyJLrav/Ub/ikmK1sd3eyTw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+{#    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/uk.min.js" integrity="sha512-TDV/1TfxlJAwv/y8HVjHO/AbxfEi3JzUJhQ9HL8GqMprZTcgRggSavorvX2bYzpWyJLrav/Ub/ikmK1sd3eyTw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>#}
     <script src={% static "uk.min.js" %}></script>
 
     {{ address_form.media.js }}
 {#    <script src={% static "select2.min.js" %}></script>#}
 
     <script src={% static "magnific_popup/jquery.magnific-popup.min.js" %}></script>
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script src={% static "site-apps.js" %}></script>
 </body>
 </html>

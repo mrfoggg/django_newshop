@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AbstractUser
 from django.db import models
 from django.contrib import admin
 from django.utils.html import format_html
@@ -44,7 +44,7 @@ def get_phone_full_str(number):
 
 
 class Phone(models.Model):
-    number = PhoneNumberField(blank=True, help_text='Номер телефона')
+    number = PhoneNumberField(blank=True, help_text='Номер телефона', unique=True)
     messengers = models.ManyToManyField(
         Messenger, blank=True, default=None, verbose_name='Подключенные мессенжеры')
     telegram_username = models.CharField(max_length=128, blank=True, null=True, unique=True,
@@ -76,19 +76,18 @@ class Phone(models.Model):
         verbose_name_plural = "Номера телефонов"
 
 
-class Person(models.Model):
-    first_name = models.CharField('Имя', max_length=128, default=None, unique=True, db_index=True)
-    last_name = models.CharField('Фамилия', max_length=128, default=None, unique=True, db_index=True)
-    middle_name = models.CharField('Отчество', max_length=128, default=None, unique=True, db_index=True)
-    email = models.EmailField('Элетронная почта', max_length=128, default=None, unique=True, null=True, blank=True)
-    is_customer = models.BooleanField('Является покупателем', default=True)
+class Person(AbstractUser):
+    middle_name = models.CharField('Отчество', max_length=128,  blank=True, null=True, default=None, db_index=True)
+    is_customer = models.BooleanField('Является покупателем', default=False)
     is_supplier = models.BooleanField('Является поставщиком', default=False)
-    user = models.OneToOneField(User, verbose_name='Учетная запись польователя', blank=True, null=True, default=None,
-                                on_delete=models.CASCADE, related_name='person')
+    main_phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.SET_NULL)
+    # first_name = models.CharField('Имя', max_length=128, blank=True, null=True, default=None, db_index=True)
+    # last_name = models.CharField('Фамилия', max_length=128,  blank=True, null=True, default=None, db_index=True)
+
 
     class Meta:
-        verbose_name = 'Контактное лицо'
-        verbose_name_plural = 'Контактные лица'
+        verbose_name = 'Контрагент'
+        verbose_name_plural = 'Контрагенты'
 
     def __str__(self):
         return f'N{self.id} - {self.last_name} {self.first_name} {self.middle_name}'
@@ -102,6 +101,7 @@ class PersonPhone(models.Model):
     class Meta:
         verbose_name = 'Телефон контрагента'
         verbose_name_plural = 'Телефоны контрагента'
+        unique_together = ('person', 'phone')
 
     def __str__(self):
         return f'Телефон контрагента {self.person} - {self.phone}'
@@ -188,3 +188,9 @@ class PersonSettlement(models.Model):
 
     def __str__(self):
         return f'Населенный пункт {self.settlement}, контрагента - {self.person}'
+
+
+# class Profile(models.Model):
+#     user = models.OneToOneField(User, on_delete=models.CASCADE)
+#     third_name = models.CharField('Отчество', max_length=128, default=None, unique=True, db_index=True)
+#     phone_number = PhoneNumberField(blank=True, help_text='Номер телефона')

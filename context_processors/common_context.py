@@ -1,5 +1,10 @@
+from allauth.socialaccount.forms import SignupForm, DisconnectForm
 from django.db.models import Subquery, OuterRef, Case, When, F
+from django.forms import modelform_factory
 from django.urls import reverse
+
+from ROOTAPP.forms import PersonEmailForm
+from ROOTAPP.models import Person
 from catalog.models import Product, ProductImage
 from main_page.models import SitePhone, Schedule, Menu
 from orders.models import ByOneclick
@@ -13,18 +18,17 @@ def header_context(request):
         'menu_items': Menu.objects.filter(level=0).only('parent', 'title', 'image').select_related(
             'parent').prefetch_related('children__children__children'),
         'header_config': HeaderConfiguration.get_solo(), 'photo_plug': PhotoPlug.get_solo().image,
-        'favorites_link': reverse('main_page:favorites'),
-        'compare_link': reverse('main_page:compare'),
-        'checkout_link': reverse('root_app:checkout'),
-        'by_now_link': reverse('root_app:by_now'),
         'favorites_count': len(f) if (f := request.session.get('favorites', None)) else 0,
         'compare_count': len(f) if (f := request.session.get('compare', None)) else 0,
         'back_link': request.META.get('HTTP_REFERER') if request.META.get('HTTP_REFERER') else '/',
-        'cabinet_title_text': f"Вітаємо { request.user.last_name } { request.user.first_name }. "
-                              f"Ви увійшли в систему за допомогою "
-                              f"номера телефону { request.user.username }" if request.user.is_authenticated else
-        "Для входу в кабінет або щоб створити обліковий запис вкажіть ваш номер телефону"
-        # 'session': request.session
+        'cabinet_title_text': f"Вітаємо {request.user.last_name if request.user.last_name else ''} "
+                              f"{request.user.first_name}. "
+                              f"Ви увійшли в свій особистий кабінет " if request.user.is_authenticated else
+        "Для входу в кабінет або щоб створити обліковий запис вкажіть ваш номер телефону",
+        'email_form': PersonEmailForm,
+        'show_email_login_section': request.user.is_authenticated and not request.user.password and not request.user.email,
+        'show_set_password_link': request.user.is_authenticated and request.user.email and not request.user.password,
+        'show_change_password_link': request.user.is_authenticated and request.user.email and request.user.password,
     }
     return context
 

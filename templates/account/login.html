@@ -1,0 +1,31 @@
+{% extends 'template_with_header_footer.html' %}
+{% load i18n %}
+{% load socialaccount %}
+
+{% block title %}
+    <title> Сніп-Сноп | Вхід</title>
+{% endblock title %}
+
+{% block content %}
+    <div class="content-wrapper login">
+
+        <h2>Вхід за допомогою електронної пошти і пароля</h2>
+
+        {% get_providers as socialaccount_providers %}
+
+        <div class="center_form_wrapper">
+            <form method="POST" action="{% url 'account_login' %}">
+                {% csrf_token %}
+                {{ form.as_p }}
+                {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                {% endif %}
+
+                <button class="primaryAction" type="submit">{% trans "Sign In" %}</button>
+                <h4><a class="button secondaryAction" href="{% url 'account_reset_password' %}">Забули пароль? Перейдіть для відновлення</a></h4>
+                <a class="button secondaryAction" href="{% url 'account_signup' %}">Не зареєстровані? Перейдіть для реєстрації</a>
+            </form>
+        </div>
+
+    </div>
+{% endblock %}

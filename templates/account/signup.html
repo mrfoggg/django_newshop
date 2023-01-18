@@ -1,0 +1,28 @@
+{% extends 'template_with_header_footer.html' %}
+{% load i18n %}
+{% load socialaccount %}
+
+{% block title %}
+    <title> Сніп-Сноп | Реєстрація</title>
+{% endblock title %}
+
+{% block content %}
+    <div class="content-wrapper login">
+
+        <h2>Регістрація за допомогою електронної пошти і пароля</h2>
+
+        <h3>{% blocktrans %}Already have an account? Then please <a href="{{ login_url }}">sign in</a>.{% endblocktrans %}</h3>
+        <div class="center_form_wrapper">
+
+            <form id="signup_form" method="post" action="{% url 'account_signup' %}">
+                {% csrf_token %}
+                {{ form.as_p }}
+                {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                {% endif %}
+                <button type="submit">{% trans "Sign Up" %} &raquo;</button>
+            </form>
+        </div>
+
+    </div>
+{% endblock %}

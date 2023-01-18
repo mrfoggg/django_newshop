@@ -1,0 +1,71 @@
+{% extends 'template_with_header_footer.html' %}
+{% load i18n %}
+{% load socialaccount %}
+
+{% block title %}
+    <title> Сніп-Сноп | Соцмережі</title>
+{% endblock title %}
+
+{% block content %}
+<div class="content-wrapper social__connections">
+    <h2>Приєднані акаунти соціальних мереж</h2>
+    {% if messages %}
+        <div>
+            <ul class="messages">
+                {% for message in messages %}
+                <li>{{message}}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if form.accounts %}
+        <p>{% blocktrans %}You can sign in to your account using any of the following third party accounts:{% endblocktrans %}</p>
+
+        <form method="post" action="{% url 'socialaccount_connections' %}">
+        {% csrf_token %}
+
+        <fieldset>
+        {% if form.non_field_errors %}
+            <div id="errorMsg">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        {% for base_account in form.accounts %}
+            {% with base_account.get_provider_account as account %}
+            <div>
+            <label for="id_account_{{ base_account.id }}">
+            <input id="id_account_{{ base_account.id }}" type="radio" name="account" value="{{ base_account.id }}"/>
+            <span class="socialaccount_provider {{ base_account.provider }} {{ account.get_brand.id }}">{{account.get_brand.name}}</span>
+            {{ account }}
+            </label>
+            </div>
+            {% endwith %}
+        {% endfor %}
+
+        <div>
+            <button type="submit">{% trans 'Remove' %}</button>
+        </div>
+
+        </fieldset>
+
+        </form>
+
+    {% else %}
+        <p>{% trans 'You currently have no social network accounts connected to this account.' %}</p>
+    {% endif %}
+
+    <div class="cabinet__social">
+        {% get_providers as socialaccount_providers %}
+        {% for provider in socialaccount_providers %}
+            <div class="cabinet__social-item">
+                <a class="cabinet__social-section" title="{{provider.name}}"href="{% provider_login_url provider.id process='connect' scope=scope auth_params=auth_params %}">
+                    <div class="cabinet__social-icon {{provider.id}}"></div>
+                    <div class="cabinet__social-text">Під'єднати {{provider.name}}</div>
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+

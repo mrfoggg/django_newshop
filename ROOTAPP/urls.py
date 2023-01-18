@@ -2,7 +2,7 @@ from django.urls import path
 
 from ROOTAPP.views import (update_cities, get_delivery_cost, ProductActionsView, CheckoutView, ByNowView,
                            request_google_auth, google_response, get_and_check_registration_phone,
-                           get_registration_name, verify_sms_token, regenerate_sms_token, logout_view,
+                           get_registration_name, verify_sms_token, regenerate_sms_token, logout_view, add_email,
                            )
 
 app_name = 'root_app'
@@ -17,6 +17,7 @@ urlpatterns = [
     path('regenerate_sms_token/', regenerate_sms_token, name='regenerate_sms_token'),
     path('verify_sms_token/', verify_sms_token, name='verify_sms_token'),
     path('logout/', logout_view, name='logout'),
+    path('add_email/', add_email, name='add_email'),
     # path('request_google_auth/', request_google_auth, name='request_google_auth'),
     # path('google_response/', google_response, name='google_response'),
 ]

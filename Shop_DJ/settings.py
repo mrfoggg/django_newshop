@@ -31,20 +31,6 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 # Application definition
-SITE_ID = 1
-
-MIDDLEWARE = [
-    # 'django.contrib.redirects.middleware.RedirectFallbackMiddleware',
-    # "debug_toolbar.middleware.DebugToolbarMiddleware",
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django_otp.middleware.OTPMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
 INSTALLED_APPS = [
     # 'django.contrib.sites',
     # 'django_select2',
@@ -66,14 +52,6 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.github',
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
-    'allauth.socialaccount.providers.instagram',
-    'allauth.socialaccount.providers.linkedin',
-    'allauth.socialaccount.providers.twitter',
-
-    # 'django_otp',
-    # 'django_otp.plugins.otp_totp',
-    # 'django_otp.plugins.otp_hotp',
-    # 'django_otp.plugins.otp_static',
     'otp_twilio',
 
     'mptt',
@@ -99,7 +77,20 @@ INSTALLED_APPS = [
     'babel',
     'baton.autodiscover',
 
+]
+SITE_ID = 1
 
+MIDDLEWARE = [
+    # 'django.contrib.redirects.middleware.RedirectFallbackMiddleware',
+    # "debug_toolbar.middleware.DebugToolbarMiddleware",
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'Shop_DJ.urls'
@@ -162,7 +153,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'ru-ru'
+LANGUAGE_CODE = 'uk'
+# LANGUAGE_CODE = 'ru-ru'
+
+# Мови що підтримуються
+LANGUAGES = (
+    ('en', 'English'),
+    ('ru', 'Russian'),
+    ('uk', 'Ukrainian'),
+)
 
 TIME_ZONE = 'Europe/Kiev'
 
@@ -220,7 +219,7 @@ CACHES = {
 # Tell select2 which cache configuration to use:
 SELECT2_CACHE_BACKEND = "select2"
 SOLO_CACHE = 'default'
-SOLO_CACHE_TIMEOUT = 60*5  # 5 mins
+SOLO_CACHE_TIMEOUT = 60 * 5  # 5 mins
 SOLO_CACHE_PREFIX = 'solo'
 
 BATON = {
@@ -364,15 +363,25 @@ BATON = {
 
 
 AUTHENTICATION_BACKENDS = (
-    "django.contrib.auth.backends.ModelBackend",
+    # "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 )
 
 SITE_ID = 1
 
-ACCOUNT_EMAIL_VERIFICATION = 'none'
+AUTH_USER_MODEL = 'ROOTAPP.Person'
 
+ACCOUNT_EMAIL_VERIFICATION = 'none'
 LOGIN_REDIRECT_URL = '/'
+ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
+
+EMAIL_BACKEND ='django.core.mail.backends.console.EmailBackend'
+
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 OTP_TWILIO_NO_DELIVERY = True
 OTP_TWILIO_CHALLENGE_MESSAGE = '{token}'
@@ -385,3 +394,9 @@ OTP_TWILIO_ACCOUNT = 'AC00452becddd687f236c1f01e457d58ef'
 OTP_TWILIO_AUTH = '033011fe9a93cf9ea7a0fd2df5e4ad21'
 
 OTP_TWILIO_FROM = '+16154374918'
+
+# SOCIALACCOUNT_FORMS = {
+    # 'disconnect': 'allauth.socialaccount.forms.DisconnectForm',
+    # 'signup': 'allauth.socialaccount.forms.SignupForm',
+#     'reset_password': 'ROOTAPP.forms.MyCustomResetPasswordForm',
+# }

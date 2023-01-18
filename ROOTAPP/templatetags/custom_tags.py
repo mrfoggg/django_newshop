@@ -19,3 +19,22 @@ def get_attr_str_value(product, attribute):
 @register.simple_tag
 def values_by_condition(condition, value_1, value_2=''):
     return value_1 if condition else value_2
+
+
+@register.simple_tag
+def hide_when_in(val, ls):
+    return 'display: none;' if val in ls else ''
+
+
+@register.simple_tag
+def hide_when_not_in(val, ls):
+    return '' if val in ls else 'display: none;'
+
+
+@register.simple_tag
+def val_when_in(val, ls, val_1, val_2=''):
+    return val_1 if val in ls else val_2
+
+# @register.filter
+# def true_if_in(val, ls):
+#     return True if val in ls else False

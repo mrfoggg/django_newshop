@@ -5,6 +5,24 @@ from django_select2.forms import ModelSelect2Widget
 from ROOTAPP.models import Settlement, SettlementArea, Person
 from django_select2 import forms as s2forms
 
+from allauth.account.forms import ResetPasswordForm
+
+
+# class MyCustomResetPasswordFor(ResetPasswordForm):
+#     email = forms.EmailField(
+#         label="e-mail адреса",
+#         required=True,
+#         initial='asd@df.ua',
+#         widget=forms.TextInput(
+#             attrs={
+#                 "type": "email",
+#                 "placeholder": "e-mail адр",
+#                 "autocomplete": "email",
+#             }
+#         ),
+#     )
+
+
 
 class AddressForm(forms.Form):
     area = forms.ModelChoiceField(
@@ -27,6 +45,12 @@ class AddressForm(forms.Form):
             max_results=50,
             attrs={'data-placeholder': 'назва населеного пункту'}
         )
+    )
+
+
+PersonEmailForm = modelform_factory(
+        Person,
+        fields=('email',)
     )
 
 

@@ -4373,6 +4373,11 @@ h2 {
   visibility: hidden;
 }
 
+.center_form_wrapper {
+  display: flex;
+  align-items: center;
+}
+
 header {
   position: relative;
   z-index: 1000;
@@ -7158,7 +7163,7 @@ footer {
   color: #3d2525;
   cursor: auto;
 }
-.user-content__personal button {
+.user-content__personal .logined_links a, .logined_links .user-content__personal a, .user-content__personal .cabinet__social-connect, .user-content__personal .order-cancel, .user-content__personal #logoutBtn, .user-content__personal button {
   padding: 0.5rem 2rem;
   border-radius: 2rem;
   box-shadow: 0.2rem 0.5rem 1rem rgba(56, 56, 56, 0.5);
@@ -7169,11 +7174,12 @@ footer {
   font-size: inherit;
   font-weight: inherit;
   border: 2px solid #FBD83E;
+  text-decoration: none;
 }
-.user-content__personal button:hover {
+.user-content__personal .logined_links a:hover, .logined_links .user-content__personal a:hover, .user-content__personal .cabinet__social-connect:hover, .user-content__personal .order-cancel:hover, .user-content__personal #logoutBtn:hover, .user-content__personal button:hover {
   transform: scale(1.02);
 }
-.user-content__personal .order-cancel {
+.user-content__personal .order-cancel, .user-content__personal #logoutBtn {
   border: 2px solid #DE728E;
 }
 .user-content__personal-content {
@@ -7303,10 +7309,10 @@ footer {
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
 }
-.user-content__personal .cabinet__login-title {
+.cabinet__login-title {
   margin-top: 0;
 }
-.user-content__personal .cabinet__login-section {
+.cabinet__login-section {
   display: block;
   margin: 0 auto;
   text-align: center;
@@ -7314,7 +7320,7 @@ footer {
   font-weight: 600;
   font-size: 2.2rem;
 }
-.user-content__personal .cabinet__login-section input {
+.cabinet__login-section input {
   border: none;
   font: inherit;
   width: 17rem;
@@ -7323,11 +7329,11 @@ footer {
   border-radius: 0.4rem;
   margin-right: 2rem;
 }
-.user-content__personal .cabinet__login-section button {
+.cabinet__login-section button {
   display: none;
   margin: 2rem auto;
 }
-.user-content__personal .cabinet__login-section .get_token_actions {
+.cabinet__login-section .get_token_actions {
   font-size: 1.6rem;
   display: block;
   margin: 2rem auto;
@@ -7338,28 +7344,72 @@ footer {
   background-color: #cfcfcf;
   cursor: pointer;
 }
-.user-content__personal .cabinet__login-section #logoutBtn {
-  display: block;
+.cabinet__login-section #logoutBtn {
+  display: inline-block;
 }
-.user-content__personal .cabinet #verifySmsTokenForm input {
+.cabinet #verifySmsTokenForm input {
   width: 11rem;
   padding: 1rem;
   text-align: center;
 }
-.user-content__personal .cabinet__separator {
+.cabinet__separator {
   display: flex;
   align-items: center;
   margin: 2rem;
 }
-.user-content__personal .cabinet__separator span {
+.cabinet__separator span {
   flex-shrink: 0;
   padding: 1rem;
   font-size: 1.8rem;
 }
-.user-content__personal .cabinet__separator hr {
+.cabinet__separator hr {
   width: 100%;
   height: 0;
   flex-shrink: 1;
+  border: 1px solid #FFED9F;
+}
+.cabinet__social {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+.cabinet__social-item {
+  flex-basis: 30%;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+.cabinet__social-section {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  border: 1px solid #FFED9F;
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  text-decoration: none;
+  color: inherit;
+  background: #A93CF3;
+  margin-bottom: 1rem;
+}
+.cabinet__social-text {
+  margin: 0 auto;
+}
+.cabinet__social-icon {
+  height: 2.5rem;
+  width: 2.5rem;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.cabinet__social-icon.google {
+  background-image: url("/media/icons/google_icon.svg");
+}
+.cabinet__social-icon.facebook {
+  background-image: url("/media/icons/facebook_icon.svg");
+}
+.cabinet__social-icon.github {
+  background-image: url("/media/icons/github_icon.svg");
 }
 
 .hide_status {
@@ -7385,6 +7435,44 @@ footer {
   }
 }
 
+.social_settings_link a, .email_login_section span,
+.set_password_section a, .change_password_section a {
+  text-decoration: none;
+  color: inherit;
+  font-weight: 600;
+  border: 2px solid #A93CF3;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  background: rgba(244, 228, 255, 0.4);
+}
+
+.email_login_section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.email_login_section form {
+  display: inline-block;
+  margin: 0 auto;
+}
+.email_login_section form input {
+  font-size: 2rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid purple;
+  padding: 1rem;
+  text-align: center;
+}
+
+.logined_links {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin: 1rem;
+}
+.logined_links button {
+  margin: 0;
+}
 .checkout_header {
   height: 6rem;
   width: 100%;
@@ -7475,4 +7563,165 @@ footer {
 }
 .checkout .checkout__section_block .user-content__basket-item-total {
   font-weight: 600;
+}
+
+.social__connections h2 {
+  margin: 4rem 0;
+}
+.social__connections p {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+.social__connections .cabinet__social {
+  margin-top: 2rem;
+  justify-content: space-between;
+  font-size: 2rem;
+}
+.social__connections .cabinet__social-section {
+  background: #FFED9F;
+  border: 1px solid #A93CF3;
+  box-shadow: 0.2rem 0.5rem 1rem rgba(56, 56, 56, 0.5);
+}
+.social__connections fieldset {
+  font-size: 1.6rem;
+  margin-bottom: 3rem;
+  display: inline-flex;
+  border: 1px solid #A93CF3;
+  padding: 2rem;
+  border-radius: 1rem;
+}
+.social__connections fieldset .disconnect_item.selected label {
+  border: 2px solid #A93CF3;
+}
+.social__connections fieldset div {
+  padding-right: 2rem;
+  display: flex;
+  align-items: center;
+}
+.social__connections fieldset div label, .social__connections fieldset div a {
+  display: flex;
+  align-items: center;
+  background: #fff5c8;
+  border-radius: 1rem;
+  padding: 0 1.5rem;
+}
+.social__connections fieldset div button {
+  display: flex;
+  align-items: center;
+  margin-left: 2rem;
+  border: 2px solid #DE728E;
+  background-image: linear-gradient(0deg, #AC47F0, #AC47F0 25%, #C682F3);
+  box-shadow: 0.2rem 0.5rem 1rem rgba(56, 56, 56, 0.5);
+  height: 70%;
+  padding: 0.5rem 2rem;
+  border-radius: 2rem;
+  font-size: 2rem;
+}
+.social__connections fieldset div span {
+  display: flex;
+  margin: 1rem;
+  align-items: center;
+  font-weight: 600;
+}
+.social__connections fieldset div span::before {
+  margin: 0 1rem 0 0;
+  display: block;
+  content: "";
+  width: 3rem;
+  height: 3rem;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.social__connections fieldset div span::after {
+  content: "-";
+  margin-left: 1rem;
+}
+.social__connections fieldset div span.google::before {
+  background-image: url("/media/icons/google_icon.svg");
+}
+.social__connections fieldset div span.github::before {
+  background-image: url("/media/icons/github_icon.svg");
+}
+
+.messages, .errorlist {
+  margin: 2rem 3rem 2rem 4rem;
+  font-style: italic;
+  font-size: 1.8rem;
+  border-left: 4px solid #FFED9F;
+  padding-left: 2rem;
+}
+.messages li, .errorlist li {
+  display: flex;
+}
+.messages li::before, .errorlist li::before {
+  color: #A93CF3;
+  font-weight: 600;
+  font-size: 2.2rem;
+  content: "*";
+  margin-right: 1rem;
+}
+
+.errorlist {
+  border-left: 4px solid red;
+}
+
+.login {
+  font-size: 2rem;
+  color: #3d2525;
+}
+.login h2 {
+  margin: 4rem 0;
+}
+.login h3 {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.login h3 a {
+  font-size: 2rem;
+}
+.login form {
+  margin: 0 auto;
+  background: #F4E4FF;
+  padding: 5rem 9rem 4rem;
+  border-radius: 3rem;
+}
+.login p {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.login input {
+  border: none;
+  border-bottom: 2px solid #A93CF3;
+  margin-left: 2rem;
+  background: #F4E4FF;
+  padding: 0.5rem 2rem;
+}
+.login button {
+  display: block;
+  width: 100%;
+  margin-bottom: 3rem;
+  box-shadow: 0.2rem 0.5rem 1rem rgba(56, 56, 56, 0.5);
+  background-image: linear-gradient(0deg, #AC47F0, #AC47F0 25%, #C682F3);
+  border-radius: 1rem;
+  font-size: 2.2rem;
+  font-weight: 600;
+  padding: 0.5rem;
+}
+.login a {
+  font-size: 1.6rem;
+}
+.login .already_logged_in p {
+  justify-content: start;
+}
+.login .already_logged_in p strong {
+  margin-right: 2rem;
+  font-weight: 600;
+}
+
+.success_notify {
+  color: #3d2525;
+  font-size: 1.6rem;
 }

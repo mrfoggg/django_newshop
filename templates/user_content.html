@@ -1,5 +1,7 @@
 {% load thumbnail %}
 {% load custom_tags %}
+{% load socialaccount %}
+
 <div class="user-content user-content__basket" id="basket">
     <div class="user-content__basket-list-wrapper">
         <div class="user-content__basket-list">
@@ -29,7 +31,7 @@
         </div>
 
         <form id="update_basket" action="{{ url_product_actions }}">
-            {% csrf_token %}
+{#            {% csrf_token %}#}
             <input type="hidden" name='product_id' value="">
             <input type="hidden" name="action" value="">
             <input type="hidden" name="amount" value="">
@@ -43,7 +45,7 @@
 {#    {% endif %}#}
 {#    <div class="user-content__basket-total {{ products_obj_in_basket | variants:'visible'}}">#}
     <div class="user-content__basket-total {% values_by_condition products_obj_in_basket 'visible' %}">
-        <a href="{{ checkout_link }}">Оформити</a>
+        <a href="{% url 'root_app:checkout' %}">Оформити</a>
 
         <div class="user-content__basket-total--ammount">
             <span>{{ basket_total.total_amount }}</span> шт
@@ -82,7 +84,7 @@
                 <h3>Ви зможете ввести пароль через <span>${interval}</span> секунд </h3>
             {% endif %}
             <form action={{ get_and_check_registration_phone_action_url }} id="sendRegistrationPhoneForm" style="{% values_by_condition user.is_authenticated 'display: none;' %}">
-                {% csrf_token %}
+{#                {% csrf_token %}#}
                 <label class='cabinet__login-section user-content__personal-item'>
                     +38(0
                     <input class="phone-number-input" name="phonenumber" type="text" autocomplete="off" maxlength="9">
@@ -94,7 +96,7 @@
             </form>
 
             <form action={{ get_registration_name_action_url }} id="sendRegistrationNameForm" style="display: none;">
-                {% csrf_token %}
+{#                {% csrf_token %}#}
                 <label class='cabinet__login-section user-content__personal-item'>
                     Ваше ім'я
                     <input type="text" name="name" id="registrationNameInput">
@@ -105,7 +107,7 @@
             </form>
 
             <form action={{ verify_sms_token_action_url }} id="verifySmsTokenForm" style="display: none;">
-                {% csrf_token %}
+{#                {% csrf_token %}#}
                 <div class='cabinet__login-section user-content__personal-item'>
                     <label>
                         Одноразовий пароль  з СМС
@@ -116,33 +118,77 @@
                         </div>
                     </label>
 
-
                     <span class="get_token_actions" id="regenerateSmsTokenBtn">Відправити новий код підтвердження</span>
                     <span class="get_token_actions" id="regenerateSmsTokenTimer" style="display: none; cursor: auto; opacity: 50%">Запросити код ще раз можливо через <span></span> с</span>
                     <span class="get_token_actions" id="changeNumber">Вказати інший номер телефону</span>
                 </div>
             </form>
             <form action={{ regenerate_sms_token_action_url }} id='regenerateSmsTokenForm'>
-                {% csrf_token %}
+{#                {% csrf_token %}#}
             </form>
 
 
             <form action={{ logout_action_url }} id='logoutForm' style="{% values_by_condition user.is_authenticated '' 'display: none;' %}">
 
                 <div class="cabinet__login-section user-content__personal-item">
-                    {% csrf_token %}
-                    <button type="submit" id='logoutBtn'>Вийти</button>
+{#                    {% csrf_token %}#}
+                    <div class="logined_links">
+                        <a class="cabinet_link">Перейти в мій кабінет</a>
+                        <button type="submit" id="logoutBtn">Вийти</button>
+                    </div>
                 </div>
             </form>
 
+            <div class="cabinet__separator" style="{% values_by_condition user.is_authenticated 'display: none;' %}">
+                <hr>
+                <span id="socialSeparatorText">або авторизутесь через соціальні мережі</span>
+                <hr>
+            </div>
+            <div class="cabinet__social" id="socialLoginSection" style="{% values_by_condition user.is_authenticated 'display: none;' %}">
 
-            <div id="loginBySocial">
-                <div class="cabinet__separator">
-                    <hr>
-                    <span>або авторизутесь через соціальні мережі</span>
-                    <hr>
+                {% get_providers as socialaccount_providers %}
+                {% for provider in socialaccount_providers %}
+                    <div class="cabinet__social-item">
+                        <a class="cabinet__social-section" title="{{provider.name}}"href="{% provider_login_url provider.id process='login' scope=scope auth_params=auth_params %}">
+                            <div class="cabinet__social-icon {{provider.id}}"></div>
+                            <div class="cabinet__social-text">Увійти через {{provider.name}}</div>
+                        </a>
+                    </div>
+
+                {% endfor %}
+            </div>
+            <div class="cabinet__separator" style="{% values_by_condition user.is_authenticated 'display: none;' %}">
+                <hr>
+                <span>або авторизутесь за допомогою електронної пошти</span>
+                <hr>
+            </div>
+            <div class="cabinet__social" style="{% values_by_condition user.is_authenticated 'display: none;' %}">
+                <div class="cabinet__social-item">
+                    <a href="{% url 'account_login' %}" class="cabinet__social-section"> <div class="cabinet__social-text">Увійти</div></a>
+                </div>
+                <div class="cabinet__social-item">
+                    <a href="{% url 'account_signup' %}" class="cabinet__social-section">  <div class="cabinet__social-text">Зареєструватись</div></a>
                 </div>
             </div>
+
+            <div class="social_settings_link" id="socialSettingsSection" style="{% values_by_condition user.is_authenticated '' 'display: none;' %}">
+                <h3><a href="{% url 'socialaccount_connections' %}">Перейти до налаштування входу через соцмережі</a></h3>
+            </div>
+
+            <div class="email_login_section" style="{% values_by_condition show_email_login_section '' 'display: none;'%}">
+                <h3><span id="emailLoginSectionButton">Налаштувати вхід через електронну пошту і пароль</span></h3>
+                <form action="{% url 'root_app:add_email' %}" id="addEmail" style="display: none;">
+                    {{ email_form }}
+                    <button type="submit">OK</button>
+                </form>
+            </div>
+            <div class="set_password_section" style="{% values_by_condition show_set_password_link '' 'display: none;'%}">
+                <h3><a href="{% url 'account_reset_password' %}">Задати або відновити пароль</a></h3>
+            </div>
+            <div class="change_password_section" style="{% values_by_condition show_change_password_link '' 'display: none;'%}">
+                <h3><a href="{% url 'account_change_password' %}">Змінити пароль</a></h3>
+            </div>
+
         </div>
     </div>
 </div>

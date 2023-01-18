@@ -54,7 +54,7 @@
                     <span class="product-list-item-content__compare" data-status="disabled" data-mode="compare"></span>
                 {% endif %}
                 <form  class="product_action_form" action="{{ url_product_actions }}" data-page="{{ page }}">
-                    {% csrf_token %}
+{#                    {% csrf_token %}#}
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     <input type="hidden" name="action" value="">
                 </form>
@@ -78,7 +78,7 @@
                 <form class="product_by_form" action="{{ url_product_actions }}" data-by_text="Купитии" data-byed_text="У кошику" data-status="not_in_basket" data-product_id="{{ product.id }}">
             {% endif %}
             <form class="product_by_form" action="{{ url_product_actions }}" data-by_text="Купитии" data-byed_text="У кошику" data-status="not_in_basket" data-product_id="{{ product.id }}">
-                {% csrf_token %}
+{#                {% csrf_token %}#}
                 <input type="hidden" name="product_id" value="{{ product.id }}">
                 <input type="hidden" name="action" value="add_basket">
                 {% if product.id|stringformat:"i" in products_id_in_basket %}

@@ -77,11 +77,11 @@
                         <span class="product__top-data-by-art">артікул: {{ product.sku }}</span>
                     </div>
                     {% if product.id|stringformat:"i" in products_id_in_basket %}
-                        <form class="product__top-data-by-btns product_by_form" action="{{ url_product_actions }}" data-url-by-now="{{ by_now_link }}" data-by_text="До кошика" data-byed_text="У кошику" data-status="in_basket" data-product_id="{{ product.id }}">
+                        <form class="product__top-data-by-btns product_by_form" action="{{ url_product_actions }}" data-url-by-now="{% url 'root_app:by_now' %}" data-by_text="До кошика" data-byed_text="У кошику" data-status="in_basket" data-product_id="{{ product.id }}">
                     {% else %}
-                        <form class="product__top-data-by-btns product_by_form" action="{{ url_product_actions }}" data-url-by-now="{{ by_now_link }}" data-by_text="До кошика" data-byed_text="У кошику" data-status="not_in_basket" data-product_id="{{ product.id }}">
+                        <form class="product__top-data-by-btns product_by_form" action="{{ url_product_actions }}" data-url-by-now="{% url 'root_app:by_now' %}" data-by_text="До кошика" data-byed_text="У кошику" data-status="not_in_basket" data-product_id="{{ product.id }}">
                     {% endif %}
-                {% csrf_token %}
+{#                {% csrf_token %}#}
                 <input type="hidden" name="product_id" value="{{ product.id }}" data-id="{{ product.id }}">
                 <input type="hidden" name="action" value="add_basket">
                         <button class="product__top-data-by-btns-checkout" type="submit" data-by-now="true" >Замовити зараз</button>
@@ -96,7 +96,7 @@
                     <div class="product__top-data-by-onclick">
                         <p class="product__top-data-by-onclick-header">Проконсультуємо і оформимо замовлення по телефону:</p>
                         <form id="by_one_click_action" action="{{ by_one_click_link_action }}">
-                            {% csrf_token %}
+{#                            {% csrf_token %}#}
                             <span>+38 (0</span><input class="phone-number-input" name="phonenumber" type="text" autocomplete="off"><button type="submit">Відправити</button>
                             <span id="errNumber" style="color: red; display: none">&nbsp Невірний номер</span>
                             <span id="okNumber" style="color: green; display: none">&nbsp Прийнято </span>
@@ -117,7 +117,7 @@
                         <span class="product__top-data-compare" data-status="disabled" data-mode="compare">До порівняння</span>
                     {% endif %}
                     <form  class="product_action_form" action="{{ url_product_actions }}" data-page="product">
-                        {% csrf_token %}
+{#                        {% csrf_token %}#}
                         <input type="hidden" name="product_id" value="{{ product.id }}">
                         <input type="hidden" name="action" value="">
                     </form>
@@ -134,7 +134,7 @@
                 {% if settlement_from %}
                     <h3>Для розрахунку вартості доставки вкажіть адресу:</h3>
                     <form data-url={{ url_get_delivery_cost }} method="POST" class="change-form input-data-delivery-cost" id="get_delivery_cost">
-                        {% csrf_token %}
+{#                        {% csrf_token %}#}
                         {{ address_form.as_p }}
                         <input type="hidden" name="settlement_from_ref" value={{ settlement_from.ref }}>
                         <input type="hidden" name="width" value={{ product.package_width }}>

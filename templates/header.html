@@ -75,14 +75,14 @@
                 {% endif %}
 
                 {% if favorites_count %}
-                    <a class="sub-header__favorites" href="{{ favorites_link }}"><span>{{ favorites_count }}</span></a>
+                    <a class="sub-header__favorites" href="{% url 'main_page:favorites' %}"><span>{{ favorites_count }}</span></a>
                 {% else %}
-                    <a class="sub-header__favorites" href="{{ favorites_link }}"></a>
+                    <a class="sub-header__favorites" href="{% url 'main_page:favorites' %}"></a>
                 {% endif %}
                 {% if compare_count %}
-                    <a class="sub-header__compare" href="{{ compare_link }}"><span>{{ compare_count }}</span></a>
+                    <a class="sub-header__compare" href="{% url 'main_page:compare' %}"><span>{{ compare_count }}</span></a>
                 {% else %}
-                    <a class="sub-header__compare" href="{{ compare_link }}"></a>
+                    <a class="sub-header__compare" href="{% url 'main_page:compare' %}"></a>
                 {% endif %}
                 {% if basket_total.total_amount %}
                     <span class="sub-header__basket" href="#"><span>{{ basket_total.total_amount }}</span></span>

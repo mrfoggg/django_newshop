@@ -1,3 +1,4 @@
+import django
 from django.db.models import Subquery, When, ImageField, ExpressionWrapper
 from django.db.models.expressions import OuterRef, Case, F
 from django.http import HttpResponse
@@ -20,6 +21,7 @@ class MainPageView(TemplateView):
     template_name = 'main-page/index.html'
 
     def get_context_data(self, **kwargs):
+        print('CSRF = ', django.middleware.csrf.get_token(self.request))
         context = super().get_context_data(**kwargs)
         context |= {
             'banners': Banner.objects.all(),

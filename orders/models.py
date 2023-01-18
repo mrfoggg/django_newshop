@@ -1,6 +1,7 @@
 import ipinfo
 import requests
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
@@ -138,4 +139,4 @@ class ByOneclickPersonalComment(models.Model):
 
 
 class Basket(models.Model):
-    customer = models.ForeignKey(User, verbose_name="Пользователь", on_delete=models.SET_NULL, null=True)
+    customer = models.ForeignKey(get_user_model(), verbose_name="Пользователь", on_delete=models.SET_NULL, null=True)

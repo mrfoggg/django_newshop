@@ -14,11 +14,33 @@
             range.select();
           }
         };
-        $('#id_number_1').click(function (){
-            if (!$(this).is(":focus")) {
-                $(this).setCursorPosition(0);
+
+        function moveLeftCursor(inp) {
+            let pos = inp.selectionStart - 1;
+            let val = $(inp).val();
+            let leftChar = val.charAt(pos);
+            let leftLeftChar = val.charAt(pos-1);
+            let leftLeftLeftChar = val.charAt(pos-2);
+            if (leftChar==='_' || leftChar===' ' && leftLeftChar===' ' || leftChar===' ' && leftLeftChar==='_' || leftChar==='-' && !/[0-9]/.test(leftLeftChar)) {
+                $(inp).setCursorPosition(pos);
+                moveLeftCursor(inp);
             }
-        })
+        }
+
+        $('#id_number_1').click(function(){
+            if (!/[0-9]/.test($(this).val())) {
+                $(this).setCursorPosition(0);
+            } else if (this.selectionStart > 0) {
+                moveLeftCursor(this);
+            }
+        });
+
+        // $('#id_number_1').click(function (){
+        //     if (!$(this).is(":focus")) {
+        //         $(this).setCursorPosition(0);
+        //     }
+        // });
+
         function setUkraineFormat() {
             console.log('setUkraineFormat');
             if ($('#id_number_0').val()==='UA') {

@@ -31,14 +31,14 @@
     <div class="user-content__personal-item-actions">
         <button class="comment-write">Додати коментар</button>
         <form action={{ cancel_oneclick_action_url }}>
-            {% csrf_token %}
+{#            {% csrf_token %}#}
             <input type="hidden" name="one_click_id" value="{{ oneclick.id }}">
             <button class="order-cancel" type="submit">Відмінтити заявку</button>
         </form>
     </div>
 
     <form class="user-content__personal-item-comment" action="{{ oneclick_add_comment_action_url }}">
-        {% csrf_token %}
+{#        {% csrf_token %}#}
         <input type="hidden" name="one_click_id" value="{{ oneclick.id }}">
         <div class="user-content__personal-item-comment-section">
             <textarea rows="1" class="user-content__personal-item-comment-field" name="comment_text" id="commentText" placeholder="введіть текст вашого коментаря"></textarea>

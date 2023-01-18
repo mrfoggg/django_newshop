@@ -57,12 +57,17 @@ class PhoneAdmin(admin.ModelAdmin):
 
 @admin.register(Person)
 class PersonAdmin(nested_admin.NestedModelAdmin):
-    fields = (('last_name', 'first_name', 'middle_name'), 'email', ('is_customer', 'is_supplier'), 'user')
+    fields = (
+        ('last_name', 'first_name', 'middle_name'), ('email', 'username'),
+        ('is_customer', 'is_supplier', 'is_staff', 'is_superuser'), 'main_phone'
+    )
     search_fields = ('last_name', 'first_name', 'middle_name')
+    # autocomplete_fields = ('main_phone',)
     inlines = (PersonPhoneInlineAdmin, PersonSettlementInline, PersonOneClickInline)
-    list_display = ('__str__', 'is_customer', 'is_supplier')
+    list_display = ('__str__', 'email', 'is_customer', 'is_supplier')
     list_filter = ('is_customer', 'is_supplier')
 
+# admin.site.register(Person)
 
 @admin.register(Settlement)
 class SettlementAdmin(admin.ModelAdmin):
