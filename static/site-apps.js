@@ -1499,12 +1499,69 @@ $(document).ready(function(){
         }, 200);
     });
 
+
+    $('#personalInfoForm').submit(function (e){
+        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function (response) {
+                if (response['result']) {
+                    notificationAddEmail.success(response['result_text']);
+                } else {
+                    for (let err of response['result_text']) {
+                        notificationAddEmail.error(err);
+                    }
+                }
+            }
+        }, 200);
+    });
+
     let prf = $('.password_reset')
     let prd = prf.data('currentEmail');
     if (prd)
-        // console.log(prf.find('#id_email'));
         prf.find('#id_email').val(prd);
-        // console.log('password_reset_data: ', prd);
+
+
+    let tab = $('.cabinet-detail-tabs-items > div');
+	tab.hide().filter(':first').show(300);
+
+	// Клики по вкладкам.
+	$('.cabinet-detail-tabs-nav a').click(function(){
+		tab.hide(300);
+		tab.filter(this.hash).show(300);
+		$('.cabinet-detail-tabs-nav a').removeClass('active');
+		$(this).addClass('active');
+		return false;
+	}).filter(':first').click();
+
+	// Клики по якорным ссылкам.
+	// $('.tabs-target').click(function(){
+	// 	$('#tabs .tabs-nav a[href=' + $(this).attr('href')+ ']').click();
+	// });
+
+	// Отрытие вкладки из хеша URL
+	if(window.location.hash){
+		$(`.cabinet-detail-tabs-nav a[href="${window.location.hash}"]`).click();
+		// window.scrollTo(0, $("#" . window.location.hash).offset().top);
+	}
+
+    $('#personalInfoForm input').keyup(function (){
+        let isChangedArr = [];
+        let inputs = $('#personalInfoForm input');
+        for (let inp of inputs)
+            isChangedArr.push($(inp).attr('value') === $(inp).val().trim())
+        console.log($(inputs[0]).val());
+        console.log(222);
+        // if (isChangedArr.every(v => v === true) && inputs[0].val().length > 1 && inputs[1].val().length > 3 ) {
+        if (isChangedArr.every(v => v === true) || $(inputs[0]).val().length < 2 || $(inputs[1]).val().length < 2) {
+            $('#personalInfoForm button').slideUp();
+        } else if($(inputs[0]).val().length > 1 && $(inputs[1]).val().length > 1) {
+            $('#personalInfoForm button').slideDown();
+        }
+    });
 
 });
 

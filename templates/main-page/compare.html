@@ -1,4 +1,4 @@
-{% extends 'template_with_header_footer.html' %}
+cabinet{% extends 'template_with_header_footer.html' %}
 {% load thumbnail %}
 {% load custom_tags %}
 
@@ -17,7 +17,6 @@
             <a class="link_back" id="linkBackNotCheckout" href="{{ back_link }}">До попередньої сторінки</a>
         </div>
         {% for group in grouped_dict.items %}
-
             <table>
                 <thead>
                     <th><a href={{ group.1.category.get_absolute_url }}><h3>{{ group.1.category }}</h3></a></th>

@@ -133,7 +133,7 @@
                 <div class="cabinet__login-section user-content__personal-item">
 {#                    {% csrf_token %}#}
                     <div class="logined_links">
-                        <a class="cabinet_link">Перейти в мій кабінет</a>
+                        <a class="cabinet_link" href="{% url 'main_page:cabinet' %}">Перейти в мій кабінет</a>
                         <button type="submit" id="logoutBtn">Вийти</button>
                     </div>
                 </div>

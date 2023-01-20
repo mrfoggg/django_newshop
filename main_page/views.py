@@ -8,6 +8,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 
+from ROOTAPP.forms import PersonForm, PersonalInfoForm
 from catalog.models import Product, Category, ProductImage
 from catalog.views import ProductView, CategoryView
 from main_page.models import Banner, Menu, SitePhone, Schedule, PopularCategory, PopularProduct, NewProduct
@@ -84,6 +85,12 @@ def dispatch_view(request, slug, str_url_data=None):
                 model.__name__.lower()).as_view()(request, slug=slug, str_url_data=str_url_data)
 
 
-class Login2View(TemplateView):
-    template_name = 'login2.html'
+class CabinetView(TemplateView):
+    template_name = 'main-page/cabinet.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context |= {
+            'personal_info_form': PersonalInfoForm(instance=self.request.user)
+        }
+        return context

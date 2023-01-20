@@ -7725,3 +7725,68 @@ footer {
   color: #3d2525;
   font-size: 1.6rem;
 }
+
+.cabinet-detail h2 {
+  margin: 4rem 0;
+}
+.cabinet-detail > div {
+  display: flex;
+  margin: 10px 0;
+  overflow: hidden;
+  min-height: 60vh;
+  border: 1px solid #FBD83E;
+  border-radius: 2rem;
+  position: relative;
+  height: 100%;
+  padding: 2rem;
+  background: #f5f5f5;
+}
+.cabinet-detail-tabs-nav {
+  width: 28%;
+  float: left;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  background: #F4E4FF;
+  margin-right: 1rem;
+  border-radius: 1rem 0 0 1rem;
+}
+.cabinet-detail-tabs-nav li {
+  display: block;
+  padding: 0;
+  margin: 0;
+}
+.cabinet-detail-tabs-nav a {
+  display: block;
+  padding: 10px 20px;
+  width: 100%;
+  font-size: 2rem;
+  font-weight: 600;
+  box-sizing: border-box;
+  border-top: 1px solid #ccc;
+  background: transparent;
+  text-decoration: none;
+  color: #999;
+}
+.cabinet-detail-tabs-nav li:first-child a {
+  border-radius: 5px 0 0 0;
+}
+.cabinet-detail-tabs-nav li:last-child a {
+  border-bottom: 1px solid #ccc;
+  border-radius: 0 0 0 5px;
+}
+.cabinet-detail-tabs-nav a.active {
+  border: 1px solid #F4E4FF;
+  background: #fff;
+  color: #3d2525;
+}
+.cabinet-detail-tabs-items {
+  width: 72%;
+}
+.cabinet-detail-tabs-item {
+  padding: 15px;
+  border-radius: 0 5px 5px 0;
+  min-height: 160px;
+  height: 100%;
+}

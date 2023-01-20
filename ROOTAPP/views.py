@@ -21,7 +21,7 @@ from otp_twilio.models import TwilioSMSDevice
 from phonenumber_field.phonenumber import PhoneNumber
 from phonenumbers import geocoder
 
-from ROOTAPP.forms import PersonForm, PersonEmailForm
+from ROOTAPP.forms import PersonForm, PersonEmailForm, PersonalInfoForm
 from ROOTAPP.models import Settlement, SettlementType, SettlementArea, SettlementRegion, Phone, PersonPhone, Person, \
     get_phone_full_str
 from Shop_DJ import settings
@@ -622,18 +622,11 @@ def add_email(request):
         return {'result': False, 'result_text': form.errors['email']}
 
 
-class AddEmailView(FormView):
-    template_name = 'main-page/index.html'
-    form_class = modelform_factory(
-        Person,
-        fields=('email',)
-    )
-
-    def form_valid(self, form):
-        email = form.cleaned_data['email']
+@json_view
+def update_user_personal(request):
+    form = PersonalInfoForm(request.POST, instance=request.user)
+    if form.is_valid():
+        form.cleaned_data['last_name'] = form.cleaned_data['last_name'].title()
+        print(form.cleaned_data['last_name'])
         form.save()
-        return JsonResponse({'email': email}, status=200)
-
-    def form_invalid(self, form):
-        errors = form.errors.as_json()
-        return JsonResponse({'errors': errors}, status=400)
+        return {'result': True, 'result_text': 'Персональні дані успішно оновлено'}

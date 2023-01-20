@@ -1,0 +1,43 @@
+{% extends 'template_with_header_footer.html' %}
+{% load i18n %}
+{% load socialaccount %}
+
+{% block title %}
+    <title> Сніп-Сноп | Вхід</title>
+{% endblock title %}
+
+{% block content %}
+    <div class="content-wrapper cabinet-detail">
+        <h2>Мій особистий кабінет</h2>
+        <div>
+            <!-- Кнопки -->
+            <ul class="cabinet-detail-tabs-nav">
+                <li><a href="#tab-1">Персональні дані</a></li>
+                <li><a href="#tab-2">Мої номери</a></li>
+                <li><a href="#tab-3">Мої адреси</a></li>
+
+            </ul>
+
+            <!-- Контент -->
+            <div class="cabinet-detail-tabs-items">
+                <div class="cabinet-detail-tabs-item login" id="tab-1">
+                    <div class="center_form_wrapper">
+                        <form action="{% url 'root_app:update_user_personal' %}" id="personalInfoForm">
+                            {{ personal_info_form.as_p }}
+                            <button type="submit" style="display: none;">Збрегти зміни</button>
+                        </form>
+                    </div>
+
+                </div>
+                <div class="cabinet-detail-tabs-item" id="tab-2">
+                    <h3>066-666-4943</h3>
+                    <h3>095-301-4075</h3>
+                </div>
+                <div class="cabinet-detail-tabs-item" id="tab-3">
+                    <h3>м. Кукуєвка</h3>
+                    <h3>с. Пупуївка</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

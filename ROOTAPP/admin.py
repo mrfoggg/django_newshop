@@ -48,6 +48,7 @@ class PhoneAdmin(admin.ModelAdmin):
     readonly_fields = ('get_chat_links',)
     list_display = ('__str__', 'get_chat_links',)
     list_display_links = ('__str__',)
+    search_fields = ('number', )
 
     class Media:
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
@@ -62,7 +63,7 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
         ('is_customer', 'is_supplier', 'is_staff', 'is_superuser'), 'main_phone'
     )
     search_fields = ('last_name', 'first_name', 'middle_name')
-    # autocomplete_fields = ('main_phone',)
+    autocomplete_fields = ('main_phone',)
     inlines = (PersonPhoneInlineAdmin, PersonSettlementInline, PersonOneClickInline)
     list_display = ('__str__', 'email', 'is_customer', 'is_supplier')
     list_filter = ('is_customer', 'is_supplier')
