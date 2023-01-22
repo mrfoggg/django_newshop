@@ -1,4 +1,5 @@
 import django
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Subquery, When, ImageField, ExpressionWrapper
 from django.db.models.expressions import OuterRef, Case, F
 from django.http import HttpResponse
@@ -9,6 +10,7 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 
 from ROOTAPP.forms import PersonForm, PersonalInfoForm
+from ROOTAPP.models import PersonPhone, Messenger
 from catalog.models import Product, Category, ProductImage
 from catalog.views import ProductView, CategoryView
 from main_page.models import Banner, Menu, SitePhone, Schedule, PopularCategory, PopularProduct, NewProduct
@@ -90,7 +92,16 @@ class CabinetView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        person = self.request.user
         context |= {
-            'personal_info_form': PersonalInfoForm(instance=self.request.user)
+            'personal_info_form': PersonalInfoForm(instance=person),
+            'person_phones': PersonPhone.objects.filter(person=person).annotate(
+                m_id_list=ArrayAgg('phone__messengers', ordering='phone__messengers')).values(
+                'id', 'phone__number', 'm_id_list', 'phone'
+            ),
+            # 'person_phones': PersonPhone.objects.filter(person=person),
+            'messengers': Messenger.objects.all(),
+            'main_phone_id': PersonPhone.objects.get(phone_id=self.request.user.main_phone).id,
+            'delivery_phone_id': PersonPhone.objects.get(phone_id=self.request.user.delivery_phone).id
         }
         return context

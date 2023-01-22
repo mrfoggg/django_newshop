@@ -80,7 +80,10 @@ class Person(AbstractUser):
     middle_name = models.CharField('Отчество', max_length=128,  blank=True, null=True, default=None, db_index=True)
     is_customer = models.BooleanField('Является покупателем', default=False)
     is_supplier = models.BooleanField('Является поставщиком', default=False)
-    main_phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.SET_NULL)
+    main_phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.SET_NULL, unique=True,
+                                   verbose_name='Телефон для авторизации', related_name='login_person')
+    delivery_phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.SET_NULL,
+                                       verbose_name='Телефон для доставки', related_name='delivery_persons')
     # first_name = models.CharField('Имя', max_length=128, blank=True, null=True, default=None, db_index=True)
     # last_name = models.CharField('Фамилия', max_length=128,  blank=True, null=True, default=None, db_index=True)
 

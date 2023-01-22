@@ -15,6 +15,7 @@ admin.site.register(Messenger)
 
 class PersonPhoneInlineAdmin(nested_admin.NestedTabularInline):
     model = PersonPhone
+    autocomplete_fields = ('phone',)
     extra = 0
 
 
@@ -48,7 +49,12 @@ class PhoneAdmin(admin.ModelAdmin):
     readonly_fields = ('get_chat_links',)
     list_display = ('__str__', 'get_chat_links',)
     list_display_links = ('__str__',)
-    search_fields = ('number', )
+    search_fields = ('number',)
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super(PhoneAdmin, self).get_form(request, obj, **kwargs)
+        form.base_fields['messengers'].widget = forms.CheckboxSelectMultiple()
+        return form
 
     class Media:
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
@@ -60,13 +66,28 @@ class PhoneAdmin(admin.ModelAdmin):
 class PersonAdmin(nested_admin.NestedModelAdmin):
     fields = (
         ('last_name', 'first_name', 'middle_name'), ('email', 'username'),
-        ('is_customer', 'is_supplier', 'is_staff', 'is_superuser'), 'main_phone'
+        ('is_customer', 'is_supplier', 'is_staff', 'is_superuser'), 'main_phone', 'delivery_phone'
     )
     search_fields = ('last_name', 'first_name', 'middle_name')
-    autocomplete_fields = ('main_phone',)
+    # autocomplete_fields = ('main_phone',)
     inlines = (PersonPhoneInlineAdmin, PersonSettlementInline, PersonOneClickInline)
-    list_display = ('__str__', 'email', 'is_customer', 'is_supplier')
+    list_display = ('__str__', 'email', 'main_phone', 'is_customer', 'is_supplier')
     list_filter = ('is_customer', 'is_supplier')
+    # read
+
+    def get_form(self, request, obj=None, **kwargs):
+        if obj:
+            request._person_phones = Phone.objects.filter(personphone__person=obj)
+        else:
+            request._person_phones = []
+        return super(PersonAdmin, self).get_form(request, obj, **kwargs)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name in ('main_phone', 'delivery_phone'):
+            kwargs["queryset"] = request._person_phones
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
 
 # admin.site.register(Person)
 
@@ -79,10 +100,12 @@ class SettlementAdmin(admin.ModelAdmin):
     #     'warehouse',
     # )
     fields = (
-        'type', 'description_ru', 'description_ua', 'area', 'region', 'warehouse','index_1', 'index_2', 'index_coatsu_1'
+        'type', 'description_ru', 'description_ua', 'area', 'region', 'warehouse', 'index_1', 'index_2',
+        'index_coatsu_1'
     )
     readonly_fields = (
-        'type', 'description_ru', 'description_ua', 'area', 'region', 'warehouse','index_1', 'index_2', 'index_coatsu_1'
+        'type', 'description_ru', 'description_ua', 'area', 'region', 'warehouse', 'index_1', 'index_2',
+        'index_coatsu_1'
     )
     list_filter = ('area__description_ru', 'warehouse')
     baton_cl_includes = [

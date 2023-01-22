@@ -23,7 +23,7 @@ from phonenumbers import geocoder
 
 from ROOTAPP.forms import PersonForm, PersonEmailForm, PersonalInfoForm
 from ROOTAPP.models import Settlement, SettlementType, SettlementArea, SettlementRegion, Phone, PersonPhone, Person, \
-    get_phone_full_str
+    get_phone_full_str, Messenger
 from Shop_DJ import settings
 from catalog.models import Product, get_price_sq
 from sorl.thumbnail import get_thumbnail
@@ -482,6 +482,9 @@ def get_and_check_registration_phone(request):
         user, is_created_user = Person.objects.get_or_create(main_phone=phone, is_customer=True)
     else:
         user, is_created_user = Person.objects.get_or_create(main_phone=phone, username=number, is_customer=True)
+        user_phone, is_create_phone = PersonPhone.objects.get_or_create(phone=phone, person=user)
+        user.delivery_phone = phone
+        user.save()
     device = TwilioSMSDevice.objects.get_or_create(number=number.as_e164, name=request.session.session_key,
                                                    user=user, confirmed=False)[0]
     response['allow_verify_time_delta'] = get_verify_allow_time_delta(device)
@@ -608,7 +611,6 @@ def add_email(request):
     if form.is_valid():
         email = form.cleaned_data['email']
         if Person.objects.filter(email=email).exists():
-            print('EXIST')
             return {'result': False, 'result_text': [
                 'Електронну пошту не додано',
                 f'Електронну пошту {email} вже зареєстровано на інший акаунт',
@@ -627,6 +629,65 @@ def update_user_personal(request):
     form = PersonalInfoForm(request.POST, instance=request.user)
     if form.is_valid():
         form.cleaned_data['last_name'] = form.cleaned_data['last_name'].title()
-        print(form.cleaned_data['last_name'])
         form.save()
         return {'result': True, 'result_text': 'Персональні дані успішно оновлено'}
+
+
+@json_view
+def update_user_phones(request):
+    # print(request.POST)
+    numbers_data = {}
+    request_data = request.POST
+    print('='*20)
+    print('request_data - ', request_data)
+    errors_list = []
+    wrong_inputs_id_list = []
+    for key in request.POST:
+        if 'phone_' in key:
+            str_phone = ''.join(x for x in request_data.get(key) if x.isdigit())
+            number = PhoneNumber.from_string(str_phone, region='UA')
+            if not geocoder.description_for_number(number, "ru"):
+                errors_list.append(f'Номер {number.as_e164} не сбережено. Невірний номер')
+                numbers_data[key[6:]] = {'valid': False}
+                wrong_inputs_id_list.append(key[6:])
+            else:
+                numbers_data[key[6:]] = {
+                    'number': number.as_e164,
+                    'messengers': [],
+                    'valid': True
+                }
+        if 'messengers_' in key:
+            numbers_data[key[11:]]['messengers'] = request_data.getlist(key)
+    print('numbers_data: ', numbers_data)
+    print('-'*20)
+    for person_phone_id, data in numbers_data.items():
+        if data['valid']:
+            old_number = PersonPhone.objects.get(id=person_phone_id)
+            if old_number.phone.number.as_e164 == data['number']:
+                old_number.phone.messengers.set(data['messengers'])
+            else:
+                new_phone, created = Phone.objects.get_or_create(number=data['number'])
+                old_number.phone = new_phone
+                old_number.save()
+                new_phone.messengers.set(data['messengers'])
+    main_phone_id = request_data.get('is_main_phone')
+    main_phone = PersonPhone.objects.get(id=main_phone_id).phone
+    delivery_phone_id = request_data.get('is_delivery_phone')
+    # print('OTHER: ', Person.objects.filter(main_phone=main_phone))
+    # print('MAIN: ', main_phone_id)
+    if main_phone_id in wrong_inputs_id_list:
+        errors_list.append('Новий номер для входу не встановлено')
+    elif Person.objects.exclude(id=request.user.id).filter(main_phone=main_phone).exists():
+        errors_list.append(f'Номер {number.as_e164} не можливо встановити для входу. Номер зайнятий')
+    else:
+        request.user.main_phone_id = PersonPhone.objects.get(id=main_phone_id).phone_id
+        # pass
+    if delivery_phone_id in wrong_inputs_id_list:
+        errors_list.append('Новий номер для доставки не встановлено')
+    else:
+        request.user.delivery_phone_id = PersonPhone.objects.get(id=delivery_phone_id).phone_id
+    request.user.save()
+    return {
+        'result': False if len(errors_list) else True,
+        'errors_list': errors_list
+    }

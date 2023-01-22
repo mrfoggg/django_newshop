@@ -1519,6 +1519,27 @@ $(document).ready(function(){
         }, 200);
     });
 
+    $('#updateUserPhones').submit(function (e){
+        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function (response) {
+                if (response['result']){
+                    notificationAddEmail.success('Телефонні номери успішно збережено');
+                } else {
+                    console.log(response['errors_list']);
+                    for (let err of response['errors_list']){
+                        notificationAddEmail.error(err);
+                    }
+                }
+
+            }
+        }, 200);
+    });
+
     let prf = $('.password_reset')
     let prd = prf.data('currentEmail');
     if (prd)
@@ -1553,9 +1574,6 @@ $(document).ready(function(){
         let inputs = $('#personalInfoForm input');
         for (let inp of inputs)
             isChangedArr.push($(inp).attr('value') === $(inp).val().trim())
-        console.log($(inputs[0]).val());
-        console.log(222);
-        // if (isChangedArr.every(v => v === true) && inputs[0].val().length > 1 && inputs[1].val().length > 3 ) {
         if (isChangedArr.every(v => v === true) || $(inputs[0]).val().length < 2 || $(inputs[1]).val().length < 2) {
             $('#personalInfoForm button').slideUp();
         } else if($(inputs[0]).val().length > 1 && $(inputs[1]).val().length > 1) {

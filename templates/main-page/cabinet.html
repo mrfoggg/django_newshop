@@ -1,9 +1,10 @@
 {% extends 'template_with_header_footer.html' %}
 {% load i18n %}
 {% load socialaccount %}
+{% load custom_tags %}
 
 {% block title %}
-    <title> Сніп-Сноп | Вхід</title>
+    <title> Сніп-Сноп | Особистий кабінет</title>
 {% endblock title %}
 
 {% block content %}
@@ -30,8 +31,29 @@
 
                 </div>
                 <div class="cabinet-detail-tabs-item" id="tab-2">
-                    <h3>066-666-4943</h3>
-                    <h3>095-301-4075</h3>
+                    <form action="{% url 'root_app:update_user_phones' %}" id="updateUserPhones">
+                        {% for person_phone in person_phones %}
+                            <span>+38 (0</span>
+                            <input class="phone-number-input" name="phone_{{ person_phone.id }}" type="text" autocomplete="off" value="{{ person_phone.phone__number | strip_phone }}">
+
+                            {% for m in messengers %}
+                                <label>
+                                    {{ m }}
+                                    <input type="checkbox" name="messengers_{{ person_phone.id }}" value="{{ m.id }}" {% val_when_in m.id person_phone.m_id_list 'checked' %}>
+                                </label>
+
+                            {% endfor %}
+                            <input type="radio" name="is_delivery_phone" value="{{ person_phone.id }}" {% val_if_eq person_phone.id delivery_phone_id 'checked' %}>
+                            <input type="radio" name="is_main_phone" value="{{ person_phone.id }}" {% val_if_eq person_phone.id main_phone_id 'checked' %}>
+                            <div></div>
+                        {% endfor %}
+                        <h3><button type="submit">Save</button></h3>
+                    {{ main_phone_id }}
+
+                    </form>
+
+
+
                 </div>
                 <div class="cabinet-detail-tabs-item" id="tab-3">
                     <h3>м. Кукуєвка</h3>

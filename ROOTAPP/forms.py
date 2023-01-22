@@ -1,8 +1,9 @@
 from django import forms
 from django.forms import modelform_factory
+from django.forms.models import inlineformset_factory
 from django_select2.forms import ModelSelect2Widget
 
-from ROOTAPP.models import Settlement, SettlementArea, Person
+from ROOTAPP.models import Settlement, SettlementArea, Person, Phone, PersonPhone
 from django_select2 import forms as s2forms
 
 from allauth.account.forms import ResetPasswordForm
@@ -86,3 +87,5 @@ class PersonalInfoForm(forms.ModelForm):
         model = Person
         fields = ('last_name', 'first_name', 'middle_name',)
 
+
+# PersonInlineFormset = inlineformset_factory(Person, PersonPhone, fields=('phone', 'is_nova_poshta'))

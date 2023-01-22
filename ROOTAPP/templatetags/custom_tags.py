@@ -16,6 +16,21 @@ def get_attr_str_value(product, attribute):
     return product.get_attr_string_val(attribute)
 
 
+@register.filter
+def strip_phone(phone):
+    return phone[4:]
+
+
+@register.filter
+def bool_when_in(val, ls):
+    return val in ls
+
+
+@register.simple_tag
+def val_if_eq(inp_val_1, inp_val_2, val):
+    return val if inp_val_1 == inp_val_2 else ''
+
+
 @register.simple_tag
 def values_by_condition(condition, value_1, value_2=''):
     return value_1 if condition else value_2
