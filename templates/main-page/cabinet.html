@@ -50,7 +50,7 @@
                                 {% for person_phone in person_phones %}
                                     <div class="cabinet-phones-column cabinet-phones-phone" data-id={{ person_phone.id }}>
                                         <span>+38 (0</span>
-                                        <input class="phone-number-input" name="phone_{{ person_phone.id }}" type="text" autocomplete="off" value="{{ person_phone.phone__number | strip_phone }}">
+                                        <input class="phone-number-input {% val_if_eq person_phone.id main_phone_id 'disabled' %}" name="phone_{{ person_phone.id }}" type="text" autocomplete="off" value="{{ person_phone.phone__number | strip_phone }}" {% val_if_eq person_phone.id main_phone_id 'disabled' %}>
                                     </div>
                                     <div class="cabinet-phones-column cabinet-phones-messangers" data-id={{ person_phone.id }}>
                                         {% for m in messengers %}
