@@ -3,7 +3,7 @@ from django.urls import path
 from ROOTAPP.views import (update_cities, get_delivery_cost, ProductActionsView, CheckoutView, ByNowView,
                            request_google_auth, google_response, get_and_check_registration_phone,
                            get_registration_name, verify_sms_token, regenerate_sms_token, logout_view, add_email,
-                           update_user_personal, update_user_phones,
+                           update_user_personal, update_user_phones, del_user_phone,
                            )
 
 app_name = 'root_app'
@@ -21,6 +21,7 @@ urlpatterns = [
     path('add_email/', add_email, name='add_email'),
     path('update_user_personal/', update_user_personal, name='update_user_personal'),
     path('update_user_phones/', update_user_phones, name='update_user_phones'),
+    path('del_user_phone/', del_user_phone, name='del_user_phone'),
     # path('request_google_auth/', request_google_auth, name='request_google_auth'),
     # path('google_response/', google_response, name='google_response'),
 ]

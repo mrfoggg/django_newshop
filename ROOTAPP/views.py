@@ -635,59 +635,97 @@ def update_user_personal(request):
 
 @json_view
 def update_user_phones(request):
-    # print(request.POST)
+    print(request.POST)
     numbers_data = {}
     request_data = request.POST
-    print('='*20)
+    print('=' * 20)
     print('request_data - ', request_data)
     errors_list = []
     wrong_inputs_id_list = []
-    for key in request.POST:
+    for key in request_data:
+        new = True if 'new_' in key else False
+        ph_key = key[:4]+key[10:] if new else key[6:]
+
+        mess_key = key[:4]+key[15:] if new else key[11:]
+
         if 'phone_' in key:
-            str_phone = ''.join(x for x in request_data.get(key) if x.isdigit())
+            phone_inp = request_data.get(key)
+            if not len(phone_inp):
+                continue
+            str_phone = ''.join(x for x in phone_inp if x.isdigit())
             number = PhoneNumber.from_string(str_phone, region='UA')
             if not geocoder.description_for_number(number, "ru"):
                 errors_list.append(f'Номер {number.as_e164} не сбережено. Невірний номер')
-                numbers_data[key[6:]] = {'valid': False}
+                numbers_data[ph_key] = {'valid': False}
                 wrong_inputs_id_list.append(key[6:])
             else:
-                numbers_data[key[6:]] = {
+                numbers_data[ph_key] = {
                     'number': number.as_e164,
                     'messengers': [],
-                    'valid': True
+                    'valid': True,
+                    'new': new
                 }
         if 'messengers_' in key:
-            numbers_data[key[11:]]['messengers'] = request_data.getlist(key)
+            print('mess_key -', mess_key)
+            numbers_data[mess_key]['messengers'] = request_data.getlist(key)
+
     print('numbers_data: ', numbers_data)
-    print('-'*20)
+
+    new_person_phone_id_dict = {}
     for person_phone_id, data in numbers_data.items():
         if data['valid']:
-            old_number = PersonPhone.objects.get(id=person_phone_id)
-            if old_number.phone.number.as_e164 == data['number']:
-                old_number.phone.messengers.set(data['messengers'])
-            else:
+            if data['new']:
                 new_phone, created = Phone.objects.get_or_create(number=data['number'])
-                old_number.phone = new_phone
-                old_number.save()
-                new_phone.messengers.set(data['messengers'])
-    main_phone_id = request_data.get('is_main_phone')
+                if new_phone.messengers.exists():
+                    old_messengers = list(new_phone.messengers.values_list('id', flat=True))
+                else:
+                    new_phone.messengers.set(data['messengers'])
+                    old_messengers = []
+                new_person_phone = PersonPhone.objects.create(phone=new_phone, person_id=request.user.id)
+                new_person_phone_id_dict[person_phone_id] = {
+                    'new_person_phone_id': new_person_phone.id,
+                    'old_messengers': old_messengers
+                }
+            else:
+                old_number = PersonPhone.objects.get(id=person_phone_id)
+                if old_number.phone.number.as_e164 == data['number']:
+                    old_number.phone.messengers.set(data['messengers'])
+                else:
+                    new_phone, created = Phone.objects.get_or_create(number=data['number'])
+                    old_number.phone = new_phone
+                    old_number.save()
+                    new_phone.messengers.set(data['messengers'])
+    print('new_person_phone_id_dict - ', new_person_phone_id_dict)
+    print('-' * 20)
+    main_phone_id_req = request_data.get('is_main_phone')
+    main_phone_id = new_person_phone_id_dict[main_phone_id_req] if 'new_' in main_phone_id_req else main_phone_id_req
     main_phone = PersonPhone.objects.get(id=main_phone_id).phone
-    delivery_phone_id = request_data.get('is_delivery_phone')
-    # print('OTHER: ', Person.objects.filter(main_phone=main_phone))
-    # print('MAIN: ', main_phone_id)
+    delivery_phone_req = request_data.get('is_delivery_phone')
+    delivery_phone_id = new_person_phone_id_dict[delivery_phone_req] if 'new_' in delivery_phone_req else delivery_phone_req
+    new_main_phone_id = False
+    new_delivery_phone_id = False
     if main_phone_id in wrong_inputs_id_list:
         errors_list.append('Новий номер для входу не встановлено')
     elif Person.objects.exclude(id=request.user.id).filter(main_phone=main_phone).exists():
         errors_list.append(f'Номер {number.as_e164} не можливо встановити для входу. Номер зайнятий')
     else:
         request.user.main_phone_id = PersonPhone.objects.get(id=main_phone_id).phone_id
-        # pass
+        new_main_phone_id = main_phone_id
     if delivery_phone_id in wrong_inputs_id_list:
         errors_list.append('Новий номер для доставки не встановлено')
     else:
         request.user.delivery_phone_id = PersonPhone.objects.get(id=delivery_phone_id).phone_id
+        new_delivery_phone_id = delivery_phone_id
     request.user.save()
     return {
-        'result': False if len(errors_list) else True,
-        'errors_list': errors_list
+        'result': False if len(errors_list) else True, 'new': new_person_phone_id_dict,
+        'errors_list': errors_list, 'main_phone_id': new_main_phone_id, 'delivery_phone_id': new_delivery_phone_id
     }
+
+
+@json_view
+def del_user_phone(request):
+    id_to_del = request.POST.get('phone_id')
+    PersonPhone.objects.get(id=id_to_del).delete()
+    hide_del_btn = True if PersonPhone.objects.filter(person_id=request.user.id).count()==1 else False
+    return {'id': id_to_del, 'hide_del_btn': hide_del_btn}

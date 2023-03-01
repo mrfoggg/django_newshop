@@ -1,5 +1,6 @@
 import django
 from django.contrib.postgres.aggregates import ArrayAgg
+from django.db import models
 from django.db.models import Subquery, When, ImageField, ExpressionWrapper
 from django.db.models.expressions import OuterRef, Case, F
 from django.http import HttpResponse
@@ -93,15 +94,23 @@ class CabinetView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         person = self.request.user
+        person_phones = PersonPhone.objects.filter(person=person).annotate(
+            m_id_list=ArrayAgg('phone__messengers', ordering='phone__messengers'),
+            # str_phone=models.Value(person, output_field=models.CharField())
+        ).values(
+            'id', 'phone__number', 'm_id_list', 'phone'
+        )
         context |= {
             'personal_info_form': PersonalInfoForm(instance=person),
-            'person_phones': PersonPhone.objects.filter(person=person).annotate(
-                m_id_list=ArrayAgg('phone__messengers', ordering='phone__messengers')).values(
-                'id', 'phone__number', 'm_id_list', 'phone'
-            ),
+            'person_phones': person_phones,
             # 'person_phones': PersonPhone.objects.filter(person=person),
             'messengers': Messenger.objects.all(),
-            'main_phone_id': PersonPhone.objects.get(phone_id=self.request.user.main_phone).id,
-            'delivery_phone_id': PersonPhone.objects.get(phone_id=self.request.user.delivery_phone).id
+            'main_phone_id': PersonPhone.objects.get(
+                phone_id=self.request.user.main_phone, person=self.request.user
+            ).id,
+            'delivery_phone_id': PersonPhone.objects.get(
+                phone_id=self.request.user.delivery_phone, person=self.request.user
+            ).id,
+            'phones_one': len(person_phones) == 1
         }
         return context

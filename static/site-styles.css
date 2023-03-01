@@ -7459,7 +7459,7 @@ footer {
   font-size: 2rem;
   background: transparent;
   border: none;
-  border-bottom: 2px solid purple;
+  border-bottom: 2px solid #A93CF3;
   padding: 1rem;
   text-align: center;
 }
@@ -7697,7 +7697,14 @@ footer {
   border-bottom: 2px solid #A93CF3;
   margin-left: 2rem;
   background: #F4E4FF;
+  transition: border-bottom 0.5s ease-out;
   padding: 0.5rem 2rem;
+}
+.login input.changed {
+  border-bottom: 2px solid #FBD83E;
+}
+.login input.wrong {
+  border-bottom: 2px solid red;
 }
 .login button {
   display: block;
@@ -7742,7 +7749,7 @@ footer {
   background: #f5f5f5;
 }
 .cabinet-detail-tabs-nav {
-  width: 28%;
+  width: 25%;
   float: left;
   overflow: hidden;
   margin: 0;
@@ -7782,11 +7789,230 @@ footer {
   color: #3d2525;
 }
 .cabinet-detail-tabs-items {
-  width: 72%;
+  width: 75%;
 }
 .cabinet-detail-tabs-item {
   padding: 15px;
   border-radius: 0 5px 5px 0;
   min-height: 160px;
   height: 100%;
+}
+.cabinet-detail form#updateUserPhones {
+  padding: 4rem;
+  padding-right: 2.5rem;
+}
+.cabinet-detail .cabinet-phones input {
+  margin-left: 0;
+}
+.cabinet-detail .cabinet-phones form {
+  width: 100%;
+}
+.cabinet-detail .cabinet-phones-header {
+  font-weight: 600;
+  background: #FFED9F;
+}
+.cabinet-detail .cabinet-phones-column {
+  background: #f5f5f5;
+}
+.cabinet-detail .cabinet-phones-column.del-row {
+  background: none;
+  padding: 0;
+}
+.cabinet-detail .cabinet-phones-column-disabled {
+  grid-column: 3/5;
+}
+.cabinet-detail .cabinet-phones-column-disabled + div {
+  background: yellow;
+  display: none;
+}
+.cabinet-detail .cabinet-phones-column-disabled::after {
+  display: inline-block;
+  content: "Номер не збережено";
+}
+.cabinet-detail .cabinet-phones-column-disabled label {
+  display: none;
+}
+.cabinet-detail .cabinet-phones-header, .cabinet-detail .cabinet-phones-column {
+  border-radius: 2rem;
+  padding: 1rem 2rem;
+}
+.cabinet-detail .cabinet-phones-table {
+  display: grid;
+  grid-template-columns: 28rem 2fr 1fr 1fr 4rem;
+  grid-gap: 1rem;
+  margin-bottom: 3rem;
+}
+.cabinet-detail .cabinet-phones-phone input {
+  width: 16rem;
+  padding: 0.5rem;
+  background: transparent;
+}
+.cabinet-detail .cabinet-phones-messangers {
+  display: flex;
+  flex-direction: column;
+}
+.cabinet-detail .cabinet-phones-messangers input {
+  display: none;
+}
+.cabinet-detail .cabinet-phones-messangers label {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+}
+.cabinet-detail .cabinet-phones-radios input {
+  display: none;
+}
+.cabinet-detail .cabinet-phones-radios.first.new {
+  grid-column: 3/5;
+}
+.cabinet-detail .cabinet-phones-radios.first.new + div {
+  display: none;
+}
+.cabinet-detail .cabinet-phones-radios.first.new::after {
+  display: inline-block;
+  content: "Номер не збережено";
+}
+.cabinet-detail .cabinet-phones-radios.first.new label {
+  display: none;
+}
+.cabinet-detail .cabinet-phones-column, .cabinet-detail .cabinet-phones-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cabinet-detail .cabinet-phones-buttons {
+  display: flex;
+}
+
+.delete_number-popup {
+  position: relative;
+  background: #FFF;
+  padding: 3rem;
+  width: auto;
+  max-width: 94rem;
+  margin: 3rem auto;
+  border-radius: 2rem;
+  text-align: center;
+}
+.delete_number-popup strong {
+  font-weight: 600;
+}
+.delete_number-popup h2, .delete_number-popup caption {
+  margin-bottom: 1rem;
+}
+.delete_number-popup h3 {
+  font-size: 2.1rem;
+  font-weight: 600;
+  margin-bottom: 1.4rem;
+}
+.delete_number-popup caption {
+  padding: 0.8rem;
+  margin-bottom: 0;
+  background: #FFED9F;
+}
+.delete_number-popup h4 {
+  font-size: 1.7rem;
+  margin-bottom: 1.4rem;
+  font-weight: 600;
+}
+.delete_number-popup p {
+  font-size: 1.6rem;
+  margin-bottom: 1.5rem;
+  text-indent: 4rem;
+}
+.delete_number-popup li, .delete_number-popup p, .delete_number-popup span {
+  font-size: 1.6rem;
+  line-height: 1.5;
+}
+.delete_number-popup li {
+  margin-bottom: 1rem;
+  position: relative;
+}
+.delete_number-popup ul li {
+  padding-left: 2rem;
+}
+.delete_number-popup ul li::before {
+  content: "";
+  position: absolute;
+  display: block;
+  height: 0.7rem;
+  width: 0.7rem;
+  background-color: #A93CF3;
+  border-radius: 50%;
+  top: 1rem;
+  left: 0;
+}
+.delete_number-popup ol {
+  list-style: decimal;
+  list-style-position: inside;
+}
+.delete_number-popup ol li::marker {
+  padding-right: 1rem;
+}
+.delete_number-popup table, .delete_number-popup tr, .delete_number-popup th, .delete_number-popup td, .delete_number-popup caption {
+  font-size: 1.6rem;
+  border: 1px solid gainsboro;
+}
+.delete_number-popup td, .delete_number-popup th {
+  vertical-align: middle;
+  padding: 0.5rem 1rem;
+}
+.delete_number-popup th {
+  font-weight: 600;
+}
+.delete_number-popup-buttons {
+  display: flex;
+  justify-content: space-around;
+}
+.delete_number-popup-buttons button {
+  font-size: 2rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  width: 10rem;
+  box-shadow: 0.2rem 0.5rem 1rem rgba(56, 56, 56, 0.5);
+  background-image: linear-gradient(0deg, #AC47F0, #AC47F0 25%, #C682F3);
+}
+.delete_number-popup-buttons #confirmDelNumber {
+  border: 2px solid #FBD83E;
+}
+.delete_number-popup-buttons #cancelDelNumber {
+  border: 2px solid #DE728E;
+}
+
+.checkbox--visible {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 3px;
+  background-color: #fff;
+  border: 1px solid #A93CF3;
+}
+.checkbox--visible-radio {
+  border-radius: 50%;
+}
+
+.del {
+  display: inline-block;
+  width: 3rem;
+  height: 3rem;
+  background-image: url("/media/icons/close.svg");
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  cursor: pointer;
+}
+
+input:checked ~ .checkbox--visible {
+  background-color: #A93CF3;
+  background-image: url("/media/icons/checkmark.svg");
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+}
+input:checked ~ .checkbox--visible-radio {
+  background-image: none;
+  background-color: #fff;
+  border: 7px solid #A93CF3;
 }

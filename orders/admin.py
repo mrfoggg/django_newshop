@@ -25,7 +25,7 @@ class ByOneclickAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['contact'].queryset = Person.objects.filter(phones__phone=self.instance.phone)
+        self.fields['person'].queryset = Person.objects.filter(phones__phone=self.instance.phone)
 
     def clean(self):
         if 'status' in self.changed_data:
@@ -44,7 +44,7 @@ class ByOneclickAdmin(admin.ModelAdmin):
         ('product', 'price',),
         ('phone', 'is_active'),
         ('created', 'updated'),
-        ('contact', 'this_number_contacts'),
+        ('person', 'this_number_contacts'),
         ('status', 'extend_status'),
         ('session_key', 'this_session_oneclicks'),
         'user_ip_info'

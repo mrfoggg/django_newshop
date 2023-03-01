@@ -9,11 +9,13 @@ from django import forms
 # from .services.telegram_servises import get_tg_username
 # from asgiref.sync import sync_to_async
 from orders.models import ByOneclick
+from .admin_forms import PersonPhonesAdminFormset
 
 admin.site.register(Messenger)
 
 
 class PersonPhoneInlineAdmin(nested_admin.NestedTabularInline):
+    formset = PersonPhonesAdminFormset
     model = PersonPhone
     autocomplete_fields = ('phone',)
     extra = 0

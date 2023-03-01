@@ -53,8 +53,8 @@ class ByOneclick(models.Model):
     status = models.SmallIntegerField('Статус', choices=STATUSES, default=1, db_index=True)
     extend_status = models.SmallIntegerField('Подробный статус', choices=EXTEND_STATUSES, default=1, db_index=True)
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
-    contact = models.ForeignKey(
-        Person, verbose_name="Контактное лицо", default=None, blank=True, null=True, on_delete=models.SET_NULL)
+    person = models.ForeignKey(
+        Person, verbose_name="Пользователь", default=None, blank=True, null=True, on_delete=models.SET_NULL)
     session_key = models.CharField('Ключ сессии', max_length=32, blank=True, null=True)
     user_ip_info = models.TextField('Информация по IP посетителя', blank=True, null=True, default=None)
 
@@ -69,7 +69,7 @@ class ByOneclick(models.Model):
     @property
     @admin.display(
         ordering='last_name',
-        description='Контакты с этим номером',
+        description='Пользователи с этим номером',
     )
     def this_number_contacts(self):
         if self.phone.personphone_set.count():
@@ -140,3 +140,6 @@ class ByOneclickPersonalComment(models.Model):
 
 class Basket(models.Model):
     customer = models.ForeignKey(get_user_model(), verbose_name="Пользователь", on_delete=models.SET_NULL, null=True)
+
+
+# В заказе должно быть поле тип заказа: на сайте, ванклик или по телефону

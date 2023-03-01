@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils.encoding import force_str
 from django_summernote.admin import SummernoteModelAdmin
 from mptt.admin import DraggableMPTTAdmin
+from baton.admin import MultipleChoiceListFilter
 
 from ROOTAPP.models import Person
 from finance.admin import ProductPriceProductInline
@@ -313,6 +314,13 @@ class CategoryAdmin(DraggableMPTTAdmin, SummernoteModelAdmin, SortableAdminBase,
             ShotAttribute.objects.filter(attribute__group_id__in=deleted_groups_list).delete()
 
 
+class BrandListFilter(MultipleChoiceListFilter):
+    title = 'Бренд'
+    parameter_name = 'brand__in'
+
+    def lookups(self, request, model_admin):
+        return Brand.objects.values_list('id', 'name')
+
 @admin.register(Product)
 class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     form = ProductForm
@@ -331,7 +339,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     summernote_fields = ('description',)
     change_form_template = "product_changeform.html"
     actions = [export_as_json]
-    list_filter = ('admin_category', 'brand')
+    list_filter = ('admin_category', BrandListFilter)
     fieldsets = (
         ("Основное", {
             'fields': (

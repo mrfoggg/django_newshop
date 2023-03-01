@@ -1288,56 +1288,38 @@ $(document).ready(function(){
         },1000)
     }
 
-    $('#sendRegistrationPhoneForm').submit(function (e){
-        e.preventDefault();
-        $.ajax({
-            type: "POST",
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
-            success: function (response) {
-                if (response['phone_is_valid']){
-                    $('#loginTitle').text(response['next_title_text']);
-                    $('#sendRegistrationPhoneForm').slideUp();
-                    $('#wrongRegistrationPhone').slideUp();
-                    delResendCodeTimer();
-                    $('#loginTitle').next('h3').remove();
-                    if (response['ask_name']) {
-                        $('#sendRegistrationNameForm').slideDown();
-                    } else {
-                        let allowVerifyTimeDelta = response['allow_verify_time_delta'];
-                        if (allowVerifyTimeDelta) {
-                            runReverifyTimer(allowVerifyTimeDelta);
-                        }
-                        $('#tokenInput').val('');
-                        $('#verifySmsTokenForm').slideDown();
-                        $('#regenerateSmsTokenBtn').prev().slideDown();
-                        runValidityTimer(response['validity_time']);
-                    }
-                } else {
-                    $('#wrongRegistrationPhone').slideDown();
-                }
+    ajaxForm($('#sendRegistrationPhoneForm'), (response) => {
+        if (response['phone_is_valid']){
+        $('#loginTitle').text(response['next_title_text']);
+        $('#sendRegistrationPhoneForm').slideUp();
+        $('#wrongRegistrationPhone').slideUp();
+        delResendCodeTimer();
+        $('#loginTitle').next('h3').remove();
+        if (response['ask_name']) {
+            $('#sendRegistrationNameForm').slideDown();
+        } else {
+            let allowVerifyTimeDelta = response['allow_verify_time_delta'];
+            if (allowVerifyTimeDelta) {
+                runReverifyTimer(allowVerifyTimeDelta);
             }
-        }, 200);
+            $('#tokenInput').val('');
+            $('#verifySmsTokenForm').slideDown();
+            $('#regenerateSmsTokenBtn').prev().slideDown();
+            runValidityTimer(response['validity_time']);
+        }
+    } else {
+        $('#wrongRegistrationPhone').slideDown();
+    }
     });
 
 
-    $('#sendRegistrationNameForm').submit(function (e){
-        e.preventDefault();
-        $.ajax({
-            type: "POST",
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
-            success: function (response) {
-                $('#loginTitle').text(response['next_title_text']);
-                $('#regenerateSmsTokenBtn').prev().slideDown();
-                $('#sendRegistrationNameForm').slideUp();
-                $('#tokenInput').val('');
-                $('#verifySmsTokenForm').slideDown();
-                runValidityTimer(response['validity_time']);
-            }
-        }, 200);
+    ajaxForm($('#sendRegistrationNameForm'), (response) => {
+        $('#loginTitle').text(response['next_title_text']);
+        $('#regenerateSmsTokenBtn').prev().slideDown();
+        $('#sendRegistrationNameForm').slideUp();
+        $('#tokenInput').val('');
+        $('#verifySmsTokenForm').slideDown();
+        runValidityTimer(response['validity_time']);
     });
 
     $('#registrationNameInput').keyup(function (){
@@ -1365,83 +1347,72 @@ $(document).ready(function(){
 
 
 
-    $('#regenerateSmsTokenForm').submit(function (e){
-        e.preventDefault();
-        clearInterval(validityTimer);
-        $.ajax({
-            type: "POST",
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
-            success: function (response) {
-                $('#loginTitle').text(response['next_title_text']);
-                runResendCodeTimer(response['resent_time']);
-                runValidityTimer(response['validity_time']);
-                $('#loginTitle').next('h3').slideUp();
-                $('#verifySmsTokenForm label').css('opacity', '100%');
-                $('#verifySmsTokenForm label button').prop('disabled', false);
+    // $('#regenerateSmsTokenForm').submit(function (e){
+    //     e.preventDefault();
+    //     clearInterval(validityTimer);
+    //     $.ajax({
+    //         type: "POST",
+    //         url: $(this).attr('action'),
+    //         data: $(this).serialize(),
+    //         headers: {'X-CSRFToken': getCookie('csrftoken')},
+    //         success: function (response) {
+    //             $('#loginTitle').text(response['next_title_text']);
+    //             runResendCodeTimer(response['resent_time']);
+    //             runValidityTimer(response['validity_time']);
+    //             $('#loginTitle').next('h3').slideUp();
+    //             $('#verifySmsTokenForm label').css('opacity', '100%');
+    //             $('#verifySmsTokenForm label button').prop('disabled', false);
+    //             $('#tokenInput').val('');
+    //         }
+    //     }, 200);
+    // });
+
+    ajaxForm($('#regenerateSmsTokenBtn'), (response) => {
+        $('#loginTitle').text(response['next_title_text']);
+        runResendCodeTimer(response['resent_time']);
+        runValidityTimer(response['validity_time']);
+        $('#loginTitle').next('h3').slideUp();
+        $('#verifySmsTokenForm label').css('opacity', '100%');
+        $('#verifySmsTokenForm label button').prop('disabled', false);
+        $('#tokenInput').val('');
+    }, () => {clearInterval(validityTimer);});
+
+    ajaxForm($('#verifySmsTokenForm'), (response) => {
+        $('#loginTitle').text(response['next_title_text']);
+        if (response['result']){
+            $('#verifySmsTokenForm, #socialLoginSection, .cabinet__social-section').slideUp();
+            $('#logoutForm, #socialSettingsSection').slideDown();
+            $('.cabinet__separator').fadeOut();
+            $('input[name="csrfmiddlewaretoken"]').val(response['csrf']);
+            clearInterval(validityTimer);
+            if (response['show_email_login_section'])
+                $('.email_login_section').slideDown();
+            if (response['show_set_passw_link'])
+                $('.set_password_section').slideDown();
+            if (response['show_change_password_link'])
+                $('.change_password_section').slideDown();
+        } else {
+            let interval = response['interval'];
+            let tokenFormElements = $('#verifySmsTokenForm label');
+
+            if (interval == -1) {
+                tokenFormElements.slideUp();
+                clearInterval(reverifyTimer);
+                clearInterval(validityTimer);
                 $('#tokenInput').val('');
+            } else {
+                runReverifyTimer(interval);
             }
-        }, 200);
+        }
     });
 
-
-
-    $('#verifySmsTokenForm').submit(function (e){
-        e.preventDefault();
-        $.ajax({
-            type: "POST",
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
-            success: function (response) {
-                $('#loginTitle').text(response['next_title_text']);
-                if (response['result']){
-                    $('#verifySmsTokenForm, #socialLoginSection, .cabinet__social-section').slideUp();
-                    $('#logoutForm, #socialSettingsSection').slideDown();
-                    $('.cabinet__separator').fadeOut();
-                    $('input[name="csrfmiddlewaretoken"]').val(response['csrf']);
-                    clearInterval(validityTimer);
-                    if (response['show_email_login_section'])
-                        $('.email_login_section').slideDown();
-                    if (response['show_set_passw_link'])
-                        $('.set_password_section').slideDown();
-                    if (response['show_change_password_link'])
-                        $('.change_password_section').slideDown();
-                } else {
-                    let interval = response['interval'];
-                    let tokenFormElements = $('#verifySmsTokenForm label');
-
-                    if (interval == -1) {
-                        tokenFormElements.slideUp();
-                        clearInterval(reverifyTimer);
-                        clearInterval(validityTimer);
-                        $('#tokenInput').val('');
-                    } else {
-                        runReverifyTimer(interval);
-                    }
-                }
-            }
-        }, 200);
-    });
-
-    $('#logoutForm').submit(function (e){
-        e.preventDefault();
-        $.ajax({
-            type: "POST",
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
-            success: function (response) {
-                // console.log(response);
-                $('#loginTitle').text(response['next_title_text']);
-                $('#sendRegistrationPhoneForm, #socialLoginSection').slideDown();
-                $('.cabinet__social-section, .cabinet__social').slideDown();
-                $('.cabinet__separator').fadeIn();
-                $('#logoutForm, #socialSettingsSection, .email_login_section, .set_password_section, .change_password_section').slideUp();
-                $('#socialSeparatorText').text('або авторизутесь через соціальні мережі');
-            }
-        }, 200);
+    ajaxForm($('#logoutForm'), (response) => {
+        $('#loginTitle').text(response['next_title_text']);
+        $('#sendRegistrationPhoneForm, #socialLoginSection').slideDown();
+        $('.cabinet__social-section, .cabinet__social').slideDown();
+        $('.cabinet__separator').fadeIn();
+        $('#logoutForm, #socialSettingsSection, .email_login_section, .set_password_section, .change_password_section').slideUp();
+        $('#socialSeparatorText').text('або авторизутесь через соціальні мережі');
     });
 
     $('#changeNumber').click(function (){
@@ -1458,7 +1429,7 @@ $(document).ready(function(){
     });
 
     const notificationAddEmail = new Notyf({
-        duration: 8000,
+        duration: 3000,
         dismissible: true,
         position: {
             x: 'right',
@@ -1478,67 +1449,81 @@ $(document).ready(function(){
         ]
     });
 
-    $('#addEmail').submit(function (e){
-        e.preventDefault();
-        $.ajax({
-            type: "POST",
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
-            success: function (response) {
-                if (response['result']) {
-                    notificationAddEmail.success(response['result_text']);
-                    $('.email_login_section').slideUp();
-                    $('.set_password_section').slideDown();
-                } else {
-                    for (let err of response['result_text']) {
-                        notificationAddEmail.error(err);
+    ajaxForm($('#addEmail'), (response) => {
+        if (response['result']) {
+            notificationAddEmail.success(response['result_text']);
+            $('.email_login_section').slideUp();
+            $('.set_password_section').slideDown();
+        } else {
+            for (let err of response['result_text']) {
+                notificationAddEmail.error(err);
+            }
+        }
+    });
+
+    ajaxForm($('#personalInfoForm'), (response) => {
+        if (response['result']) {
+            notificationAddEmail.success(response['result_text']);
+            for (let inp of $('#personalInfoForm input')) {
+                $(inp).attr('value', $(inp).val().trim());
+                $(inp).removeClass('changed');
+            }
+            $('#personalInfoForm button').slideUp();
+        } else {
+            for (let err of response['result_text']) {
+                notificationAddEmail.error(err);
+            }
+        }
+    });
+
+    ajaxForm($('#updateUserPhones'), (response) => {
+        if (response['result']){
+            notificationAddEmail.success('Телефонні номери успішно збережено');
+
+            let dictNew = response['new']
+            for(let ph in dictNew){
+                let oldNum = ph.slice(4);
+                let newId = dictNew[ph]['new_person_phone_id']
+                $(`input[name=new_phone_${oldNum}`).prop('name', `phone_${newId}`);
+                $(`input[name=new_messengers_${oldNum}]`).prop('name', `messengers_${newId}`);
+                dictNew[ph]['old_messengers'].forEach((messenger_id) => {
+                    $(`input[name=messengers_${newId}][value=${messenger_id}]`).prop('checked', true);
+                });
+                $(`input[value=${ph}]`).prop('value', newId);
+                for (let deleter of $('.cabinet-phones-column .del')) {
+                    if ($(deleter).data('id')===ph)
+                        $(deleter).data('id', newId);
+                }
+                for (let column of $('.cabinet-phones-column')){
+                    if ($(column).data('id')===ph){
+                        $(column).data('id', newId);
+                        $(column).find(':checkbox').parent().slideDown();
                     }
                 }
             }
-        }, 200);
-    });
-
-
-    $('#personalInfoForm').submit(function (e){
-        e.preventDefault();
-        $.ajax({
-            type: "POST",
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
-            success: function (response) {
-                if (response['result']) {
-                    notificationAddEmail.success(response['result_text']);
-                } else {
-                    for (let err of response['result_text']) {
-                        notificationAddEmail.error(err);
+            setTimeout(function (){
+                for (let el of $('.cabinet-phones-radios.first')) {
+                    if ($(el).data('new')==='no' && $(el).prev().prev().children('input').val()){
+                        $(el).removeClass('new').next().slideDown();
                     }
                 }
+            }, 200);
+            for (let inp of $('.phone-number-input')){
+                $(inp).attr('value', $(inp).val());
+                $(inp).removeClass('changed');
             }
-        }, 200);
+            $('#updateUserPhones').data('mainId', $('input:checked[name="is_main_phone"]').val());
+            $('#updateUserPhones').data('deliveryId', $('input:checked[name="is_delivery_phone"]').val());
+        } else {
+            for (let err of response['errors_list']){
+                notificationAddEmail.error(err);
+            }
+            $(`.cabinet-phones-radios input[name="is_main_phone"][value=${$('#updateUserPhones').data('mainId')}]`).prop('checked', true);
+            $(`.cabinet-phones-radios input[name="is_delivery_phone"][value=${$('#updateUserPhones').data('deliveryId')}]`).prop('checked', true);
+        }
+        $('#updateUserPhones button:submit').fadeOut();
     });
 
-    $('#updateUserPhones').submit(function (e){
-        e.preventDefault();
-        $.ajax({
-            type: "POST",
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
-            success: function (response) {
-                if (response['result']){
-                    notificationAddEmail.success('Телефонні номери успішно збережено');
-                } else {
-                    console.log(response['errors_list']);
-                    for (let err of response['errors_list']){
-                        notificationAddEmail.error(err);
-                    }
-                }
-
-            }
-        }, 200);
-    });
 
     let prf = $('.password_reset')
     let prd = prf.data('currentEmail');
@@ -1555,8 +1540,12 @@ $(document).ready(function(){
 		tab.filter(this.hash).show(300);
 		$('.cabinet-detail-tabs-nav a').removeClass('active');
 		$(this).addClass('active');
+        // window.location.hash = $(this).attr('href');
+        let url = $(this).attr('href');
+        window.history.replaceState({route: url}, "EVILEG", url);
 		return false;
-	}).filter(':first').click();
+	});
+	// }).filter(':first').click();
 
 	// Клики по якорным ссылкам.
 	// $('.tabs-target').click(function(){
@@ -1566,14 +1555,27 @@ $(document).ready(function(){
 	// Отрытие вкладки из хеша URL
 	if(window.location.hash){
 		$(`.cabinet-detail-tabs-nav a[href="${window.location.hash}"]`).click();
+        // console.log($(`.cabinet-detail-tabs-nav a[href="${window.location.hash}"]`));
 		// window.scrollTo(0, $("#" . window.location.hash).offset().top);
-	}
+	} else {
+        $('.cabinet-detail-tabs-nav a').first().click();
+    }
 
     $('#personalInfoForm input').keyup(function (){
         let isChangedArr = [];
         let inputs = $('#personalInfoForm input');
-        for (let inp of inputs)
-            isChangedArr.push($(inp).attr('value') === $(inp).val().trim())
+        for (let inp of inputs){
+            if (!inp.hasAttribute('value'))
+                $(inp).attr('value', '')
+            let isNotChangedInp = $(inp).attr('value').toLowerCase() === $(inp).val().trim().toLowerCase();
+            isChangedArr.push(isNotChangedInp);
+            if (isNotChangedInp) {
+                $(inp).removeClass('changed');
+            } else {
+                $(inp).addClass('changed');
+            }
+        }
+
         if (isChangedArr.every(v => v === true) || $(inputs[0]).val().length < 2 || $(inputs[1]).val().length < 2) {
             $('#personalInfoForm button').slideUp();
         } else if($(inputs[0]).val().length > 1 && $(inputs[1]).val().length > 1) {
@@ -1581,24 +1583,180 @@ $(document).ready(function(){
         }
     });
 
+    $('#open_delete_number_popup').magnificPopup({
+        type:'inline',
+        midClick: true // Allow opening popup on middle mouse click. Always set it to true if you don't provide alternative source in href.
+    });
+
+    $('.cabinet-phones-table').on('click', '.del', function () {
+        let thisPhoneId = $(this).data('id');
+        let thisSection = $(this).parent();
+        let mainPhoneCheckbox = thisSection.prev().find('input');
+        let deliveryPhoneCheckbox = thisSection.prev().prev().find('input');
+        if (mainPhoneCheckbox.val().startsWith('new_')){
+            for (let td of $(`.cabinet-phones-column`)){
+                if ($(td).data('id') == thisPhoneId)
+                    $(td).slideUp(function (){
+                        $(td).remove();
+                    });
+            }
+            setTimeout(() => {
+               checkUserPhoneChanges();
+            }, 200);
+
+        } else {
+            if (!mainPhoneCheckbox.prop('checked') && !deliveryPhoneCheckbox.prop('checked')) {
+                $('#numberToDelete').text($(this).data('phone'));
+                $('#open_delete_number_popup').trigger('click');
+                $('#phoneIdToDel').val(thisPhoneId);
+            } else {
+                if (mainPhoneCheckbox.prop('checked'))
+                    notificationAddEmail.error('Спочатку оберіть і збережіть інший номер для входу в кабінет');
+                if (deliveryPhoneCheckbox.prop('checked'))
+                    notificationAddEmail.error('Спочатку оберіть і збережіть інший номер який буде вказуватись в ваших доставках');
+            }
+        }
+    });
+
+    $('#confirmDelNumber').click(function (){
+        $('#delPhoneForm').submit();
+        $('.mfp-close').click();
+        checkUserPhoneChanges();
+    });
+
+    $('#cancelDelNumber').click(() => {
+        $('.mfp-close').click();
+    });
+
+    ajaxForm($('#delPhoneForm'), (response) => {
+        let idToDel = response['id'];
+        for (let column of $('.cabinet-phones-column')) {
+            if ($(column).data('id')==idToDel)
+                $(column).slideUp(function () {
+                    $(this).remove();
+                });
+        }
+        if (response['hide_del_btn'])
+            $('.del-row').fadeOut();
+    })
+
+    $('#addNumber').click(function () {
+        $('.del-row[data-new="no"]').fadeIn();
+        let tds = $('.cabinet-phones-column.template').slice(0, 5);
+        let clone = $(tds).clone();
+        let inputs = clone.find('input');
+        inputs.prop( "disabled", false );
+        let lastDelId = $('.del').last().data('id');
+        let maxNewDataId = typeof lastDelId === 'string'? lastDelId.slice(4) : 'new_0';
+        let nextNewDataId = Number(maxNewDataId) + 1;
+        clone.appendTo('.cabinet-phones-table').not('.second').slideDown();
+        inputs.filter(':text').prop('name', `new_phone_${nextNewDataId}`);
+        inputs.filter(':checkbox').prop('name', `new_messengers_${nextNewDataId}`);
+        inputs.filter(':radio').prop('value', `new_${nextNewDataId}`);
+        clone.data('id', `new_${nextNewDataId}`);
+        clone.find('.del').data('id', `new_${nextNewDataId}`);
+        clone.data('new', `no`);
+        clone.removeClass('template');
+
+        inputs.filter(':text').click(function(){
+            if (!/[0-9]/.test($(this).val())) {
+                $(this).setCursorPosition(0);
+            } else if (this.selectionStart > 0) {
+                moveLeftCursor(this);
+            }
+        }).prop('maxlength', '9').mask("99) 999-99-99", {
+            autoclear: false,
+            completed: function () {
+                this.removeClass('wrong');
+                this.addClass('changed');
+                $('#updateUserPhones button:submit').fadeIn();
+            }
+        });
+    });
+
+    $('#updateUserPhones .phone-number-input').mask("99) 999-99-99", {
+        completed: function () {
+            console.log(this.val());
+            console.log(this.attr('value'));
+            if (this.val().replace(/\D+/g,"")!=this.attr('value')){
+                this.addClass('changed');
+            } else {
+                this.removeClass('changed');
+            }
+            checkUserPhoneChanges();
+        }
+    });
+
+
+    $('.cabinet-phones-table').on('click', '.cabinet-phones-column .checkbox--visible', function (){
+        setTimeout(function (){
+            $('#updateUserPhones').submit();
+        },100)
+
+    });
+
+    $('.cabinet-phones-table').on('blur', '.phone-number-input', function () {
+        if ($(this).val().replace(/\D+/g,"").length < 9) {
+            if ($(this).attr('value')) {
+                $(this).val($(this).attr('value'));
+            } else {
+                $(this).addClass('wrong');
+                $(this).removeClass('changed');
+                checkUserPhoneChanges();
+            }
+        }
+    });
+
 });
 
 https://stackoverflow.com/questions/70501339/django-using-ajax-for-login-how-do-should-i-update-a-forms-csrf-token
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
             }
         }
-        return cookieValue;
     }
+    return cookieValue;
+}
+
+function ajaxForm(element, success, before_ajax = () => {}) {
+    element.submit(function (e){
+        e.preventDefault();
+        before_ajax();
+        $.ajax({
+            type: "POST",
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function (response) {
+                success(response);
+            }
+        }, 200);
+    });
+}
+
+function checkUserPhoneChanges(){
+    setTimeout(() => {
+        if ($('#updateUserPhones .phone-number-input').hasClass('changed') && !$('#updateUserPhones .phone-number-input').hasClass('wrong')) {
+            console.log('form changed');
+            console.log($('#updateUserPhones .changed'));
+            $('#updateUserPhones button:submit').fadeIn();
+        } else {
+            console.log('form NOT changed');
+            $('#updateUserPhones button:submit').fadeOut();
+        }
+    }, 500);
+
+
+
+}
 
 document.body.onload = function() {
     setTimeout(function(){$('.preloader.slow').fadeOut(300)}, 100)
