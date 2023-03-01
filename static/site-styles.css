@@ -7706,6 +7706,9 @@ footer {
 .login input.wrong {
   border-bottom: 2px solid red;
 }
+.login input.disabled {
+  border: none;
+}
 .login button {
   display: block;
   width: 100%;

@@ -1512,16 +1512,18 @@ $(document).ready(function(){
                 $(inp).attr('value', $(inp).val());
                 $(inp).removeClass('changed');
             }
-            $('#updateUserPhones').data('mainId', $('input:checked[name="is_main_phone"]').val());
-            $('#updateUserPhones').data('deliveryId', $('input:checked[name="is_delivery_phone"]').val());
+            const checkedMainPhone = $('input:checked[name="is_main_phone"]').val();
+            $('#updateUserPhones').data('mainId', checkedMainPhone);
+            const checkedMainPhoneInputName = 'phone_' + checkedMainPhone;
         } else {
             for (let err of response['errors_list']){
                 notificationAddEmail.error(err);
             }
             $(`.cabinet-phones-radios input[name="is_main_phone"][value=${$('#updateUserPhones').data('mainId')}]`).prop('checked', true);
-            $(`.cabinet-phones-radios input[name="is_delivery_phone"][value=${$('#updateUserPhones').data('deliveryId')}]`).prop('checked', true);
         }
         $('#updateUserPhones button:submit').fadeOut();
+        const checkedMainPhoneInputName = 'phone_' + $('input:checked[name="is_main_phone"]').val();
+        $(`.cabinet-phones-phone input[name=${checkedMainPhoneInputName}]`).prop("disabled", true).addClass('disabled');
     });
 
 
@@ -1690,6 +1692,7 @@ $(document).ready(function(){
 
     $('.cabinet-phones-table').on('click', '.cabinet-phones-column .checkbox--visible', function (){
         setTimeout(function (){
+            $('.cabinet-phones-phone input').prop("disabled", false).removeClass('disabled');
             $('#updateUserPhones').submit();
         },100)
 
