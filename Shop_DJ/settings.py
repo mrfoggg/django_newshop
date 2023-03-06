@@ -218,6 +218,11 @@ CACHES = {
 
 # Tell select2 which cache configuration to use:
 SELECT2_CACHE_BACKEND = "select2"
+# SELECT2_CSS = [
+#     STATICFILES_DIRS/'select2.min.css',
+# ]
+# SELECT2_JS = []
+
 SOLO_CACHE = 'default'
 SOLO_CACHE_TIMEOUT = 60 * 5  # 5 mins
 SOLO_CACHE_PREFIX = 'solo'

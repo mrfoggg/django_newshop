@@ -1,5 +1,5 @@
-<a href="/root_app/update_cities">Обновить весь список городов</a>
-<form action="/root_app/update_cities">
+<a href="{% url 'root_app:update_cities' %}">Обновить весь список городов</a>
+<form action="{% url 'root_app:update_cities' %}">
     <label>
         Поисковая фраза
         <input type="text" name="search_name">

@@ -77,16 +77,16 @@ class Phone(models.Model):
 
 
 class Person(AbstractUser):
-    middle_name = models.CharField('Отчество', max_length=128,  blank=True, null=True, default=None, db_index=True)
+    middle_name = models.CharField('Отчество', max_length=128, blank=True, null=True, default=None, db_index=True)
     is_customer = models.BooleanField('Является покупателем', default=False)
     is_supplier = models.BooleanField('Является поставщиком', default=False)
     main_phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.SET_NULL, unique=True,
                                    verbose_name='Телефон для авторизации', related_name='login_person')
     delivery_phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.SET_NULL,
                                        verbose_name='Телефон для доставки', related_name='delivery_persons')
+
     # first_name = models.CharField('Имя', max_length=128, blank=True, null=True, default=None, db_index=True)
     # last_name = models.CharField('Фамилия', max_length=128,  blank=True, null=True, default=None, db_index=True)
-
 
     class Meta:
         verbose_name = 'Контрагент'
@@ -174,8 +174,64 @@ class Settlement(models.Model):
 
     def __str__(self):
         region = f'{self.region.description_ua}, ' if self.region_id else ''
-        print(f'{self.region_id=}')
         return f'{self.type.description_ua} {self.description_ua} ({region}{self.area.description_ua})'
+
+
+class TypeOfWarehouse(models.Model):
+    ref = models.CharField('Ref типа отделения', max_length=128, primary_key=True)
+    description_ru = models.CharField('Название типа отделения', max_length=128, default=None)
+    description_ua = models.CharField('Название типа отделения укр.', max_length=128, default=None)
+
+    class Meta:
+        verbose_name = 'Тип отделение '
+        verbose_name_plural = 'Типы отделения'
+        ordering = ('description_ru',)
+
+    def __str__(self):
+        return self.description_ru
+
+
+class Warehouse(models.Model):
+    ref = models.CharField('Ref отделения', max_length=36, primary_key=True)
+    site_key = models.CharField('Код отделения', max_length=10, default=None)
+    type_warehouse = models.ForeignKey(TypeOfWarehouse, max_length=36, default=None, on_delete=models.CASCADE,
+                                       verbose_name="Тип отделения", related_name='warhauses', db_index=True)
+    settlement = models.ForeignKey(Settlement, default=None, on_delete=models.CASCADE,
+                                   verbose_name="Населенный пункт", related_name='warhauses', db_index=True)
+    city_ref = models.CharField('Ref города', max_length=36, default=None)
+    number = models.PositiveIntegerField('Номер отделения', db_index=True, )
+    description_ru = models.CharField('Название отделения', max_length=99, default=None, null=True)
+    description_ua = models.CharField('Название отделения укр.', max_length=99, default=None, null=True)
+    longitude = models.DecimalField('Долгота', max_digits=18, decimal_places=15, default=None, null=True)
+    latitude = models.DecimalField('Широта', max_digits=18, decimal_places=15, default=None, null=True)
+    post_finance = models.BooleanField('Наличие кассы NovaPay', null=True)
+    payment_access = models.BooleanField('Возможность оплаты на отделении', null=True)
+    pos_terminal = models.BooleanField('Наличие терминала на отделении', null=True)
+    international_shipping = models.BooleanField('Международная отправка', null=True)
+    self_service_workplaces = models.BooleanField('Терминал самообслуживания', null=True)
+    total_max_weight = models.PositiveSmallIntegerField('Максимальный вес', null=True)
+    place_max_weight = models.PositiveSmallIntegerField('Максимальный вес на место', null=True)
+    sending_limitations_on_dimensions = models.JSONField('Максимальные габбариты для отправки', default=dict,
+                                                         blank=True, db_index=True, null=True)
+    receiving_limitations_on_dimensions = models.JSONField('Максимальные габбариты для получения', default=dict,
+                                                           blank=True, db_index=True, null=True)
+    reception = models.JSONField('График приема посылок', default=dict, blank=True, db_index=True, null=True)
+    delivery = models.JSONField('График привема день в день', default=dict, blank=True, db_index=True, null=True)
+    schedule = models.JSONField('График работы', default=dict, blank=True, db_index=True, null=True)
+    warehouse_status = models.CharField('Статус отделения', max_length=36, default=None, null=True)
+    warehouse_status_date = models.CharField('Дата статуса отделения', max_length=36, default=None, null=True)
+    category_warehouse = models.CharField('Категория отделения', max_length=36, default=None, null=True)
+    deny_to_select = models.BooleanField('Запрет выбора отделения', null=True)
+    only_receiving_parcel = models.BooleanField('Работает только на выдачу', null=True)
+    post_machine_type = models.CharField('Тип почтомата', max_length=36, default='', null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Отделение Новой почты'
+        verbose_name_plural = 'Отделения Новой почты'
+        ordering = ('number',)
+
+    def __str__(self):
+        return f'{self.description_ua} ({self.type_warehouse})'
 
 
 class PersonSettlement(models.Model):
@@ -191,7 +247,6 @@ class PersonSettlement(models.Model):
 
     def __str__(self):
         return f'Населенный пункт {self.settlement}, контрагента - {self.person}'
-
 
 # class Profile(models.Model):
 #     user = models.OneToOneField(User, on_delete=models.CASCADE)

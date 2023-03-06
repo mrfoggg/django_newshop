@@ -1,3 +1,4 @@
+import ast
 from datetime import datetime, timezone
 
 import django
@@ -23,7 +24,7 @@ from phonenumbers import geocoder
 
 from ROOTAPP.forms import PersonForm, PersonEmailForm, PersonalInfoForm
 from ROOTAPP.models import Settlement, SettlementType, SettlementArea, SettlementRegion, Phone, PersonPhone, Person, \
-    get_phone_full_str, Messenger
+    get_phone_full_str, Messenger, Warehouse, TypeOfWarehouse
 from Shop_DJ import settings
 from catalog.models import Product, get_price_sq
 from sorl.thumbnail import get_thumbnail
@@ -36,26 +37,290 @@ import google_auth_oauthlib.flow
 
 from site_settings.models import OAuthGoogle
 
+from deepdiff import DeepDiff
+
 url_np = 'https://api.novaposhta.ua/v2.0/json/'
 
+pml = '<p style="margin-left: 2rem;">'
 
-def update_cities(request):
-    data = request.GET
-    limit = 150
-    timeout_limit = 3.0
-    request_dict = {
+
+def replace_str_dict(s):
+    return str(s).replace('{', '').replace('}', '')
+
+
+limit = 150
+timeout_limit = 3.0
+
+settlement_request_dict = {
         "modelName": "Address",
         "calledMethod": "getSettlements",
         "methodProperties": {
             "Limit": str(limit)
         }
     }
+
+def build_settlement_to_create(data):
+    settlement_type, created = SettlementType.objects.get_or_create(
+        ref=data['SettlementType'],
+        defaults={
+            'description_ru': data['SettlementTypeDescriptionRu'],
+            'description_ua': data['SettlementTypeDescription']
+        }
+    )
+    area, created = SettlementArea.objects.get_or_create(
+        ref=data['Area'],
+        defaults={
+            'description_ru': data['AreaDescriptionRu'],
+            'description_ua': data['AreaDescription']
+        }
+    )
+    region, created = SettlementRegion.objects.get_or_create(
+        ref=data['Region'],
+        defaults={
+            'description_ru': data['RegionsDescriptionRu'],
+            'description_ua': data['RegionsDescription']
+        }
+    )
+    print(data["Ref"])
+    return Settlement(
+        description_ru=data['DescriptionRu'], description_ua=data['Description'], ref=data["Ref"],
+        type=settlement_type, area=area, region=region, warehouse=data['Warehouse'],
+        index_coatsu_1=data['IndexCOATSU1'], index_1=data['Index1'], index_2=data['Index2']
+    )
+
+
+def update_warehouses(request):
+    data = request.GET
+    request_dict = {
+        "modelName": "Address",
+        "calledMethod": "getWarehouses",
+        "methodProperties": {
+            "Limit": str(limit)
+        }
+    }
+    message_text = ''
+    if data:
+        if 'settlement' in data.keys():
+            search_by_settlement = True
+            settlement_ref = data['settlement']
+            request_dict['methodProperties']['SettlementRef'] = settlement_ref
+            settlement = Settlement.objects.get(ref=settlement_ref)
+            message_text = f'<h4>Обновление списка отделений в населенном пункте {settlement}</h4> <br>'
+
+    ln = limit
+    page = 1
+    count = 0
+    added_count = 0
+    edited_count = 0
+
+    settlement_to_create_list = []
+    new_cities_names_list = []
+    types_of_warehouses_updated = False
+    changed_fields = []
+
+    w_parameters = (
+        ('ref', 'Ref', ''),
+        ('site_key', 'SiteKey', ''),
+        ('type_warehouse_id', 'TypeOfWarehouse', 'Код отделения'),
+        ('settlement_id', 'SettlementRef', 'Населенный пункт'),
+        ('city_ref', 'CityRef', 'Город'),
+        ('number', 'Number', 'Номер отделения'),
+        ('description_ru', 'DescriptionRu', 'Название на русском'),
+        ('description_ua', 'Description', 'Название на украинском'),
+        ('longitude', 'Longitude', 'Долгота'),
+        ('latitude', 'Latitude', 'Широта'),
+        ('post_finance', 'PostFinance', 'Наличие кассы PostFinance'),
+        ('payment_access', 'PaymentAccess', 'Возможность оплаты на отделении'),
+        ('pos_terminal', 'POSTerminal', 'Наличие терминала на отделении'),
+        ('international_shipping', 'InternationalShipping', 'Международная отправка'),
+        ('self_service_workplaces', 'SelfServiceWorkplacesCount', 'Терминал самообслуживания'),
+        ('total_max_weight', 'TotalMaxWeightAllowed', 'Максимальный вес'),
+        ('place_max_weight', 'PlaceMaxWeightAllowed', 'Максимальный вес на место'),
+        ('sending_limitations_on_dimensions', 'SendingLimitationsOnDimensions',
+         'Максимальные габбариты для отправки'),
+        ('receiving_limitations_on_dimensions', 'ReceivingLimitationsOnDimensions',
+         'Максимальные габбариты для получения'),
+        ('reception', 'Reception', 'График приема посылок'),
+        ('delivery', 'Delivery', 'График привема день в день'),
+        ('schedule', 'Schedule', 'График работы'),
+        ('warehouse_status', 'WarehouseStatus', 'Статус отделения'),
+        ('warehouse_status_date', 'WarehouseStatusDate', 'Дата статуса отделения'),
+        ('category_warehouse', 'CategoryOfWarehouse', 'Категория отделения'),
+        ('deny_to_select', 'DenyToSelect', 'Запрет выбора отделения'),
+        ('only_receiving_parcel', 'OnlyReceivingParcel', 'Работает только на выдачу'),
+        ('post_machine_type', 'PostMachineType', 'Тип почтомата'),
+    )
+
+    while ln == limit:
+        request_dict["methodProperties"]["Page"] = str(page)
+        print(f'Запрос страницы сервера #{page}')
+        try:
+            warehouses_to_create_list = []
+            edited_warehouses = []
+            request_json = json.dumps(request_dict, indent=4)
+            response = requests.post(url_np, data=request_json, timeout=timeout_limit)
+            response_dict = json.loads(response.text)
+            print(f'Статус запроса {response_dict["success"]}')
+            ln = len(all_data := response_dict['data'])
+            print(f'Получены данные {ln} отделений, лимит: {limit}')
+            print()
+
+            message_text += f'<h5> Загрузка страницы №{page} (по {limit} отделений на старнице) - ' \
+                            f'{response_dict["success"]} + </h5>>'
+            page += 1
+            ref_list = []
+            for wh_data in all_data:
+                warehouse_is_changed = False
+                count += 1
+                # print('wh_data: ', wh_data)
+                # обновить отделение
+                exist_wh = Warehouse.objects.filter(ref=wh_data['Ref'])
+                # print('REF повторяется - ', 'да' if wh_data['Ref'] in ref_list else 'нет')
+                ref_list.append(wh_data['Ref'])
+                if exist_wh.exists():
+                    warehouse_to_change = Warehouse.objects.get(ref=wh_data['Ref'])
+
+                    changed_fields_info = ''
+                    for w_field in w_parameters:
+                        if w_field[0] == 'ref':
+                            continue
+
+                        field = warehouse_to_change.__dict__[w_field[0]]
+                        api_field = wh_data[w_field[1]]
+                        match str(type(field)):
+                            case "<class 'bool'>":
+                                if field is not None:
+                                    field_val_to_check = '1' if field else '0'
+                                else:
+                                    field_val_to_check = str(field)
+                                changed = False if field_val_to_check == api_field else True
+                                diff = f'{pml}Старое значение: {field_val_to_check}</p>' \
+                                       f'{pml}Новое значение: {api_field}</p>'
+                            case "<class 'dict'>":
+                                difff = DeepDiff(field, api_field, ignore_order=True)
+                                df = any(('values_changed' in difff, 'dictionary_item_added' in difff,
+                                          'dictionary_item_removed' in difff))
+                                changed = True if df else False
+                                if changed:
+                                    diff = f'{pml}старое значение: </p> {pml}{replace_str_dict(field)}</p>' \
+                                           f'{pml}Новое значение:</p>{pml}{replace_str_dict(api_field)}</p>'
+                            case "<class 'str'>":
+                                field_val_to_check = field if field is not None else ''
+                                changed = False if api_field == field else True
+                                diff = f'{pml}Старое значение: {field_val_to_check}</p>' \
+                                       f'{pml}Новое значение: {api_field}</p>'
+                            case "<class 'NoneType'>":
+                                changed = False if field == api_field else True
+                                diff = f'{pml}Старое значение: {field}</p>' \
+                                       f'{pml}Новое значение: {api_field}</p>'
+                            case _:
+                                field_val_to_check = str(field)
+                                changed = False if api_field == str(field) else True
+                                diff = f'{pml}Старое значение: {str(field_val_to_check)}</p>' \
+                                       f'{pml}Новое значение: {api_field}</p>'
+
+                        if changed:
+                            warehouse_is_changed = True
+                            changed_fields.append(w_field[0])
+                            changed_fields_info += f'<p>Изменилось поле {w_field[2]} </p> <p>{diff}</p>'
+                            setattr(warehouse_to_change, w_field[0], api_field)
+
+                    if warehouse_is_changed:
+                        print('wh_data - ', wh_data)
+                        edited_warehouses.append(warehouse_to_change)
+                        message_text += f'<h6>Изменились данные отделения {warehouse_to_change}' \
+                                        f'({warehouse_to_change.settlement}): </h6>'
+                        message_text += changed_fields_info
+                        edited_count += 1
+                # создать отделение
+                else:
+                    if wh_data['SettlementRef'] == '00000000-0000-0000-0000-000000000000':
+                        continue
+                    if not Settlement.objects.filter(ref=wh_data['SettlementRef']).exists():
+                        request_settlement_result = False
+                        settlement_request_dict['methodProperties']['Ref'] = wh_data['SettlementRef']
+                        while not request_settlement_result:
+                            try:
+                                request_json = json.dumps(settlement_request_dict, indent=4)
+                                response = requests.post(url_np, data=request_json, timeout=timeout_limit)
+                                request_settlement_result = True
+                                response_dict = json.loads(response.text)
+                                settlement_data = response_dict['data'][0]
+                                created_settlement = build_settlement_to_create(settlement_data)
+                                created_settlement.save()
+                                message_text += f'<h5>Создан населенный пункт {created_settlement} </h5>'
+                            except requests.exceptions.Timeout:
+                                print(
+                                    f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка запроса населенного пункта')
+                    if not types_of_warehouses_updated:
+                        if not TypeOfWarehouse.objects.filter(ref=wh_data['TypeOfWarehouse']).exists():
+                            print('Обновление списка типов отделений')
+                            message_text += '<h5>Обновление списка типов отделений </h5>'
+                            types_request_dict = {
+                                "modelName": "Address",
+                                "calledMethod": "getWarehouseTypes",
+                                "methodProperties": {}
+                            }
+                            request_json_type = json.dumps(types_request_dict, indent=4)
+                            is_response_types_success = False
+                            while not is_response_types_success:
+                                try:
+                                    response_type = requests.post(url_np, data=request_json_type, timeout=timeout_limit)
+                                    response_type_dict = json.loads(response_type.text)
+                                    is_response_types_success = True
+                                    types_of_warehouses_updated = True
+                                    print(f'Статус запроса {response_type_dict["success"]}')
+                                    print(f'Получены данные {len(all_types_data := response_type_dict["data"])} типов '
+                                          f'отделений')
+                                    types_to_create = []
+                                    for type_data in all_types_data:
+                                        types_to_create.append(
+                                            TypeOfWarehouse(
+                                                ref=type_data['Ref'],
+                                                description_ru=type_data['Description'],
+                                                description_ua=type_data['DescriptionRu']
+                                            )
+                                        )
+                                    TypeOfWarehouse.objects.bulk_create(types_to_create)
+                                except requests.exceptions.Timeout:
+                                    print(
+                                        f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка запроса типов отд')
+
+                    warehouse = Warehouse()
+                    for param in w_parameters:
+                        warehouse.__dict__[param[0]] = wh_data[param[1]]
+                    warehouses_to_create_list.append(warehouse)
+                    added_count += 1
+
+            Warehouse.objects.bulk_create(warehouses_to_create_list)
+            if warehouse_is_changed:
+                Warehouse.objects.bulk_update(edited_warehouses, changed_fields)
+
+        except requests.exceptions.Timeout:
+            print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
+            print()
+            message_text += f'Превышен лимит {timeout_limit}c врмени ожидания загрузки данных страницы №{page} ' \
+                            f'/ Повторная попытка - <br>'
+    message_text += '=' * 80 + '<br>'
+    print('=' * 80)
+    total_info = f'На сервере просмотрено {count} отделений. <br> Всего добавлено отделений {added_count}, всего ' \
+                 f'изменено отделений {edited_count} '
+    message_text += total_info
+    print(total_info)
+    messages.add_message(request, messages.SUCCESS, format_html(message_text))
+    return HttpResponseRedirect(reverse('admin:ROOTAPP_warehouse_changelist'))
+
+
+def update_cities(request):
+    data = request.GET
+
+
     message_text = ''
     search_by_descr = False
     if data:
         if 'search_name' in data.keys():
             search_by_descr = True
-            request_dict['methodProperties']['FindByString'] = (search_name := data['search_name'])
+            settlement_request_dict['methodProperties']['FindByString'] = (search_name := data['search_name'])
             message_text = f'Обновление списка населенных пунктов по запросу {search_name} <br>'
         else:
             message_text = ''
@@ -68,13 +333,10 @@ def update_cities(request):
     edited_count = 0
 
     while ln == limit:
-        # is_exists_new = False
-        # is_exists_edited = False
-        request_dict["methodProperties"]["Page"] = str(page)
+        settlement_request_dict["methodProperties"]["Page"] = str(page)
         print(f'Запрос страницы сервера #{page}')
-
         try:
-            request_json = json.dumps(request_dict, indent=4)
+            request_json = json.dumps(settlement_request_dict, indent=4)
             response = requests.post(url_np, data=request_json, timeout=timeout_limit)
             response_dict = json.loads(response.text)
             print(f'Статус запроса {response_dict["success"]}')
@@ -86,7 +348,8 @@ def update_cities(request):
             settlement_to_create_list = []
             new_cities_names_list = []
             edited_cities_data_list = []
-            for data in response_dict['data']:
+            ln = len(all_data := response_dict['data'])
+            for data in all_data:
                 data_settlement_str = f"№{count}: {data['DescriptionRu']}/{data['Description']} ({data['AreaDescriptionRu']}, " \
                                       f"{data['RegionsDescriptionRu']})"
                 if search_by_descr:
@@ -176,38 +439,11 @@ def update_cities(request):
                         edited_count += 1
                         settlement.save()
                 else:
-                    settlement_type, created = SettlementType.objects.get_or_create(
-                        ref=data['SettlementType'],
-                        defaults={
-                            'description_ru': data['SettlementTypeDescriptionRu'],
-                            'description_ua': data['SettlementTypeDescription']
-                        }
-                    )
-                    area, created = SettlementArea.objects.get_or_create(
-                        ref=data['Area'],
-                        defaults={
-                            'description_ru': data['AreaDescriptionRu'],
-                            'description_ua': data['AreaDescription']
-                        }
-                    )
-                    region, created = SettlementRegion.objects.get_or_create(
-                        ref=data['Region'],
-                        defaults={
-                            'description_ru': data['RegionsDescriptionRu'],
-                            'description_ua': data['RegionsDescription']
-                        }
-                    )
-                    print(data["Ref"])
-                    settlement_to_create_list.append(Settlement(
-                        description_ru=data['DescriptionRu'], description_ua=data['Description'], ref=data["Ref"],
-                        type=settlement_type, area=area, region=region, warehouse=data['Warehouse'],
-                        index_coatsu_1=data['IndexCOATSU1'], index_1=data['Index1'], index_2=data['Index2']
-                    ))
+                    settlement_to_create_list.append(build_settlement_to_create(data))
                     new_cities_names_list.append(data_settlement_str)
                     print(f'Добавлено: {data_settlement_str}')
                     added_count += 1
                 count += 1
-                ln = len(response_dict['data'])
 
             print('-' * 80)
 
@@ -261,11 +497,14 @@ def get_delivery_cost(request):
             }
         }
     }
+    print('data_cost - ', data_cost)
     while number_of_attempts <= max_number_of_attempts:
         try:
             request_json = json.dumps(data_cost, indent=4)
             response = requests.post(url_np, data=request_json, timeout=timeout_limit)
+            print('response - ', response)
             response_dict = json.loads(response.text)
+            print('response_dict - ', response_dict)
             return JsonResponse({
                 'settlement_to_name': str(Settlement.objects.get(ref=request.POST.get("settlement"))),
                 'cost_redelivery': response_dict['data'][0]['CostRedeliveryWarehouseWarehouse'],
@@ -277,6 +516,7 @@ def get_delivery_cost(request):
         except requests.exceptions.Timeout:
             number_of_attempts += 1
             print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
+
     return response('')
 
 
@@ -644,9 +884,9 @@ def update_user_phones(request):
     wrong_inputs_id_list = []
     for key in request_data:
         new = True if 'new_' in key else False
-        ph_key = key[:4]+key[10:] if new else key[6:]
+        ph_key = key[:4] + key[10:] if new else key[6:]
 
-        mess_key = key[:4]+key[15:] if new else key[11:]
+        mess_key = key[:4] + key[15:] if new else key[11:]
 
         if 'phone_' in key:
             phone_inp = request_data.get(key)
@@ -701,7 +941,8 @@ def update_user_phones(request):
     main_phone_id = new_person_phone_id_dict[main_phone_id_req] if 'new_' in main_phone_id_req else main_phone_id_req
     main_phone = PersonPhone.objects.get(id=main_phone_id).phone
     delivery_phone_req = request_data.get('is_delivery_phone')
-    delivery_phone_id = new_person_phone_id_dict[delivery_phone_req] if 'new_' in delivery_phone_req else delivery_phone_req
+    delivery_phone_id = new_person_phone_id_dict[
+        delivery_phone_req] if 'new_' in delivery_phone_req else delivery_phone_req
     new_main_phone_id = False
     new_delivery_phone_id = False
     if main_phone_id in wrong_inputs_id_list:
@@ -727,5 +968,5 @@ def update_user_phones(request):
 def del_user_phone(request):
     id_to_del = request.POST.get('phone_id')
     PersonPhone.objects.get(id=id_to_del).delete()
-    hide_del_btn = True if PersonPhone.objects.filter(person_id=request.user.id).count()==1 else False
+    hide_del_btn = True if PersonPhone.objects.filter(person_id=request.user.id).count() == 1 else False
     return {'id': id_to_del, 'hide_del_btn': hide_del_btn}
