@@ -3,7 +3,7 @@ from django.forms import modelform_factory
 from django.forms.models import inlineformset_factory
 from django_select2.forms import ModelSelect2Widget
 
-from ROOTAPP.models import Settlement, SettlementArea, Person, Phone, PersonPhone
+from ROOTAPP.models import Settlement, SettlementArea, Person, Phone, PersonPhone, Warehouse, PersonAddress
 from django_select2 import forms as s2forms
 
 from allauth.account.forms import ResetPasswordForm
@@ -48,6 +48,86 @@ class AddressForm(forms.Form):
     )
 
 
+# class FullAddressForm(forms.ModelForm):
+#     area = forms.ModelChoiceField(
+#         queryset=SettlementArea.objects.all(),
+#         label="Область",
+#         widget=ModelSelect2Widget(
+#             model=SettlementArea,
+#             search_fields=['description_ua__icontains', 'description_ru__icontains'],
+#             attrs={'data-placeholder': 'назва області'}
+#         )
+#     )
+#
+#     settlement = forms.ModelChoiceField(
+#         queryset=Settlement.objects.all(),
+#         label="Населений пункт",
+#         widget=ModelSelect2Widget(
+#             model=Settlement,
+#             search_fields=('description_ua__icontains', 'description_ru__icontains'),
+#             dependent_fields={'area': 'area'},
+#             max_results=50,
+#             attrs={'data-placeholder': 'назва населеного пункту'}
+#         )
+#     )
+#
+#     warehouse = forms.ModelChoiceField(
+#         queryset=Warehouse.objects.all(),
+#         label="Отделение",
+#         widget=ModelSelect2Widget(
+#             model=Warehouse,
+#             search_fields=('description_ua__icontains', 'description_ru__icontains'),
+#             dependent_fields={'settlement': 'settlement'},
+#             max_results=50,
+#             attrs={'data-placeholder': 'отделение'}
+#         )
+#     )
+
+area_widget = ModelSelect2Widget(
+    model=SettlementArea,
+    search_fields=['description_ua__icontains', 'description_ru__icontains'],
+    attrs={'data-placeholder': 'назва області', 'style': 'width: 80%;',
+           'data-minimum-input-length': '0'}
+)
+
+settlement_widget = ModelSelect2Widget(
+    model=Settlement,
+    search_fields=('description_ua__icontains', 'description_ru__icontains'),
+    dependent_fields={'area': 'area'},
+    max_results=50,
+    attrs={'data-placeholder': 'назва населеного пункту', 'style': 'width: 80%;'}
+)
+
+warehouse_widget = ModelSelect2Widget(
+    model=Warehouse,
+    search_fields=('description_ua__icontains', 'description_ru__icontains'),
+    dependent_fields={'settlement': 'settlement'},
+    max_results=50,
+    # minimum_results_for_search=1,
+    attrs={'data-placeholder': 'отделение', 'style': 'width: 80%;',
+           'data-minimum-input-length': '0'}
+)
+
+
+class FullAddressForm(forms.ModelForm):
+    class Meta:
+        model = PersonAddress
+        exclude = []
+        widgets = {
+            'area': area_widget, 'settlement': settlement_widget,
+            'warehouse': warehouse_widget
+        }
+
+
+# class SettlementSelectWidget(ModelSelect2Widget):
+#     model = Settlement
+#     search_fields = [
+#         'description_ua__icontains',
+#         'description_ru__icontains',
+#     ]
+#     max_results = 50
+
+
 PersonEmailForm = modelform_factory(
     Person,
     fields=('email',)
@@ -71,8 +151,8 @@ class PersonForm(forms.ModelForm):
 
 
 class PersonalInfoForm(forms.ModelForm):
-    last_name = forms.CharField(label='Прізвище', widget=forms.TextInput(attrs={'placeholder': "Обов'язкове поле",}))
-    first_name = forms.CharField(label="Ім'я", widget=forms.TextInput(attrs={'placeholder': "Обов'язкове поле",}))
+    last_name = forms.CharField(label='Прізвище', widget=forms.TextInput(attrs={'placeholder': "Обов'язкове поле", }))
+    first_name = forms.CharField(label="Ім'я", widget=forms.TextInput(attrs={'placeholder': "Обов'язкове поле", }))
     middle_name = forms.CharField(label="По-батькові", required=False)
 
     def clean(self):
@@ -86,6 +166,5 @@ class PersonalInfoForm(forms.ModelForm):
     class Meta:
         model = Person
         fields = ('last_name', 'first_name', 'middle_name',)
-
 
 # PersonInlineFormset = inlineformset_factory(Person, PersonPhone, fields=('phone', 'is_nova_poshta'))

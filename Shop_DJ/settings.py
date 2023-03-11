@@ -227,6 +227,11 @@ SOLO_CACHE = 'default'
 SOLO_CACHE_TIMEOUT = 60 * 5  # 5 mins
 SOLO_CACHE_PREFIX = 'solo'
 
+
+# django-smart-selects
+USE_DJANGO_JQUERY = True
+# JQUERY_URL = True
+
 BATON = {
     'SITE_HEADER': 'Baton',
     'SITE_TITLE': 'Baton',

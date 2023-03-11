@@ -1,6 +1,6 @@
 from django.urls import path
 
-from ROOTAPP.views import (update_cities, get_delivery_cost, ProductActionsView, CheckoutView, ByNowView,
+from ROOTAPP.views import (update_settlements, get_delivery_cost, ProductActionsView, CheckoutView, ByNowView,
                            request_google_auth, google_response, get_and_check_registration_phone,
                            get_registration_name, verify_sms_token, regenerate_sms_token, logout_view, add_email,
                            update_user_personal, update_user_phones, del_user_phone, update_warehouses,
@@ -8,8 +8,8 @@ from ROOTAPP.views import (update_cities, get_delivery_cost, ProductActionsView,
 
 app_name = 'root_app'
 urlpatterns = [
-    path('update_cities/', update_cities, name='update_cities'),
-    path('update_warhouses/', update_warehouses, name='update_warhouses'),
+    path('update_settlements/', update_settlements, name='update_settlements'),
+    path('update_warehouses/', update_warehouses, name='update_warehouses'),
     path('get_delivery_cost/', get_delivery_cost, name='get_delivery_cost'),
     path('product_actions/', ProductActionsView.as_view(), name='product_actions'),
     path('checkout/', CheckoutView.as_view(), name='checkout'),

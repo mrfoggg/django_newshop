@@ -30,6 +30,7 @@ urlpatterns = [
     path("select2/", include("django_select2.urls")),
     path('admin/', admin.site.urls),
     path('baton/', include('baton.urls')),
+    # path('chaining/', include('smart_selects.urls')),
     path('accounts/', include('allauth.urls')),
     path('root_app/', include('ROOTAPP.urls')),
     path('orders/', include('orders.urls')),

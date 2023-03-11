@@ -1,7 +1,11 @@
+import math
+from decimal import Decimal
+
 from django.contrib.auth.models import User, AbstractUser
 from django.db import models
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from phonenumber_field.modelfields import PhoneNumberField
 
 from phonenumbers import carrier
@@ -152,29 +156,48 @@ class SettlementRegion(models.Model):
         return self.description_ru
 
 
-class Settlement(models.Model):
-    description_ru = models.CharField('Название', max_length=128, default=None, db_index=True)
-    description_ua = models.CharField('Название укр.', max_length=128, default=None, db_index=True)
-    ref = models.CharField('Ref', max_length=128, primary_key=True)
-    type = models.ForeignKey(SettlementType, max_length=128, default=None, on_delete=models.CASCADE,
-                             db_index=True, verbose_name='Тип населенного пункта')
-    area = models.ForeignKey(SettlementArea, max_length=128, default=None, on_delete=models.CASCADE,
-                             db_index=True, verbose_name="Область")
-    region = models.ForeignKey(SettlementRegion, max_length=128, default=None, on_delete=models.CASCADE,
-                               verbose_name="Район")
-    warehouse = models.BooleanField('Наличие отделений', default=False)
-    index_1 = models.CharField('Индекс', max_length=128, null=True, default=None)
-    index_2 = models.CharField('Индекс-2', max_length=128, null=True, default=None)
-    index_coatsu_1 = models.CharField('Индекс КОАТУУ', null=True, max_length=128, default=None)
+class SettlementOrCity(models.Model):
+    description_ru = models.CharField('Название', max_length=50, null=True, db_index=True)
+    description_ua = models.CharField('Название укр.', max_length=50, null=True, db_index=True)
+    ref = models.CharField('Ref', max_length=36, primary_key=True)
+    type = models.ForeignKey(SettlementType, on_delete=models.CASCADE, db_index=True, null=True,
+                             verbose_name='Тип населенного пункта')
+    area = models.ForeignKey(SettlementArea, on_delete=models.CASCADE, db_index=True, verbose_name="Область", null=True)
+
+
+    class Meta:
+        abstract = True
+        ordering = ('description_ru',)
+
+
+class Settlement(SettlementOrCity):
+    region = models.ForeignKey(SettlementRegion, on_delete=models.CASCADE, verbose_name="Район", null=True)
+    warehouse = models.BooleanField('Наличие отделений', null=True)
+    index_1 = models.CharField('Начало диапазона индексов', max_length=10, null=True)
+    index_2 = models.CharField('Конец диапазона индексов', max_length=10, null=True, )
+    index_coatsu_1 = models.CharField('Индекс КОАТУУ', max_length=36, null=True)
 
     class Meta:
         verbose_name = 'Населенный пункт'
         verbose_name_plural = 'Населенные пункты'
-        ordering = ('description_ru',)
 
     def __str__(self):
         region = f'{self.region.description_ua}, ' if self.region_id else ''
         return f'{self.type.description_ua} {self.description_ua} ({region}{self.area.description_ua})'
+        # return ''
+
+
+class City(SettlementOrCity):
+    city_id = models.CharField('Код города', null=True, max_length=128)
+    is_branch = models.BooleanField('Филиал или партнер')
+    prevent_entry_new_streets_user = models.BooleanField('Запрет ввода новых улиц')
+
+    class Meta:
+        verbose_name = 'Город'
+        verbose_name_plural = 'Города'
+
+    def __str__(self):
+        return f'{self.type.description_ua} {self.description_ua} ({self.area.description_ua})'
 
 
 class TypeOfWarehouse(models.Model):
@@ -191,6 +214,17 @@ class TypeOfWarehouse(models.Model):
         return self.description_ru
 
 
+def reformate_coord(dd):
+    d = math.trunc(dd)
+    m = math.trunc((dd - d) * 60)
+    s = ((dd - d) * 60 - m) * 60
+    return d, m, s
+
+
+# class Street(models.Model):
+#     ref = models.CharField('Ref улицы', max_length=36, primary_key=True)
+
+
 class Warehouse(models.Model):
     ref = models.CharField('Ref отделения', max_length=36, primary_key=True)
     site_key = models.CharField('Код отделения', max_length=10, default=None)
@@ -198,7 +232,8 @@ class Warehouse(models.Model):
                                        verbose_name="Тип отделения", related_name='warhauses', db_index=True)
     settlement = models.ForeignKey(Settlement, default=None, on_delete=models.CASCADE,
                                    verbose_name="Населенный пункт", related_name='warhauses', db_index=True)
-    city_ref = models.CharField('Ref города', max_length=36, default=None)
+    city = models.ForeignKey(City, default=None, on_delete=models.CASCADE,
+                                   verbose_name="Город", related_name='warhauses', db_index=True)
     number = models.PositiveIntegerField('Номер отделения', db_index=True, )
     description_ru = models.CharField('Название отделения', max_length=99, default=None, null=True)
     description_ua = models.CharField('Название отделения укр.', max_length=99, default=None, null=True)
@@ -224,6 +259,26 @@ class Warehouse(models.Model):
     deny_to_select = models.BooleanField('Запрет выбора отделения', null=True)
     only_receiving_parcel = models.BooleanField('Работает только на выдачу', null=True)
     post_machine_type = models.CharField('Тип почтомата', max_length=36, default='', null=True, blank=True)
+    index = models.CharField('Цифровой адрес склада', max_length=36, default='', null=True, blank=True)
+
+    @property
+    def long(self):
+        long = reformate_coord(self.longitude) if self.longitude else False
+        return f"{long[0]}°{long[1]}'0{str(long[2].quantize(Decimal('1.0')))}\"E" if long else False
+
+    @property
+    def alt(self):
+        alt = reformate_coord(self.latitude) if self.latitude else False
+        return f"{alt[0]}°{alt[1]}'0{str(alt[2].quantize(Decimal('1.0')))}\"N" if alt else False
+
+    @property
+    @admin.display(description='Координаты')
+    def map_link(self):
+        if self.long and self.alt:
+            ln = 'https://www.google.com.ua/maps/place/' + f'{self.alt}+{self.long}' if self.alt and self.long else False
+            return mark_safe(f'<a href={ln} target="_blank">Показать на карте</a>') if ln else 'Нет координат'
+        else:
+            return 'Координаты не указаны'
 
     class Meta:
         verbose_name = 'Отделение Новой почты'
@@ -248,7 +303,18 @@ class PersonSettlement(models.Model):
     def __str__(self):
         return f'Населенный пункт {self.settlement}, контрагента - {self.person}'
 
-# class Profile(models.Model):
-#     user = models.OneToOneField(User, on_delete=models.CASCADE)
-#     third_name = models.CharField('Отчество', max_length=128, default=None, unique=True, db_index=True)
-#     phone_number = PhoneNumberField(blank=True, help_text='Номер телефона')
+
+class PersonAddress(models.Model):
+    area = models.ForeignKey(SettlementArea, on_delete=models.CASCADE, verbose_name="Область")
+    settlement = models.ForeignKey(Settlement, on_delete=models.CASCADE, verbose_name="Населенный пункт", )
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, verbose_name="Отделение", )
+    person = models.ForeignKey(Person, on_delete=models.CASCADE, verbose_name="Контрагент")
+
+    class Meta:
+        verbose_name = "Адрес доставки контрагента"
+        verbose_name_plural = "Адреса доставки контрагента"
+        unique_together = ('settlement', 'person', 'area', 'warehouse')
+        ordering = ('area',)
+
+    def __str__(self):
+        return f'{self.settlement}, {self.warehouse}'

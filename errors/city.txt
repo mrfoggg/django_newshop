@@ -1,0 +1,58 @@
+{
+	"success": true,
+	"data": [
+		{
+			"Description": "Київ",
+			"DescriptionRu": "Киев",
+			"Ref": "8d5a980d-391c-11dd-90d9-001a92567626",
+			"Delivery1": "1",
+			"Delivery2": "1",
+			"Delivery3": "1",
+			"Delivery4": "1",
+			"Delivery5": "1",
+			"Delivery6": "1",
+			"Delivery7": "1",
+			"Area": "71508131-9b87-11de-822f-000c2965ae0e",
+			"SettlementType": "563ced10-f210-11e3-8c4a-0050568002cf",
+			"IsBranch": "1",
+			"PreventEntryNewStreetsUser": "0",
+			"CityID": "4",
+			"SettlementTypeDescription": "місто",
+			"SettlementTypeDescriptionRu": "город",
+			"SpecialCashCheck": 1,
+			"AreaDescription": "Київська",
+			"AreaDescriptionRu": "Киевская"
+		},
+		{
+			"Description": "Київець",
+			"DescriptionRu": "Киевец",
+			"Ref": "6dbe5985-96d1-11ea-a970-b8830365ade4",
+			"Delivery1": "1",
+			"Delivery2": "1",
+			"Delivery3": "1",
+			"Delivery4": "1",
+			"Delivery5": "1",
+			"Delivery6": "0",
+			"Delivery7": "0",
+			"Area": "71508134-9b87-11de-822f-000c2965ae0e",
+			"SettlementType": "563ced13-f210-11e3-8c4a-0050568002cf",
+			"IsBranch": "0",
+			"PreventEntryNewStreetsUser": "0",
+			"CityID": "5624",
+			"SettlementTypeDescription": "село",
+			"SettlementTypeDescriptionRu": "село",
+			"SpecialCashCheck": 1,
+			"AreaDescription": "Львівська",
+			"AreaDescriptionRu": "Львовская"
+		}
+	],
+	"errors": [],
+	"warnings": [],
+	"info": {
+		"totalCount": 2
+	},
+	"messageCodes": [],
+	"errorCodes": [],
+	"warningCodes": [],
+	"infoCodes": []
+}

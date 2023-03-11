@@ -1,16 +1,18 @@
 from adminsortable2.admin import SortableAdminMixin
 from django.contrib import admin
 import nested_admin
+from django.urls import reverse
+from django.utils.html import format_html
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
 
-from ROOTAPP.models import Phone, Messenger, Person, PersonPhone, Settlement, PersonSettlement, Warehouse
+from ROOTAPP.models import Phone, Messenger, Person, PersonPhone, Settlement, PersonSettlement, Warehouse, PersonAddress
 from django import forms
 
 # from .services.telegram_servises import get_tg_username
 # from asgiref.sync import sync_to_async
 from orders.models import ByOneclick
 from .admin_forms import PersonPhonesAdminFormset
-from .forms import AddressForm
+from .forms import AddressForm, FullAddressForm
 
 admin.site.register(Messenger)
 
@@ -41,7 +43,10 @@ class WarehouseForSettlementInline(admin.TabularInline):
     model = Warehouse
     extra = 0
     fields = ('number', 'type_warehouse', 'description_ru', 'warehouse_status', 'deny_to_select', 'place_max_weight',
-              'total_max_weight')
+              'total_max_weight', 'map_link')
+    # 'total_max_weight')
+    readonly_fields = ('map_link',)
+    show_change_link = True
 
     def has_change_permission(self, request, obj=None):
         return False
@@ -108,10 +113,12 @@ class SettlementAdmin(admin.ModelAdmin):
         'type', 'description_ru', 'description_ua', 'area', 'region', 'warehouse', 'index_1', 'index_2',
         'index_coatsu_1'
     )
-    readonly_fields = (
-        'type', 'description_ru', 'description_ua', 'area', 'region', 'warehouse', 'index_1', 'index_2',
-        'index_coatsu_1'
-    )
+    # readonly_fields = (
+    #     'type', 'description_ru', 'description_ua', 'area', 'region', 'warehouse', 'index_1', 'index_2',
+    #     'index_coatsu_1'
+    # )
+    list_display = ('description_ru', 'description_ua', 'type', 'area', 'region', 'warehouse')
+    list_display_links = ('description_ru', 'description_ua')
     list_filter = ('area__description_ru', 'warehouse')
     baton_cl_includes = [
         ('ROOTAPP/button_update_cities.html', 'top',),
@@ -122,7 +129,7 @@ class SettlementAdmin(admin.ModelAdmin):
 
 @admin.register(Warehouse)
 class WarehouseAdmin(admin.ModelAdmin):
-    # fields = ('ref',)
+    fields = [x.name for x in Warehouse._meta.fields]
     baton_cl_includes = [
         ('ROOTAPP/admin_update_warehouses.html', 'top',),
     ]
@@ -141,9 +148,26 @@ class WarehouseAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+    def get_fields(self, request, obj=None):
+        if obj is not None:
+            return self.fields + ['map_link']
+        return self.fields
+
     class Media:
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
               'select2.min.js',)
+
+        css = {
+            "all": ("select2.min.css",)}
+
+
+@admin.register(PersonAddress)
+class PersonAddressAdmin(admin.ModelAdmin):
+    form = FullAddressForm
+
+    class Media:
+        js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
+              'select2.min.js')
 
         css = {
             "all": ("select2.min.css",)}

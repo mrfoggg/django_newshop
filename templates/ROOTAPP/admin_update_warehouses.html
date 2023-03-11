@@ -8,13 +8,13 @@
 </p>
 <div class="collapse" id="collapseExample">
     <div class="card card-body">
-        <div class="update_warhouses_section">
-            <a class="update_all" href="{% url 'root_app:update_warhouses' %}">Обновить весь список отделений </a>
+        <div class="update_warehouses_section">
+            <a class="update_all" href="{% url 'root_app:update_warehouses' %}">Обновить весь список отделений </a>
             <h5 class="update_by_settlement_titile">Обновление по населенному пункту</h5>
 
             <h6>Выберите населенный пункт:</h6>
 
-            <form action="{% url 'root_app:update_warhouses' %}">
+            <form action="{% url 'root_app:update_warehouses' %}">
                 <div style="display: flex" class="select_settlement">
 
                     {{ city_form.as_p }}
@@ -29,7 +29,7 @@
 
 
 <style>
-    .update_warhouses_section {
+    .update_warehouses_section {
         outline: none;
     }
 
@@ -50,7 +50,7 @@
         padding: 1.2rem;
     }
 
-    .update_warhouses_section h6 {
+    .update_warehouses_section h6 {
         margin-bottom: 1.5rem;
         text-decoration: underline;
     }

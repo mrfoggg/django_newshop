@@ -1,0 +1,584 @@
+{
+	"success": true,
+	"data": [
+		{
+			"Description": "14-й квартал",
+			"Ref": "2f91d6b1-dd01-11e0-b707-80613c6700db",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "9-го Травня",
+			"Ref": "dfaa9d9b-9f44-11eb-80fb-b8830365bd04",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Андріївка",
+			"Ref": "b96449e4-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Артема",
+			"Ref": "c936b1b4-a449-11df-b85a-000c298e9ce4",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Бахтин",
+			"Ref": "b96449e5-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Бойні",
+			"Ref": "b96449e7-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Борівська Андріївка",
+			"Ref": "b96449e8-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Борівський",
+			"Ref": "aaaa719e-d25d-11e2-874c-d4ae527baec3",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Весняна",
+			"Ref": "6386a258-2dc4-11e9-91ff-0025b501a04b",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Весняний",
+			"Ref": "1794983e-bc28-11ea-a970-b8830365ade4",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Вишневе",
+			"Ref": "b96449e9-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Вище Солоне",
+			"Ref": "b96449ea-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Гаврилівка",
+			"Ref": "b96449eb-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Гагаріна",
+			"Ref": "9a7921fa-49d9-11e2-889f-001631fa0467",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Глущенкове",
+			"Ref": "b96449ec-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Голубівка",
+			"Ref": "b96449ed-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Дружелюбівка",
+			"Ref": "b96449ef-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Жимієвська",
+			"Ref": "da1be6ba-f9a1-11e1-8924-d4ae527baec9",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Жовтнева",
+			"Ref": "a5d9cc12-2d82-11e1-be3b-0026b97ed48a",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Загризове",
+			"Ref": "b96449f0-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Залізнична",
+			"Ref": "064a1225-71de-11e1-8c00-0026b97ed48a",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Затишна",
+			"Ref": "4cd2e544-724c-11ea-a970-b8830365ade4",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Зелена",
+			"Ref": "07844a54-bf66-11ea-a970-b8830365ade4",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Зелений Гай",
+			"Ref": "b96449f1-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Зміївський",
+			"Ref": "496bdd28-b51b-11e9-91ff-0025b501a04b",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Ізюмське",
+			"Ref": "b96449e3-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Калинове",
+			"Ref": "b96449f2-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Калініна",
+			"Ref": "35819bf5-232d-11e2-83ab-d4ae52ab9fab",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Ковальська",
+			"Ref": "098c81dc-b1a6-11df-9f0e-000c290fbeaa",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Колесника",
+			"Ref": "30d1ef17-12b3-11e7-95d1-005056887b8d",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Комарова",
+			"Ref": "02cb40c8-6fde-11e4-acce-0050568002cf",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Комсомольська",
+			"Ref": "02cb40e5-6fde-11e4-acce-0050568002cf",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Кооперативна",
+			"Ref": "ca0fcc4c-48a0-11e5-8d8d-005056887b8d",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Копанки",
+			"Ref": "b96449f3-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Корчагінців",
+			"Ref": "9fed243c-4853-11e2-889f-001631fa0467",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Котовського",
+			"Ref": "358432e0-5d05-11e5-8d8d-005056887b8d",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Леніна",
+			"Ref": "1d4b6f46-c898-11e0-a244-932e1b207d81",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Лозова",
+			"Ref": "b96449f5-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Люксембург Рози ",
+			"Ref": "9b0b9132-668d-11e0-b52b-0026b97ed48a",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Маліївка",
+			"Ref": "b96449f6-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Мирне",
+			"Ref": "b96449f7-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Миру",
+			"Ref": "3bc38f54-2d6e-11e1-be3b-0026b97ed48a",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Миру",
+			"Ref": "b435d110-0be5-11df-81b1-000c294065a1",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Молодіжна",
+			"Ref": "8fad3e11-431e-11e5-8d8d-005056887b8d",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Молодіжний",
+			"Ref": "accb426e-f166-11e3-8c4a-0050568002cf",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Московська",
+			"Ref": "412a54f1-1481-11e2-a86d-d4ae527baec9",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Набережна",
+			"Ref": "2e990073-2de4-11e4-acce-0050568002cf",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Нижня Журавка",
+			"Ref": "b96449f8-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Нижче Солоне",
+			"Ref": "b96449f9-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Нова Кругляківка",
+			"Ref": "b96449fa-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Новий Мир",
+			"Ref": "b96449fb-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Нововокзальна",
+			"Ref": "09564c1a-f8b2-11e1-8924-d4ae527baec9",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Новоплатонівка",
+			"Ref": "b96449fc-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Новосергіївка",
+			"Ref": "b96449fd-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Ольгівка",
+			"Ref": "b96449fe-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Парнувате",
+			"Ref": "b9644a02-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Партизанська",
+			"Ref": "cd1b9bca-b633-11e1-b9cf-0026b97ed48a",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Першотравнева",
+			"Ref": "eba6b666-5a2a-11e2-89c8-d4ae52ab9fab",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Першотравневе",
+			"Ref": "b9644a03-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Settlement",
+			"StreetsType": "с-ще."
+		},
+		{
+			"Description": "Петровського",
+			"Ref": "8ba7aad4-63d5-11e8-aa3a-0025b501a04b",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Північна",
+			"Ref": "62572480-1bcf-11e4-acce-0050568002cf",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Підвисоке",
+			"Ref": "54d13adc-0919-11e1-a180-0026b97ed48a",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Підлиманська",
+			"Ref": "8ccdfa15-cc1f-11e2-874c-d4ae527baec3",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Підлісна",
+			"Ref": "ab47b5a4-d090-11e5-8478-005056887b8d",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Піщана",
+			"Ref": "74a25a90-f80f-11e1-8924-d4ae527baec9",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Покровська",
+			"Ref": "b3e05032-043b-11e9-a8ec-0025b502b06e",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Поштова",
+			"Ref": "aec05a46-0ccf-11e0-a298-92ecb9fa07b3",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Привокзальна",
+			"Ref": "c3626c20-85ca-11e0-8140-969cd9edcd68",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Приоскольна",
+			"Ref": "3e4e3eed-8c09-11e4-acce-0050568002cf",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Пролетарське",
+			"Ref": "b9644a04-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Пушкіна ",
+			"Ref": "fe7686ec-5d2f-11e6-a9f2-005056887b8d",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Радянська",
+			"Ref": "a194055c-ae9c-11e4-a77a-005056887b8d",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Садова",
+			"Ref": "0468b8e3-1c11-11e6-971e-005056887b8d",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Світла",
+			"Ref": "ec49d776-8bae-11ea-a970-b8830365ade4",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Слобідська",
+			"Ref": "9474c18a-a733-11eb-80fb-b8830365bd04",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Слобідський",
+			"Ref": "5e4b3b25-2ee7-11e6-9e93-005056887b8d",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Сонячна ",
+			"Ref": "a12b2a24-7f79-11ec-80fb-b8830365bd04",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Сонячний",
+			"Ref": "f4dbad74-3495-11eb-80fb-b8830365bd04",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Степовий",
+			"Ref": "396b1d62-df09-11eb-80fb-b8830365bd04",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Суворова",
+			"Ref": "4b54d1de-06c9-11e1-bdfd-0026b97ed48a",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Східна",
+			"Ref": "e39e1ae9-109e-11e4-acce-0050568002cf",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Східний",
+			"Ref": "35b445e3-2e42-11e2-83ab-d4ae52ab9fab",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Українська",
+			"Ref": "c9ae9455-fbf9-11e5-899e-005056887b8d",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Харківська",
+			"Ref": "38ecb25c-9e92-11e1-b2df-0026b97ed48a",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Харкіський",
+			"Ref": "2cb00840-bfb5-11e3-9fa0-0050568002cf",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Центральна",
+			"Ref": "1bab287c-b81d-11e9-91ff-0025b501a04b",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Чапаєва",
+			"Ref": "685c517c-1004-11e0-b9a6-ae0b12d765b3",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Червоний Став",
+			"Ref": "b9644a05-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Червоноармійська ",
+			"Ref": "b67cc669-c8bd-11e4-a77a-005056887b8d",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Червонопрапорний",
+			"Ref": "0883ced8-3299-11e4-acce-0050568002cf",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Чернещина",
+			"Ref": "b9644a06-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		},
+		{
+			"Description": "Шкільна",
+			"Ref": "0a73951d-271b-11e2-83ab-d4ae52ab9fab",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Шкільний",
+			"Ref": "5159cb5f-de48-11e6-95d1-005056887b8d",
+			"StreetsTypeRef": "Lane",
+			"StreetsType": "пров."
+		},
+		{
+			"Description": "Шутько Єгора",
+			"Ref": "05272e79-752b-11e2-b008-d4ae52ab9fa5",
+			"StreetsTypeRef": "Street",
+			"StreetsType": "вул."
+		},
+		{
+			"Description": "Ясинувате",
+			"Ref": "b9644a08-ea61-11de-9ac7-000c291af1b3",
+			"StreetsTypeRef": "Village",
+			"StreetsType": "с."
+		}
+	],
+	"errors": [],
+	"warnings": [],
+	"info": {
+		"totalCount": 95
+	},
+	"messageCodes": [],
+	"errorCodes": [],
+	"warningCodes": [],
+	"infoCodes": []
+}
