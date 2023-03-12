@@ -23,6 +23,13 @@ from .services.NP_func_and_vars import *
 
 
 def update_warehouses(request):
+    warehouses_request_dict = {
+        "modelName": "Address",
+        "calledMethod": "getWarehouses",
+        "methodProperties": {
+            "Limit": str(big_limit)
+        }
+    }
     message_text = ''
     page = 1
     count = 0
@@ -30,8 +37,9 @@ def update_warehouses(request):
     edited_warehouses_count = 0
     types_of_warehouses_updated = False
     data = request.GET
-    warehouses_limit = warehouses_request_dict["methodProperties"]["Limit"]
+    warehouses_limit = int(warehouses_request_dict["methodProperties"]["Limit"])
     ln = warehouses_limit
+
     # добавить в запрос к АПИ фильтр по населенному пункту если это задано
     if data:
         if 'settlement' in data.keys():
@@ -42,7 +50,7 @@ def update_warehouses(request):
         else:
             message_text = f'<h4>Полное обновление списка отделений</h4> <br>'
 
-    while ln == limit:
+    while ln == warehouses_limit:
         warehouses_request_dict["methodProperties"]["Page"] = str(page)
         print(f'Запрос страницы сервера #{page}')
 
@@ -51,21 +59,26 @@ def update_warehouses(request):
             page += 1
             ln = len(all_warhauses_data := warehouse_response_dict['data'])
             print(f'Статус запроса {warehouse_response_dict["success"]}')
-            print(f'Получены данные {ln} обьектов, лимит: {warehouses_limit}')
+            print(f'Получены данные {ln}отделений , лимит: {warehouses_limit}')
             print()
-            message_text += f'<h5> Загрузка страницы №{page} (по {warehouses_limit}'\
+            message_text += f'<h5> Загрузка страницы №{page} (по {warehouses_limit}' \
                             f' отделения на старнице) - {warehouse_response_dict["success"]} + </h5>>'
 
             for wh_data in all_warhauses_data:
+                to_create_warehouses = []
+                changed_warehouses = []
+                changed_fields = set()
                 count += 1
                 # обновить отделение если оно уже есть в базе
                 if Warehouse.objects.filter(ref=wh_data['Ref']).exists():
-                    warehouse_change_data = get_and_apply_diff_db_api(
+                    warehouse_change_data = get_and_apply_changes(
                         Warehouse.objects.get(ref=wh_data['Ref']), warehouse_parameters, wh_data
                     )
                     if warehouse_change_data['changed']:
                         edited_warehouses_count += 1
                         message_text += warehouse_change_data['new_message_text']
+                        changed_warehouses.append(warehouse_change_data['changed_obj'])
+                        changed_fields.update(warehouse_change_data['changed_fields'])
 
                 # создать отделение
                 else:
@@ -114,11 +127,11 @@ def update_warehouses(request):
                     # Пройтись по всем полям
                     for param in warehouse_parameters:
                         setattr(Warehouse, param.db_field, wh_data[param.api_field])
-                    to_create_objects.append(warehouse)
+                    to_create_warehouses.append(warehouse)
                     added_warehouses_count += 1
-            Warehouse.objects.bulk_create(to_create_objects)
+            Warehouse.objects.bulk_create(to_create_warehouses)
             if edited_warehouses_count:
-                Warehouse.objects.bulk_update(changed_objects, changed_fields)
+                Warehouse.objects.bulk_update(changed_warehouses, changed_fields)
 
         except requests.exceptions.Timeout:
             print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
@@ -135,94 +148,121 @@ def update_warehouses(request):
     return HttpResponseRedirect(reverse('admin:ROOTAPP_warehouse_changelist'))
 
 
-def update_settlements(request):
-    data = request.GET
-    message_text = ''
-    search_by_descr = False
-    ln = limit
-    settlement_count = 1
-    page = 1
-    added_settlement_count = 0
-    edited_settlement_count = 0
-    settlement_limit = settlement_request_dict['methodProperties']['Limit']
+def update_np_catalogs(request, obj_type):
+    types_settings = {
+        'Settlement': ("getSettlements", settlement_parameters),
+        'City': ("getCity", city_parameters),
+        'Warehouse': ("getWarehouses", warehouse_parameters),
+    }
+    called_method, data_structure = types_settings[obj_type.__name__]
+
+    print('called_method - ', called_method)
+
+    objects_request_dict = {
+        "modelName": "Address",
+        "calledMethod": called_method,
+        "methodProperties": {
+            "Limit": str(limit)
+        }
+    }
+    data, message_text = request.GET, ''
+    search_by_descr, search_by_settlement, search_by_city = False, False, False
+    objects_position, added_objects_count, edited_objects_count = 1, 0, 0
+    objects_limit = int(objects_request_dict['methodProperties']['Limit'])
+    page, ln = 1, objects_limit
+
     if data:
         if 'search_name' in data.keys():
             search_by_descr = True
-            settlement_request_dict['methodProperties']['FindByString'] = (search_name := data['search_name'])
-            message_text = f'Обновление списка населенных пунктов по запросу {search_name} <br>'
+            objects_request_dict['methodProperties']['FindByString'] = (search_name := data['search_name'])
+            message_text = f'Обновление списка элементов справочника по запросу {search_name} <br>'
 
-    while ln == limit:
-        settlement_request_dict["methodProperties"]["Page"] = str(page)
+    while ln == objects_limit:
+        objects_to_create, changed_objects, changed_fields = [], [], set()
+        new_objects_names, changed_objects_names = [], []
+        objects_request_dict["methodProperties"]["Page"] = str(page)
         print(f'Запрос страницы сервера #{page}')
         try:
-            settlement_response_dict = get_response(settlement_request_dict)
-            print(f'Статус запроса {settlement_response_dict["success"]}')
-            print(f'Получены данные {len(settlement_response_dict["data"])} городов,'
-                  f' лимит: {settlement_limit}')
+            objects_response_data = get_response(objects_request_dict)
+            ln = len(all_objects_data := objects_response_data['data'])
+
+            print(f'Статус запроса {objects_response_data["success"]}')
+            print(f'Получены данные {ln} элементов справочника, лимит: {objects_limit}')
             print()
 
-            message_text += f'Загрузка страницы №{page} (по {settlement_limit} ' \
-                            f'населенных пунктов на старнице) -  {settlement_response_dict["success"]} + <br>'
-            new_cities_names_list = []
-            edited_cities_data_list = []
-            ln = len(all_settlement_data := settlement_response_dict['data'])
-            for settlement_data in all_settlement_data:
-                data_settlement_str = f"№{settlement_count}: {settlement_data['DescriptionRu']}/{settlement_data['Description']} " \
-                                      f"({settlement_data['AreaDescriptionRu']}, {settlement_data['RegionsDescriptionRu']})"
-                if search_by_descr:
-                    message_text += f'Найдено {data_settlement_str} <br>'
-                    print(f'Найдено {data_settlement_str}')
+            message_text += f'Загрузка страницы №{page} (по {objects_limit} ' \
+                            f'объектов на старнице) -  {objects_response_data["success"]} + <br>'
+            page += 1
 
-                if Settlement.objects.filter(ref=settlement_data['Ref']).exists():
-                    settlement_change_data = get_and_apply_diff_db_api(
-                        Settlement.objects.get(ref=settlement_data['Ref']), settlement_parameters, settlement_data
+            for obj_data in all_objects_data:
+                region = f", {obj_data['RegionsDescriptionRu']}" if obj_type == Settlement else ''
+                object_name = f"№{objects_position}: {obj_data['DescriptionRu']}/{obj_data['Description']} " \
+                                      f"({obj_data['AreaDescriptionRu']}{region})"
+                if search_by_descr:
+                    message_text += f'Найдено {object_name} <br>'
+                    print(f'Найдено {object_name}')
+
+                if obj_type.objects.filter(ref=obj_data['Ref']).exists():
+                    object_changes_data = get_and_apply_changes(
+                        obj_type.objects.get(ref=obj_data['Ref']), data_structure, obj_data
                     )
-                    if settlement_change_data['changed']:
-                        edited_settlement_count += 1
-                        message_text += settlement_change_data['new_message_text']
+                    if object_changes_data['changed']:
+                        edited_objects_count += 1
+                        message_text += object_changes_data['new_message_text']
+                        changed_objects.append(object_changes_data['changed_obj'])
+                        changed_fields.update(object_changes_data['changed_fields'])
+                        print(f'Изменено: {object_name}')
                 else:
-                    to_create_objects.append(build_settlement_or_city_to_create(
-                        settlement_data, Settlement, settlement_parameters)
+                    objects_to_create.append(build_settlement_or_city_to_create(
+                        obj_data, Settlement, data_structure)
                     )
-                    new_cities_names_list.append(data_settlement_str)
-                    print(f'Добавлено: {data_settlement_str}')
-                    added_settlement_count += 1
-                settlement_count += 1
+                    new_objects_names.append(object_name)
+                    print(f'Добавлено: {object_name}')
+                    added_objects_count += 1
+                objects_position += 1
 
             print('-' * 80)
 
-            if len(new_cities_names_list):
+            if len(objects_to_create):
+                obj_type.objects.bulk_create(objects_to_create)
                 message_text += 'Добавлено^<ul>'
-                for added in new_cities_names_list:
+                for added in new_objects_names:
                     message_text += f'<li>{added}</li>'
                 message_text += '</ul>'
 
-            if len(edited_cities_data_list):
+            if len(changed_objects):
+                obj_type.objects.bulk_update(changed_objects, changed_fields)
                 message_text += 'Изменено^<ul>'
-                for edited in edited_cities_data_list:
+                for edited in changed_objects_names:
                     message_text += f'<li>{edited}</li>'
                 message_text += '</ul>'
-            Settlement.objects.bulk_create(to_create_objects)
 
-            if edited_settlement_count:
-                Settlement.objects.bulk_update(changed_objects, changed_fields)
-                print('changed_objects- ', changed_objects)
             message_text += '<br>'
-            page += 1
+
         except requests.exceptions.Timeout:
             print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
             print()
             message_text += f'Превышен лимит {timeout_limit}c врмени ожидания загрузки данных страницы №{page} ' \
                             f'/ Повторная попытка - <br>'
+
     message_text += '=' * 80 + '<br>'
     print('=' * 80)
 
-    total_info = f'На сервере просмотрено {settlement_count - 1} населенных пунктов. <br> Всего добавлено населенных ' \
-                 f'пунктов {added_settlement_count}, всего изменено населенных пунктов {edited_settlement_count} '
+    total_info = f'На сервере просмотрено {objects_position - 1} элементов справочника.<br>Всего добавлено элементов' \
+                 f'{added_objects_count}, всего изменено элементов {edited_objects_count} '
     message_text += total_info
     messages.add_message(request, messages.SUCCESS, format_html(message_text))
     print(total_info)
+
+
+def update_settlements(request):
+    update_np_catalogs(request, Settlement)
     return HttpResponseRedirect(reverse('admin:ROOTAPP_settlement_changelist'))
+
+
+def update_cities(request):
+    update_np_catalogs(request, City)
+    return HttpResponseRedirect(reverse('admin:ROOTAPP_city_changelist'))
 
 
 def get_delivery_cost(request):

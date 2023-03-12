@@ -18,25 +18,6 @@ limit = 150
 big_limit = 500
 timeout_limit = 3.0
 
-settlement_request_dict = {
-    "modelName": "Address",
-    "calledMethod": "getSettlements",
-    "methodProperties": {
-        "Limit": str(limit)
-    }
-}
-
-warehouses_request_dict = {
-    "modelName": "Address",
-    "calledMethod": "getWarehouses",
-    "methodProperties": {
-        "Limit": str(big_limit)
-    }
-}
-
-changed_objects = []
-changed_fields = set()
-to_create_objects = []
 
 parameter_template = namedtuple('parameter_template', 'db_field api_field description')
 
@@ -101,16 +82,6 @@ settlement_parameters = settlement_and_city_parameters + (
 
 city_parameters = settlement_and_city_parameters + (
     parameter_template(
-        db_field='region',
-        api_field='Region',
-        description='Район'
-    ),
-    parameter_template(
-        db_field='warehouse',
-        api_field='Warehouse',
-        description='Наличие отделений'
-    ),
-    parameter_template(
         db_field='city_id',
         api_field='CityID',
         description='Код города'
@@ -119,7 +90,12 @@ city_parameters = settlement_and_city_parameters + (
         db_field='is_branch',
         api_field='IsBranch',
         description='Филиал или партнер'
-    )
+    ),
+    parameter_template(
+        db_field='prevent_entry_new_streets_user',
+        api_field='PreventEntryNewStreetsUser',
+        description='Запрет ввода новых улицр'
+    ),
 )
 
 warehouse_parameters = main_parameters + (
@@ -277,34 +253,18 @@ def build_settlement_or_city_to_create(data, db_model, parameters_template):
             'description_ua': data['AreaDescription']
         }
     )
-    SettlementRegion.objects.get_or_create(
-        ref=data['Region'],
-        defaults={
-            'description_ru': data['RegionsDescriptionRu'],
-            'description_ua': data['RegionsDescription']
-        }
-    )
+    if 'Region' in data.keys():
+        SettlementRegion.objects.get_or_create(
+            ref=data['Region'],
+            defaults={
+                'description_ru': data['RegionsDescriptionRu'],
+                'description_ua': data['RegionsDescription']
+            }
+        )
     obj_to_create = db_model()
     for param in parameters_template:
         setattr(obj_to_create, param.db_field, data[param.api_field])
     return obj_to_create
-
-
-
-
-    # if model == Settlement:
-    #     return model(
-    #         description_ru=data['DescriptionRu'], description_ua=data['Description'], ref=data["Ref"],
-    #         type=settlement_type, area=area, region=region, warehouse=data['Warehouse'],
-    #         index_coatsu_1=data['IndexCOATSU1'], index_1=data['Index1'], index_2=data['Index2']
-    #     )
-
-    # else:
-    #     return City(
-    #         description_ru=data['DescriptionRu'], description_ua=data['Description'], ref=data["Ref"],
-    #         type=settlement_type, area=area, region=region, warehouse=data['Warehouse'],
-    #         index_coatsu_1=data['IndexCOATSU1'], index_1=data['Index1'], index_2=data['Index2']
-    #     )
 
 
 def create_obj_if_not_exists(obj_model, ref, obj_parameters):
@@ -323,9 +283,10 @@ def create_obj_if_not_exists(obj_model, ref, obj_parameters):
                     f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка запроса населенного пункта')
 
 
-def get_and_apply_diff_db_api(obj, structure, api_data):
+def get_and_apply_changes(obj, structure, api_data):
     changed_fields_info = ''
     obj_is_changed = False
+    changed_fields = []
     for struct_field in structure:
         if struct_field[0] == 'ref':
             continue
@@ -365,14 +326,18 @@ def get_and_apply_diff_db_api(obj, structure, api_data):
                        f'{pml}Новое значение: {api_field_val}</p>'
 
         if field_changed:
-            changed_fields.add(struct_field.db_field)
+            # changed_fields.add(struct_field.db_field)
             changed_fields_info += f'<p>Изменилось поле {struct_field.description} </p> <p>{diff}</p>'
             setattr(obj, struct_field.db_field, api_field_val)
+            changed_fields.append(struct_field.db_field)
             obj_is_changed = True
 
     if obj_is_changed:
-        changed_objects.append(obj)
+        # changed_objects.append(obj)
         new_message_text = f'<h6>Изменились данные {obj._meta.verbose_name} ({obj})' + changed_fields_info
-        return {'changed': True, 'new_message_text': new_message_text}
+        return {
+            'changed': True, 'new_message_text': new_message_text,
+            'changed_fields': changed_fields, 'changed_obj': obj
+        }
     else:
         return {'changed': False}

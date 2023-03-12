@@ -5,7 +5,8 @@ from django.urls import reverse
 from django.utils.html import format_html
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
 
-from ROOTAPP.models import Phone, Messenger, Person, PersonPhone, Settlement, PersonSettlement, Warehouse, PersonAddress
+from ROOTAPP.models import Phone, Messenger, Person, PersonPhone, Settlement, PersonSettlement, Warehouse, \
+    PersonAddress, City
 from django import forms
 
 # from .services.telegram_servises import get_tg_username
@@ -113,18 +114,34 @@ class SettlementAdmin(admin.ModelAdmin):
         'type', 'description_ru', 'description_ua', 'area', 'region', 'warehouse', 'index_1', 'index_2',
         'index_coatsu_1'
     )
-    # readonly_fields = (
-    #     'type', 'description_ru', 'description_ua', 'area', 'region', 'warehouse', 'index_1', 'index_2',
-    #     'index_coatsu_1'
-    # )
     list_display = ('description_ru', 'description_ua', 'type', 'area', 'region', 'warehouse')
     list_display_links = ('description_ru', 'description_ua')
     list_filter = ('area__description_ru', 'warehouse')
     baton_cl_includes = [
-        ('ROOTAPP/button_update_cities.html', 'top',),
+        ('ROOTAPP/button_update_settlements.html', 'top',),
     ]
     search_fields = ('description_ru', 'description_ua', 'index_1')
     inlines = (WarehouseForSettlementInline,)
+
+    # def has_change_permission(self, request, obj=None):
+    #     return False
+
+@admin.register(City)
+class CityAdmin(admin.ModelAdmin):
+    fields = (
+        'type', 'description_ru', 'description_ua', 'area', 'city_id', 'is_branch', 'prevent_entry_new_streets_user'
+    )
+    list_display = ('description_ru', 'description_ua', 'type', 'area',)
+    list_display_links = ('description_ru', 'description_ua')
+    list_filter = ('area__description_ru', )
+    baton_cl_includes = [
+        ('ROOTAPP/button_update_cities.html', 'top',),
+    ]
+    search_fields = ('description_ru', 'description_ua',)
+    # inlines = (WarehouseForSettlementInline,)
+
+    # def has_change_permission(self, request, obj=None):
+    #     return False
 
 
 @admin.register(Warehouse)

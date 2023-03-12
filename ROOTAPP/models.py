@@ -129,9 +129,9 @@ class SettlementType(models.Model):
 
 
 class SettlementArea(models.Model):
-    ref = models.CharField('Ref области', max_length=128, primary_key=True)
-    description_ru = models.CharField('Название области', max_length=128, default=None)
-    description_ua = models.CharField('Название области укр.', max_length=128, default=None)
+    ref = models.CharField('Ref области', max_length=64, primary_key=True)
+    description_ru = models.CharField('Название области', max_length=64, default=None)
+    description_ua = models.CharField('Название области укр.', max_length=64, default=None)
 
     class Meta:
         verbose_name = 'Область'
@@ -143,9 +143,9 @@ class SettlementArea(models.Model):
 
 
 class SettlementRegion(models.Model):
-    ref = models.CharField('Ref района', max_length=128, primary_key=True)
-    description_ru = models.CharField('Название района', max_length=128, default=None)
-    description_ua = models.CharField('Название района укр.', max_length=128, default=None)
+    ref = models.CharField('Ref района', max_length=64, primary_key=True)
+    description_ru = models.CharField('Название района', max_length=64, default=None)
+    description_ua = models.CharField('Название района укр.', max_length=64, default=None)
 
     class Meta:
         verbose_name = 'Район'
@@ -157,17 +157,15 @@ class SettlementRegion(models.Model):
 
 
 class SettlementOrCity(models.Model):
-    description_ru = models.CharField('Название', max_length=50, null=True, db_index=True)
-    description_ua = models.CharField('Название укр.', max_length=50, null=True, db_index=True)
+    description_ru = models.CharField('Название', max_length=64, null=True, db_index=True)
+    description_ua = models.CharField('Название укр.', max_length=64, null=True, db_index=True)
     ref = models.CharField('Ref', max_length=36, primary_key=True)
     type = models.ForeignKey(SettlementType, on_delete=models.CASCADE, db_index=True, null=True,
                              verbose_name='Тип населенного пункта')
     area = models.ForeignKey(SettlementArea, on_delete=models.CASCADE, db_index=True, verbose_name="Область", null=True)
 
-
     class Meta:
         abstract = True
-        ordering = ('description_ru',)
 
 
 class Settlement(SettlementOrCity):
@@ -180,6 +178,7 @@ class Settlement(SettlementOrCity):
     class Meta:
         verbose_name = 'Населенный пункт'
         verbose_name_plural = 'Населенные пункты'
+        ordering = ('description_ru',)
 
     def __str__(self):
         region = f'{self.region.description_ua}, ' if self.region_id else ''
@@ -188,22 +187,22 @@ class Settlement(SettlementOrCity):
 
 
 class City(SettlementOrCity):
-    city_id = models.CharField('Код города', null=True, max_length=128)
+    city_id = models.CharField('Код города', null=True, max_length=36)
     is_branch = models.BooleanField('Филиал или партнер')
     prevent_entry_new_streets_user = models.BooleanField('Запрет ввода новых улиц')
 
     class Meta:
-        verbose_name = 'Город'
-        verbose_name_plural = 'Города'
+        verbose_name = 'Город новой почты'
+        verbose_name_plural = 'Города новой почты'
 
     def __str__(self):
         return f'{self.type.description_ua} {self.description_ua} ({self.area.description_ua})'
 
 
 class TypeOfWarehouse(models.Model):
-    ref = models.CharField('Ref типа отделения', max_length=128, primary_key=True)
-    description_ru = models.CharField('Название типа отделения', max_length=128, default=None)
-    description_ua = models.CharField('Название типа отделения укр.', max_length=128, default=None)
+    ref = models.CharField('Ref типа отделения', max_length=36, primary_key=True)
+    description_ru = models.CharField('Название типа отделения', max_length=64, default=None)
+    description_ua = models.CharField('Название типа отделения укр.', max_length=64, default=None)
 
     class Meta:
         verbose_name = 'Тип отделение '
@@ -233,7 +232,7 @@ class Warehouse(models.Model):
     settlement = models.ForeignKey(Settlement, default=None, on_delete=models.CASCADE,
                                    verbose_name="Населенный пункт", related_name='warhauses', db_index=True)
     city = models.ForeignKey(City, default=None, on_delete=models.CASCADE,
-                                   verbose_name="Город", related_name='warhauses', db_index=True)
+                             verbose_name="Город", related_name='warhauses', db_index=True)
     number = models.PositiveIntegerField('Номер отделения', db_index=True, )
     description_ru = models.CharField('Название отделения', max_length=99, default=None, null=True)
     description_ua = models.CharField('Название отделения укр.', max_length=99, default=None, null=True)
