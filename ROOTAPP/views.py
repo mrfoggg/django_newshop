@@ -22,136 +22,136 @@ from site_settings.models import OAuthGoogle
 from .services.NP_func_and_vars import *
 
 
-def update_warehouses(request):
-    warehouses_request_dict = {
-        "modelName": "Address",
-        "calledMethod": "getWarehouses",
-        "methodProperties": {
-            "Limit": str(big_limit)
-        }
-    }
-    message_text = ''
-    page = 1
-    count = 0
-    added_warehouses_count = 0
-    edited_warehouses_count = 0
-    types_of_warehouses_updated = False
-    data = request.GET
-    warehouses_limit = int(warehouses_request_dict["methodProperties"]["Limit"])
-    ln = warehouses_limit
-
-    # добавить в запрос к АПИ фильтр по населенному пункту если это задано
-    if data:
-        if 'settlement' in data.keys():
-            settlement_ref = data['settlement']
-            warehouses_request_dict['methodProperties']['SettlementRef'] = settlement_ref
-            settlement = Settlement.objects.get(ref=settlement_ref)
-            message_text = f'<h4>Обновление списка отделений в населенном пункте {settlement}</h4> <br>'
-        else:
-            message_text = f'<h4>Полное обновление списка отделений</h4> <br>'
-
-    while ln == warehouses_limit:
-        warehouses_request_dict["methodProperties"]["Page"] = str(page)
-        print(f'Запрос страницы сервера #{page}')
-
-        try:
-            warehouse_response_dict = get_response(warehouses_request_dict)
-            page += 1
-            ln = len(all_warhauses_data := warehouse_response_dict['data'])
-            print(f'Статус запроса {warehouse_response_dict["success"]}')
-            print(f'Получены данные {ln}отделений , лимит: {warehouses_limit}')
-            print()
-            message_text += f'<h5> Загрузка страницы №{page} (по {warehouses_limit}' \
-                            f' отделения на старнице) - {warehouse_response_dict["success"]} + </h5>>'
-
-            for wh_data in all_warhauses_data:
-                to_create_warehouses = []
-                changed_warehouses = []
-                changed_fields = set()
-                count += 1
-                # обновить отделение если оно уже есть в базе
-                if Warehouse.objects.filter(ref=wh_data['Ref']).exists():
-                    warehouse_change_data = get_and_apply_changes(
-                        Warehouse.objects.get(ref=wh_data['Ref']), warehouse_parameters, wh_data
-                    )
-                    if warehouse_change_data['changed']:
-                        edited_warehouses_count += 1
-                        message_text += warehouse_change_data['new_message_text']
-                        changed_warehouses.append(warehouse_change_data['changed_obj'])
-                        changed_fields.update(warehouse_change_data['changed_fields'])
-
-                # создать отделение
-                else:
-                    if wh_data['SettlementRef'] == '00000000-0000-0000-0000-000000000000':
-                        continue
-                    #  проверить налчиие в баще необходимой области и района
-                    # если отсутвует то сделать подхапрос и создать
-                    create_obj_if_not_exists(Settlement, wh_data['SettlementRef'], settlement_parameters)
-                    create_obj_if_not_exists(City, wh_data['CityRef'], city_parameters)
-                    # Если справочник типов отделений не обновлялся в этом запросе то проверить существует ли в базе такой тип
-                    if not types_of_warehouses_updated:
-                        # Если такой тип отсутсвует обновить весь справочник типов отделений
-                        if not TypeOfWarehouse.objects.filter(ref=wh_data['TypeOfWarehouse']).exists():
-                            print('Обновление списка типов отделений')
-                            message_text += '<h5>Обновление списка типов отделений </h5>'
-                            is_response_types_success = False
-                            while not is_response_types_success:
-                                try:
-                                    response_type_dict = get_response(
-                                        {
-                                            "modelName": "Address",
-                                            "calledMethod": "getWarehouseTypes",
-                                            "methodProperties": {}
-                                        }
-                                    )
-                                    is_response_types_success = True
-                                    types_of_warehouses_updated = True
-                                    print(f'Статус запроса {response_type_dict["success"]}')
-                                    print(f'Получены данные {len(all_types_data := response_type_dict["data"])} типов '
-                                          f'отделений')
-                                    types_to_create = []
-                                    for type_data in all_types_data:
-                                        types_to_create.append(
-                                            TypeOfWarehouse(
-                                                ref=type_data['Ref'],
-                                                description_ru=type_data['Description'],
-                                                description_ua=type_data['DescriptionRu']
-                                            )
-                                        )
-                                    TypeOfWarehouse.objects.bulk_create(types_to_create)
-                                except requests.exceptions.Timeout:
-                                    print(
-                                        f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка запроса типов отд')
-                    # формирование списка отделений для создания
-                    warehouse = Warehouse()
-                    # Пройтись по всем полям
-                    for param in warehouse_parameters:
-                        setattr(Warehouse, param.db_field, wh_data[param.api_field])
-                    to_create_warehouses.append(warehouse)
-                    added_warehouses_count += 1
-            Warehouse.objects.bulk_create(to_create_warehouses)
-            if edited_warehouses_count:
-                Warehouse.objects.bulk_update(changed_warehouses, changed_fields)
-
-        except requests.exceptions.Timeout:
-            print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
-            print()
-            message_text += f'Превышен лимит {timeout_limit}c врмени ожидания загрузки данных страницы №{page} ' \
-                            f'/ Повторная попытка - <br>'
-    message_text += '=' * 80 + '<br>'
-    print('=' * 80)
-    total_info = f'На сервере просмотрено {count} отделений. <br> Всего добавлено отделений {added_warehouses_count}, всего ' \
-                 f'изменено отделений {edited_warehouses_count} '
-    message_text += total_info
-    print(total_info)
-    messages.add_message(request, messages.SUCCESS, format_html(message_text))
-    return HttpResponseRedirect(reverse('admin:ROOTAPP_warehouse_changelist'))
+# def update_warehouses(request):
+#     warehouses_request_dict = {
+#         "modelName": "Address",
+#         "calledMethod": "getWarehouses",
+#         "methodProperties": {
+#             "Limit": str(big_limit)
+#         }
+#     }
+#     message_text = ''
+#     page = 1
+#     count = 0
+#     added_warehouses_count = 0
+#     edited_warehouses_count = 0
+#     types_of_warehouses_updated = False
+#     data = request.GET
+#     warehouses_limit = int(warehouses_request_dict["methodProperties"]["Limit"])
+#     ln = warehouses_limit
+#
+#     # добавить в запрос к АПИ фильтр по населенному пункту если это задано
+#     if data:
+#         if 'settlement' in data.keys():
+#             settlement_ref = data['settlement']
+#             warehouses_request_dict['methodProperties']['SettlementRef'] = settlement_ref
+#             settlement = Settlement.objects.get(ref=settlement_ref)
+#             message_text = f'<h4>Обновление списка отделений в населенном пункте {settlement}</h4> <br>'
+#         else:
+#             message_text = f'<h4>Полное обновление списка отделений</h4> <br>'
+#
+#     while ln == warehouses_limit:
+#         warehouses_request_dict["methodProperties"]["Page"] = str(page)
+#         print(f'Запрос страницы сервера #{page}')
+#
+#         try:
+#             warehouse_response_dict = get_response(warehouses_request_dict)
+#             page += 1
+#             ln = len(all_warhauses_data := warehouse_response_dict['data'])
+#             print(f'Статус запроса {warehouse_response_dict["success"]}')
+#             print(f'Получены данные {ln}отделений , лимит: {warehouses_limit}')
+#             print()
+#             message_text += f'<h5> Загрузка страницы №{page} (по {warehouses_limit}' \
+#                             f' отделения на старнице) - {warehouse_response_dict["success"]} + </h5>>'
+#
+#             for wh_data in all_warhauses_data:
+#                 to_create_warehouses = []
+#                 changed_warehouses = []
+#                 changed_fields = set()
+#                 count += 1
+#                 # обновить отделение если оно уже есть в базе
+#                 if Warehouse.objects.filter(ref=wh_data['Ref']).exists():
+#                     warehouse_change_data = get_and_apply_changes(
+#                         Warehouse.objects.get(ref=wh_data['Ref']), warehouse_parameters, wh_data
+#                     )
+#                     if warehouse_change_data['changed']:
+#                         edited_warehouses_count += 1
+#                         message_text += warehouse_change_data['new_message_text']
+#                         changed_warehouses.append(warehouse_change_data['changed_obj'])
+#                         changed_fields.update(warehouse_change_data['changed_fields'])
+#
+#                 # создать отделение
+#                 else:
+#                     if wh_data['SettlementRef'] == '00000000-0000-0000-0000-000000000000':
+#                         continue
+#                     #  проверить налчиие в баще необходимой области и района
+#                     # если отсутвует то сделать подхапрос и создать
+#                     create_obj_if_not_exists(Settlement, wh_data['SettlementRef'], settlement_parameters)
+#                     create_obj_if_not_exists(City, wh_data['CityRef'], city_parameters)
+#                     # Если справочник типов отделений не обновлялся в этом запросе то проверить существует ли в базе такой тип
+#                     if not types_of_warehouses_updated:
+#                         # Если такой тип отсутсвует обновить весь справочник типов отделений
+#                         if not TypeOfWarehouse.objects.filter(ref=wh_data['TypeOfWarehouse']).exists():
+#                             print('Обновление списка типов отделений')
+#                             message_text += '<h5>Обновление списка типов отделений </h5>'
+#                             is_response_types_success = False
+#                             while not is_response_types_success:
+#                                 try:
+#                                     response_type_dict = get_response(
+#                                         {
+#                                             "modelName": "Address",
+#                                             "calledMethod": "getWarehouseTypes",
+#                                             "methodProperties": {}
+#                                         }
+#                                     )
+#                                     is_response_types_success = True
+#                                     types_of_warehouses_updated = True
+#                                     print(f'Статус запроса {response_type_dict["success"]}')
+#                                     print(f'Получены данные {len(all_types_data := response_type_dict["data"])} типов '
+#                                           f'отделений')
+#                                     types_to_create = []
+#                                     for type_data in all_types_data:
+#                                         types_to_create.append(
+#                                             TypeOfWarehouse(
+#                                                 ref=type_data['Ref'],
+#                                                 description_ru=type_data['Description'],
+#                                                 description_ua=type_data['DescriptionRu']
+#                                             )
+#                                         )
+#                                     TypeOfWarehouse.objects.bulk_create(types_to_create)
+#                                 except requests.exceptions.Timeout:
+#                                     print(
+#                                         f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка запроса типов отд')
+#                     # формирование списка отделений для создания
+#                     warehouse = Warehouse()
+#                     # Пройтись по всем полям
+#                     for param in warehouse_parameters:
+#                         setattr(Warehouse, param.db_field, wh_data[param.api_field])
+#                     to_create_warehouses.append(warehouse)
+#                     added_warehouses_count += 1
+#             Warehouse.objects.bulk_create(to_create_warehouses)
+#             if edited_warehouses_count:
+#                 Warehouse.objects.bulk_update(changed_warehouses, changed_fields)
+#
+#         except requests.exceptions.Timeout:
+#             print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
+#             print()
+#             message_text += f'Превышен лимит {timeout_limit}c врмени ожидания загрузки данных страницы №{page} ' \
+#                             f'/ Повторная попытка - <br>'
+#     message_text += '=' * 80 + '<br>'
+#     print('=' * 80)
+#     total_info = f'На сервере просмотрено {count} отделений. <br> Всего добавлено отделений {added_warehouses_count}, всего ' \
+#                  f'изменено отделений {edited_warehouses_count} '
+#     message_text += total_info
+#     print(total_info)
+#     messages.add_message(request, messages.SUCCESS, format_html(message_text))
+#     return HttpResponseRedirect(reverse('admin:ROOTAPP_warehouse_changelist'))
 
 
 def update_np_catalogs(request, obj_type):
     types_settings = {
         'Settlement': ("getSettlements", settlement_parameters),
-        'City': ("getCity", city_parameters),
+        'City': ("getCities", city_parameters),
         'Warehouse': ("getWarehouses", warehouse_parameters),
     }
     called_method, data_structure = types_settings[obj_type.__name__]
@@ -172,10 +172,19 @@ def update_np_catalogs(request, obj_type):
     page, ln = 1, objects_limit
 
     if data:
+        print('FORM DATA: ', data)
         if 'search_name' in data.keys():
             search_by_descr = True
             objects_request_dict['methodProperties']['FindByString'] = (search_name := data['search_name'])
             message_text = f'Обновление списка элементов справочника по запросу {search_name} <br>'
+        if 'settlement' in data.keys():
+            search_by_descr = True
+            objects_request_dict['methodProperties']['SettlementRef'] = (search_name := data['settlement'])
+            message_text = f'Обновление справочник отделений по указанному населенному пункту <br>'
+        if 'city' in data.keys():
+            search_by_descr = True
+            objects_request_dict['methodProperties']['Ref'] = (search_name := data['city'])
+            message_text = f'Обновление справочник улиц по указанному городу  <br>'
 
     while ln == objects_limit:
         objects_to_create, changed_objects, changed_fields = [], [], set()
@@ -195,9 +204,12 @@ def update_np_catalogs(request, obj_type):
             page += 1
 
             for obj_data in all_objects_data:
-                region = f", {obj_data['RegionsDescriptionRu']}" if obj_type == Settlement else ''
-                object_name = f"№{objects_position}: {obj_data['DescriptionRu']}/{obj_data['Description']} " \
-                                      f"({obj_data['AreaDescriptionRu']}{region})"
+                if obj_type == Warehouse:
+                    object_name = obj_data['DescriptionRu']
+                else:
+                    region = f", {obj_data['RegionsDescriptionRu']}" if obj_type == Settlement else ''
+                    object_name = f"№{objects_position}: {obj_data['DescriptionRu']}/{obj_data['Description']} " \
+                                  f"({obj_data['AreaDescriptionRu']}{region})"
                 if search_by_descr:
                     message_text += f'Найдено {object_name} <br>'
                     print(f'Найдено {object_name}')
@@ -213,8 +225,8 @@ def update_np_catalogs(request, obj_type):
                         changed_fields.update(object_changes_data['changed_fields'])
                         print(f'Изменено: {object_name}')
                 else:
-                    objects_to_create.append(build_settlement_or_city_to_create(
-                        obj_data, Settlement, data_structure)
+                    objects_to_create.append(build_objects_to_create(
+                        obj_data, obj_type, data_structure)
                     )
                     new_objects_names.append(object_name)
                     print(f'Добавлено: {object_name}')
@@ -265,10 +277,15 @@ def update_cities(request):
     return HttpResponseRedirect(reverse('admin:ROOTAPP_city_changelist'))
 
 
+def update_warehouses(request):
+    update_np_catalogs(request, Warehouse)
+    return HttpResponseRedirect(reverse('admin:ROOTAPP_warehouse_changelist'))
+
+
 def get_delivery_cost(request):
     number_of_attempts = 1
     max_number_of_attempts = 5
-    timeout_limit = 3.0
+    # timeout_limit = 3.0
     data_cost = {
         "modelName": "InternetDocument",
         "calledMethod": "getDocumentPrice",

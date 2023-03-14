@@ -18,7 +18,6 @@ limit = 150
 big_limit = 500
 timeout_limit = 3.0
 
-
 parameter_template = namedtuple('parameter_template', 'db_field api_field description')
 
 main_parameters = (
@@ -110,12 +109,12 @@ warehouse_parameters = main_parameters + (
         description='Код отделения'
     ),
     parameter_template(
-        db_field='settlement',
+        db_field='settlement_id',
         api_field='SettlementRef',
         description='Населенный пункт'
     ),
     parameter_template(
-        db_field='city',
+        db_field='city_id',
         api_field='CityRef',
         description='Город'
     ),
@@ -238,14 +237,7 @@ def get_response(request_dict):
     return json.loads(response.text)
 
 
-def build_settlement_or_city_to_create(data, db_model, parameters_template):
-    SettlementType.objects.get_or_create(
-        ref=data['SettlementType'],
-        defaults={
-            'description_ru': data['SettlementTypeDescriptionRu'],
-            'description_ua': data['SettlementTypeDescription']
-        }
-    )
+def area_create_if_not_exists(data):
     SettlementArea.objects.get_or_create(
         ref=data['Area'],
         defaults={
@@ -253,17 +245,57 @@ def build_settlement_or_city_to_create(data, db_model, parameters_template):
             'description_ua': data['AreaDescription']
         }
     )
-    if 'Region' in data.keys():
-        SettlementRegion.objects.get_or_create(
-            ref=data['Region'],
-            defaults={
-                'description_ru': data['RegionsDescriptionRu'],
-                'description_ua': data['RegionsDescription']
-            }
-        )
+
+
+def region_create_if_not_exists(data):
+    SettlementRegion.objects.get_or_create(
+        ref=data['Region'],
+        defaults={
+            'description_ru': data['RegionsDescriptionRu'],
+            'description_ua': data['RegionsDescription']
+        }
+    )
+
+
+def settlement_type_create_if_not_exists(data):
+    SettlementType.objects.get_or_create(
+        ref=data['SettlementType'],
+        defaults={
+            'description_ru': data['SettlementTypeDescriptionRu'],
+            'description_ua': data['SettlementTypeDescription']
+        }
+    )
+
+
+def build_objects_to_create(data, db_model, parameters_template, is_sub_request=None):
+    match db_model.__name__:
+        case 'Settlement':
+            settlement_type_create_if_not_exists(data)
+            area_create_if_not_exists(data)
+            region_create_if_not_exists(data)
+        case 'City':
+            settlement_type_create_if_not_exists(data)
+            area_create_if_not_exists(data)
+        case 'Warehouse':
+
+            if not Settlement.objects.filter(ref=data['SettlementRef']).exists():
+                settlement_request_dict = {
+                    "modelName": "Address",
+                    "calledMethod": 'getSettlements',
+                    "methodProperties": {
+                        "Limit": '1'
+                    }
+                }
+                build_objects_to_create(
+                    get_response(settlement_request_dict[0], settlement_parameters, Settlement, True)
+                )
+                settlement_type_create_if_not_exists(settlement_request_dict[0])
+
     obj_to_create = db_model()
     for param in parameters_template:
         setattr(obj_to_create, param.db_field, data[param.api_field])
+    if is_sub_request:
+        obj_to_create.save()
     return obj_to_create
 
 
@@ -274,7 +306,7 @@ def create_obj_if_not_exists(obj_model, ref, obj_parameters):
         while not request_result:
             try:
                 to_create_data = get_response(obj_parameters)['data'][0]
-                created_obj = build_settlement_or_city_to_create(to_create_data, obj_model)
+                created_obj = build_objects_to_create(to_create_data, obj_model)
                 created_obj.save()
                 request_result = True
                 return f'<h5>Создан {obj_model._meta.verbose_name} {created_obj} </h5>'
