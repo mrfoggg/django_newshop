@@ -267,6 +267,30 @@ def settlement_type_create_if_not_exists(data):
     )
 
 
+def get_one_settlement_api_data(settlement_ref):
+    settlement_request_dict = {
+        "modelName": "Address",
+        "calledMethod": 'getSettlements',
+        "methodProperties": {
+            "Limit": '1',
+            "Ref": settlement_ref
+        }
+    }
+    return get_response(settlement_request_dict)['data'][0]
+
+
+def get_one_city_api_data(city_ref):
+    city_request_dict = {
+        "modelName": "Address",
+        "calledMethod": 'getCities',
+        "methodProperties": {
+            "Limit": '1',
+            "Ref": city_ref
+        }
+    }
+    return get_response(city_request_dict)['data'][0]
+
+
 def build_objects_to_create(data, db_model, parameters_template, is_sub_request=None):
     match db_model.__name__:
         case 'Settlement':
@@ -277,19 +301,15 @@ def build_objects_to_create(data, db_model, parameters_template, is_sub_request=
             settlement_type_create_if_not_exists(data)
             area_create_if_not_exists(data)
         case 'Warehouse':
+            if not Settlement.objects.filter(ref=(settlement_ref := data['SettlementRef'])).exists():
+                settlement_response_data = get_one_settlement_api_data(settlement_ref)
+                build_objects_to_create(settlement_response_data, Settlement, settlement_parameters, True)
+                settlement_type_create_if_not_exists(settlement_response_data)
 
-            if not Settlement.objects.filter(ref=data['SettlementRef']).exists():
-                settlement_request_dict = {
-                    "modelName": "Address",
-                    "calledMethod": 'getSettlements',
-                    "methodProperties": {
-                        "Limit": '1'
-                    }
-                }
-                build_objects_to_create(
-                    get_response(settlement_request_dict[0], settlement_parameters, Settlement, True)
-                )
-                settlement_type_create_if_not_exists(settlement_request_dict[0])
+            if not City.objects.filter(ref=(city_ref := data['CityRef'])).exists():
+                city_response_data = get_one_city_api_data(city_ref)
+                build_objects_to_create(city_response_data, City, city_parameters, True)
+                settlement_type_create_if_not_exists(city_response_data)
 
     obj_to_create = db_model()
     for param in parameters_template:
