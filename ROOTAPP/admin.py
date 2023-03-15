@@ -172,6 +172,9 @@ class WarehouseAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
     def get_fields(self, request, obj=None):
         if obj is not None:
             return self.fields + ['map_link']

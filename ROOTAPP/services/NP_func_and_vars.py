@@ -359,7 +359,7 @@ def get_one_city_api_data(city_ref):
             print()
 
 
-def build_objects_to_create(data, db_model, parameters_template, is_sub_request=None):
+def build_objects_to_create(data, db_model, parameters_template, is_sub_request=False, fix=False):
     messages = ''
     match db_model.__name__:
         case 'Settlement':
@@ -369,28 +369,33 @@ def build_objects_to_create(data, db_model, parameters_template, is_sub_request=
             if is_sub_request:
                 messages += f'<h5>Создан населенный пункт {data["DescriptionRu"]}</h5>'
         case 'City':
-            messages += settlement_type_create_if_not_exists(data)
-            messages += city_area_create_if_not_exists(data)
+            if not fix:
+                messages += settlement_type_create_if_not_exists(data)
+                messages += city_area_create_if_not_exists(data)
             if is_sub_request:
                 messages = f'<h5>Создан город {data["DescriptionRu"]}</h5>'
         case 'Warehouse':
-            if not Settlement.objects.filter(ref=(settlement_ref := data['SettlementRef'])).exists():
-                settlement_response_data = get_one_settlement_api_data(settlement_ref)
-                new_msg = build_objects_to_create(settlement_response_data, Settlement, settlement_parameters, True)[1]
-                new_msg_2 = settlement_type_create_if_not_exists(settlement_response_data)
-                messages += new_msg
-                messages += new_msg_2
+            if not (settlement_ref := data['SettlementRef']) == '00000000-0000-0000-0000-000000000000':
+                if not Settlement.objects.filter(ref=settlement_ref).exists():
+                    settlement_response_data = get_one_settlement_api_data(settlement_ref)
+                    new_msg = build_objects_to_create(settlement_response_data, Settlement, settlement_parameters, True)[1]
+                    new_msg_2 = settlement_type_create_if_not_exists(settlement_response_data)
+                    messages += new_msg
+                    messages += new_msg_2
+            else:
+                data['SettlementRef'] = None
 
             if not City.objects.filter(ref=(city_ref := data['CityRef'])).exists():
                 city_response_data = get_one_city_api_data(city_ref)
                 # тут делаю fix багов API - находится отделение в городе Высокие Байраки но такого города нет в справонике городов
-                data = city_response_data if city_response_data else {
+                city_data = city_response_data if city_response_data else {
                     'Ref': data['CityRef'], 'DescriptionRu': data['CityDescriptionRu'],
-                    'DescriptionRu': data['CityDescription'], 'Area': None, 'CityID': None, 'IsBranch': None,
-                    'prevent_entry_new_streets_user': None
+                    'Description': data['CityDescription'], 'Area': None, 'CityID': None, 'IsBranch': None,
+                    'PreventEntryNewStreetsUser': None, 'SettlementType': None,
                 }
-                new_msg = build_objects_to_create(data, City, city_parameters, True)[1]
-                settlement_type_create_if_not_exists(data)
+                new_msg = build_objects_to_create(city_data, City, city_parameters, True, True)[1]
+                # if city_response_data:
+                # settlement_type_create_if_not_exists(data)
                 messages += new_msg
 
             if not TypeOfWarehouse.objects.filter(ref=data['TypeOfWarehouse']).exists():

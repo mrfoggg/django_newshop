@@ -244,10 +244,10 @@ def reformate_coord(dd):
 class Warehouse(models.Model):
     ref = models.CharField('Ref отделения', max_length=36, primary_key=True)
     site_key = models.CharField('Код отделения', max_length=10, default=None)
-    region_city = models.CharField('Область/город', max_length=36, default=None)
+    region_city = models.CharField('Область/город', max_length=36, default=None, null=True)
     type_warehouse = models.ForeignKey(TypeOfWarehouse, max_length=36, default=None, on_delete=models.CASCADE,
                                        verbose_name="Тип отделения", related_name='warhauses', db_index=True)
-    settlement = models.ForeignKey(Settlement, default=None, on_delete=models.CASCADE,
+    settlement = models.ForeignKey(Settlement, default=None, on_delete=models.CASCADE, null=True,
                                    verbose_name="Населенный пункт", related_name='warhauses', db_index=True)
     city = models.ForeignKey(City, default=None, on_delete=models.CASCADE,
                              verbose_name="Город", related_name='warhauses', db_index=True)
