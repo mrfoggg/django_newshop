@@ -211,9 +211,10 @@ class City(SettlementOrCity):
         verbose_name_plural = 'Города новой почты'
         ordering = ('description_ru',)
 
-
     def __str__(self):
-        return f'{self.type.description_ua} {self.description_ua} ({self.area.description_ua})'
+        area = f'({self.area.description_ua})' if self.area else ''
+        tp = self.type.description_ua if self.type else ''
+        return f'{tp} {self.description_ua} {area}'
 
 
 class TypeOfWarehouse(models.Model):
