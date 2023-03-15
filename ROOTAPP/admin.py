@@ -123,8 +123,12 @@ class SettlementAdmin(admin.ModelAdmin):
     search_fields = ('description_ru', 'description_ua', 'index_1')
     inlines = (WarehouseForSettlementInline,)
 
-    # def has_change_permission(self, request, obj=None):
-    #     return False
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(City)
 class CityAdmin(admin.ModelAdmin):
@@ -140,8 +144,11 @@ class CityAdmin(admin.ModelAdmin):
     search_fields = ('description_ru', 'description_ua',)
     # inlines = (WarehouseForSettlementInline,)
 
-    # def has_change_permission(self, request, obj=None):
-    #     return False
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Warehouse)

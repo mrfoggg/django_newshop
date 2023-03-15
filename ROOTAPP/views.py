@@ -225,9 +225,9 @@ def update_np_catalogs(request, obj_type):
                         changed_fields.update(object_changes_data['changed_fields'])
                         print(f'Изменено: {object_name}')
                 else:
-                    objects_to_create.append(build_objects_to_create(
-                        obj_data, obj_type, data_structure)
-                    )
+                    new_objects, mess_new_obj = build_objects_to_create(obj_data, obj_type, data_structure)
+                    objects_to_create.append(new_objects)
+                    message_text += mess_new_obj
                     new_objects_names.append(object_name)
                     print(f'Добавлено: {object_name}')
                     added_objects_count += 1

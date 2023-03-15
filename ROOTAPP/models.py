@@ -134,8 +134,22 @@ class SettlementArea(models.Model):
     description_ua = models.CharField('Название области укр.', max_length=64, default=None)
 
     class Meta:
-        verbose_name = 'Область'
-        verbose_name_plural = 'Области'
+        verbose_name = 'Область населенного пункта'
+        verbose_name_plural = 'Областя населенніх пунктов'
+        ordering = ('description_ru',)
+
+    def __str__(self):
+        return self.description_ru
+
+
+class CityArea(models.Model):
+    ref = models.CharField('Ref области', max_length=64, primary_key=True)
+    description_ru = models.CharField('Название области', max_length=64, default=None)
+    description_ua = models.CharField('Название области укр.', max_length=64, default=None)
+
+    class Meta:
+        verbose_name = 'Область города'
+        verbose_name_plural = 'Областя городовов'
         ordering = ('description_ru',)
 
     def __str__(self):
@@ -162,13 +176,13 @@ class SettlementOrCity(models.Model):
     ref = models.CharField('Ref', max_length=36, primary_key=True)
     type = models.ForeignKey(SettlementType, on_delete=models.CASCADE, db_index=True, null=True,
                              verbose_name='Тип населенного пункта')
-    area = models.ForeignKey(SettlementArea, on_delete=models.CASCADE, db_index=True, verbose_name="Область", null=True)
 
     class Meta:
         abstract = True
 
 
 class Settlement(SettlementOrCity):
+    area = models.ForeignKey(SettlementArea, on_delete=models.CASCADE, db_index=True, verbose_name="Область", null=True)
     region = models.ForeignKey(SettlementRegion, on_delete=models.CASCADE, verbose_name="Район", null=True)
     warehouse = models.BooleanField('Наличие отделений', null=True)
     index_1 = models.CharField('Начало диапазона индексов', max_length=10, null=True)
@@ -187,13 +201,16 @@ class Settlement(SettlementOrCity):
 
 
 class City(SettlementOrCity):
+    area = models.ForeignKey(CityArea, on_delete=models.CASCADE, db_index=True, verbose_name="Область", null=True)
     city_id = models.CharField('Код города', null=True, max_length=36)
-    is_branch = models.BooleanField('Филиал или партнер')
-    prevent_entry_new_streets_user = models.BooleanField('Запрет ввода новых улиц')
+    is_branch = models.BooleanField('Филиал или партнер', null=True)
+    prevent_entry_new_streets_user = models.BooleanField('Запрет ввода новых улиц', null=True)
 
     class Meta:
         verbose_name = 'Город новой почты'
         verbose_name_plural = 'Города новой почты'
+        ordering = ('description_ru',)
+
 
     def __str__(self):
         return f'{self.type.description_ua} {self.description_ua} ({self.area.description_ua})'
@@ -227,6 +244,7 @@ def reformate_coord(dd):
 class Warehouse(models.Model):
     ref = models.CharField('Ref отделения', max_length=36, primary_key=True)
     site_key = models.CharField('Код отделения', max_length=10, default=None)
+    region_city = models.CharField('Область/город', max_length=36, default=None)
     type_warehouse = models.ForeignKey(TypeOfWarehouse, max_length=36, default=None, on_delete=models.CASCADE,
                                        verbose_name="Тип отделения", related_name='warhauses', db_index=True)
     settlement = models.ForeignKey(Settlement, default=None, on_delete=models.CASCADE,
