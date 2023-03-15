@@ -160,7 +160,9 @@ class WarehouseAdmin(admin.ModelAdmin):
 
     autocomplete_fields = ('settlement',)
     list_filter = ('type_warehouse',)
+    list_display = ('settlement', '__str__', )
     search_fields = ('description_ua',)
+    ordering = ('settlement', 'number')
 
     def changelist_view(self, request, extra_context=None):
         # extra_context = extra_context or {}
