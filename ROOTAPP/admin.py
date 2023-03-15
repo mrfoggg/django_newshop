@@ -163,6 +163,7 @@ class WarehouseAdmin(admin.ModelAdmin):
     list_display = ('settlement', '__str__', )
     search_fields = ('description_ua',)
     ordering = ('settlement', 'number')
+    list_display_links = ('__str__',)
 
     def changelist_view(self, request, extra_context=None):
         # extra_context = extra_context or {}
