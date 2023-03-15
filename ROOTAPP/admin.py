@@ -161,7 +161,7 @@ class WarehouseAdmin(admin.ModelAdmin):
     autocomplete_fields = ('settlement',)
     list_filter = ('type_warehouse',)
     list_display = ('settlement', '__str__', )
-    search_fields = ('description_ua',)
+    search_fields = ('description_ua', 'settlement__description_ua', 'settlement__description_ru')
     ordering = ('settlement', 'number')
     list_display_links = ('__str__',)
 
