@@ -162,7 +162,7 @@ def update_np_catalogs(request, obj_type):
         "modelName": "Address",
         "calledMethod": called_method,
         "methodProperties": {
-            "Limit": str(limit)
+            "Limit": '500' if obj_type == Warehouse else '150'
         }
     }
     data, message_text = request.GET, ''
