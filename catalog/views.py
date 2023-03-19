@@ -7,10 +7,13 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
-from ROOTAPP.forms import AddressForm
-from ROOTAPP.models import Settlement
+# from nova_poshta.forms import AddressForm
+# from nova_poshta.models import Settlement
 from catalog.models import Category, Brand, ProductSeries, Product, ShotAttribute, CategoryAddictProduct
 from django.views.generic.detail import DetailView
+
+from nova_poshta.forms import AddressForm
+from nova_poshta.models import Settlement
 
 
 # from django.views.decorators.csrf import csrf_exempt
@@ -358,7 +361,6 @@ class ProductView(DetailView):
             'last_categories': (last_cat := categories[max(categories.keys())]),
             'category': last_cat[0],
             'type_category': 'product', 'by_one_click_link_action': reverse('orders:by_one_click'),
-            'url_get_delivery_cost': reverse('root_app:get_delivery_cost'),
             'url_product_actions': reverse('root_app:product_actions'),
             'size': True if product.width or product.length or product.height or product.weight else False,
             'package_size': True if product.package_width or product.package_length or product.package_height else False,

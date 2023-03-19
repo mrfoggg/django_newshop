@@ -11,9 +11,8 @@ from django.urls import reverse
 from oauth2client.client import AccessTokenCredentials, Credentials
 from phonenumber_field.phonenumber import PhoneNumber
 from phonenumbers import geocoder
-# Create your views here.
 from ROOTAPP.models import Phone, PersonPhone, Person
-# from ROOTAPP.services.google_services import create_contact
+# from nova_poshta.services.google_services import create_contact
 from orders.models import OneClickUserSectionComment, ByOneclick
 from site_settings.models import APIkeyIpInfo, OAuthGoogle
 

@@ -1,24 +1,15 @@
 import django
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db import models
-from django.db.models import Subquery, When, ImageField, ExpressionWrapper
-from django.db.models.expressions import OuterRef, Case, F
-from django.http import HttpResponse
-from django.shortcuts import render
 
-# from ROOTAPP.views import HeaderView
-from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 
-from ROOTAPP.forms import PersonForm, PersonalInfoForm
+from ROOTAPP.forms import PersonalInfoForm
 from ROOTAPP.models import PersonPhone, Messenger
 from catalog.models import Product, Category, ProductImage
 from catalog.views import ProductView, CategoryView
 from main_page.models import Banner, Menu, SitePhone, Schedule, PopularCategory, PopularProduct, NewProduct
-from servises import get_products_annotated_prices
 from site_settings.models import SliderConfiguration, HeaderConfiguration, PhotoPlug
 from django.views.generic.base import TemplateView, View
-from django.views.generic.base import ContextMixin
 
 
 class MainPageView(TemplateView):
@@ -100,17 +91,19 @@ class CabinetView(TemplateView):
         ).values(
             'id', 'phone__number', 'm_id_list', 'phone'
         )
+        main_phone_id_query = PersonPhone.objects.filter(
+                phone_id=self.request.user.main_phone, person=self.request.user
+            )
+        delivery_phone_id_query = PersonPhone.objects.filter(
+                phone_id=self.request.user.delivery_phone, person=self.request.user
+            )
         context |= {
             'personal_info_form': PersonalInfoForm(instance=person),
             'person_phones': person_phones,
             # 'person_phones': PersonPhone.objects.filter(person=person),
             'messengers': Messenger.objects.all(),
-            'main_phone_id': PersonPhone.objects.get(
-                phone_id=self.request.user.main_phone, person=self.request.user
-            ).id,
-            'delivery_phone_id': PersonPhone.objects.get(
-                phone_id=self.request.user.delivery_phone, person=self.request.user
-            ).id,
+            'main_phone_id': main_phone_id_query.first().id if main_phone_id_query.exists() else None,
+            'delivery_phone_id': delivery_phone_id_query.first().id if delivery_phone_id_query.exists() else None,
             'phones_one': len(person_phones) == 1
         }
         return context

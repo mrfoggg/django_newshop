@@ -695,7 +695,7 @@ class ProductImage(models.Model):
         verbose_name_plural = "Фотографии товаров"
 
     def __str__(self):
-        return self.name
+        return f'{self.product} ({self.position}) - {self.name}'
 
 
 class Discount(models.Model):

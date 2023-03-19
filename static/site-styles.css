@@ -5550,6 +5550,7 @@ header {
   float: right;
 }
 .product-list-item-content__characteristics-item {
+  font-size: 1rem;
   display: flex;
   justify-content: space-between;
   flex-wrap: nowrap;
@@ -6447,8 +6448,7 @@ header {
   cursor: pointer;
   border-color: #A93CF3;
 }
-
-.product-list-item-content__characteristics-item {
+.product__main-data-sidebar .product-list-item-content__characteristics-item {
   font-size: 1.4rem;
 }
 
@@ -6474,6 +6474,7 @@ header {
   float: right;
 }
 .product__main-data-sidebar-products__characteristics-item {
+  font-size: 1rem;
   display: flex;
   justify-content: space-between;
   flex-wrap: nowrap;

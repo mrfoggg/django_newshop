@@ -139,7 +139,8 @@ class ByOneclickPersonalComment(models.Model):
 
 
 class Basket(models.Model):
-    customer = models.ForeignKey(get_user_model(), verbose_name="Пользователь", on_delete=models.SET_NULL, null=True)
+    customer = models.ForeignKey(Person, verbose_name="Пользователь", on_delete=models.SET_NULL, null=True)
+    # customer = models.ForeignKey(get_user_model(), verbose_name="Пользователь", on_delete=models.SET_NULL, null=True)
 
 
 # В заказе должно быть поле тип заказа: на сайте, ванклик или по телефону

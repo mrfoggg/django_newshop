@@ -69,14 +69,13 @@ INSTALLED_APPS = [
     'finance',
     'main_page',
     'orders',
-
+    'nova_poshta',
     'django_svg_image_form_field',
     'solo',
     'site_settings',
     'phonenumber_field',
     'babel',
     'baton.autodiscover',
-
 ]
 SITE_ID = 1
 
@@ -408,5 +407,5 @@ OTP_TWILIO_FROM = '+16154374918'
 # SOCIALACCOUNT_FORMS = {
     # 'disconnect': 'allauth.socialaccount.forms.DisconnectForm',
     # 'signup': 'allauth.socialaccount.forms.SignupForm',
-#     'reset_password': 'ROOTAPP.forms.MyCustomResetPasswordForm',
+#     'reset_password': 'nova_poshta.forms.MyCustomResetPasswordForm',
 # }

@@ -3,10 +3,10 @@
     <div class="product-list-item-content">
         <div class="product-list-item-content__img-slider-wrapper">
             {% with photo_count=product.images.count %}
-            {% thumbnail photo_plug "300" as plug %}
+            {% thumbnail photo_plug "305" as plug %}
                 {% if photo_count == 0 %}
                     <a href="{{ product.get_absolute_url }}">
-                        <img src="{{ plug.url }}" >
+                        <img src="{{ photo_plug.url }}" >
                     </a>
                 {% elif photo_count == 1 %}
                     {% thumbnail product.images.first.image "300" as im %}
@@ -17,7 +17,7 @@
                 {% else %}
                     <div class="product-list-item-content__img-slider data-slick='{}'">
                         {% for imgplacing in product.images.all %}
-                            {% thumbnail imgplacing.image "300" as im %}
+                            {% thumbnail imgplacing.image "305" as im %}
                                 <a href="{{ product.get_absolute_url }}">
                                     {% if forloop.first %}
                                         <img src="{{ im.url }}">
@@ -37,7 +37,6 @@
         </div>
         <div class="product-list-item-content__actions">
             <span class="product-list-item-content__price">{{ total_price|floatformat:2 }} ₴</span>
-{#            discount {{ discount }}#}
             {% if discount %}
                 <span class="product-list-item-content__price--old">{{ old_price|floatformat:2 }} ₴</span>
             {% endif %}
