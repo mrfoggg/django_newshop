@@ -95,8 +95,8 @@ class Person(AbstractUser):
 
 
 class PersonPhone(models.Model):
-    person = models.ForeignKey(Person, null=True, blank=True, on_delete=models.SET_NULL, related_name='phones')
-    phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.SET_NULL)
+    person = models.ForeignKey(Person, null=True, blank=True, on_delete=models.CASCADE, related_name='phones')
+    phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.CASCADE)
     is_nova_poshta = models.BooleanField('Привязан к новой почте', default=False)
 
     class Meta:

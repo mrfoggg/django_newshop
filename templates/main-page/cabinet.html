@@ -47,41 +47,45 @@
                                     Номер входу в особистий кабінет
                                 </div>
                                 <div></div>
-                                {% for person_phone in person_phones %}
-                                    <div class="cabinet-phones-column cabinet-phones-phone" data-id={{ person_phone.id }}>
-                                        <span>+38 (0</span>
-                                        <input class="phone-number-input {% val_if_eq person_phone.id main_phone_id 'disabled' %}" name="phone_{{ person_phone.id }}" type="text" autocomplete="off" value="{{ person_phone.phone__number | strip_phone }}" {% val_if_eq person_phone.id main_phone_id 'disabled' %}>
-                                    </div>
-                                    <div class="cabinet-phones-column cabinet-phones-messangers" data-id={{ person_phone.id }}>
-                                        {% for m in messengers %}
-                                            <label>
-                                                {{ m }}
-                                                <input type="checkbox" name="messengers_{{ person_phone.id }}" value="{{ m.id }}" {% val_when_in m.id person_phone.m_id_list 'checked' %}>
-                                                <div class="checkbox--visible"></div>
-                                            </label>
-                                        {% endfor %}
-                                    </div>
-                                    <div class="cabinet-phones-column cabinet-phones-radios" data-id={{ person_phone.id }}>
-                                        <label>
-                                            <input type="radio" name="is_delivery_phone" value="{{ person_phone.id }}" {% val_if_eq person_phone.id delivery_phone_id 'checked' %}>
-                                            <div class="checkbox--visible checkbox--visible-radio"></div>
-                                        </label>
-                                    </div>
 
-                                    <div class="cabinet-phones-column cabinet-phones-radios" data-id={{ person_phone.id }}>
-                                        <label>
-                                            <input type="radio" name="is_main_phone" value="{{ person_phone.id }}" {% val_if_eq person_phone.id main_phone_id 'checked' %}>
-                                            <div class="checkbox--visible checkbox--visible-radio"></div>
-                                        </label>
-                                    </div>
-                                    <div class="cabinet-phones-column del-row" data-id='{{ person_phone.id }}' data-new='no' style="{% values_by_condition phones_one 'display: none;' %}">
-                                        <div class="del" data-id={{ person_phone.id }} data-phone={{ person_phone.phone__number }} data-new-del='no'></div>
-                                    </div>
+                                {% for person_phone in person_phones %}
+                                    {% if person_phone.phone__number %}
+
+                                        <div class="cabinet-phones-column cabinet-phones-phone" data-id={{ person_phone.id }}>
+                                            <span>+38 (0</span>
+                                            <input class="phone-number-input {% val_if_eq person_phone.id main_phone_id 'disabled' %}" name="phone_{{ person_phone.id }}" type="text" autocomplete="off" value="{{ person_phone.phone__number | strip_phone }}" {% val_if_eq person_phone.id main_phone_id 'disabled' %} data-valid="true" data-wrong-values="">
+                                        </div>
+                                        <div class="cabinet-phones-column cabinet-phones-messangers" data-id={{ person_phone.id }}>
+                                            {% for m in messengers %}
+                                                <label>
+                                                    {{ m }}
+                                                    <input type="checkbox" name="messengers_{{ person_phone.id }}" value="{{ m.id }}" {% val_when_in m.id person_phone.m_id_list 'checked' %}>
+                                                    <div class="checkbox--visible"></div>
+                                                </label>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="cabinet-phones-column cabinet-phones-radios" data-id={{ person_phone.id }}>
+                                            <label>
+                                                <input type="radio" name="is_delivery_phone" value="{{ person_phone.id }}" {% val_if_eq person_phone.id delivery_phone_id 'checked' %}>
+                                                <div class="checkbox--visible checkbox--visible-radio"></div>
+                                            </label>
+                                        </div>
+
+                                        <div class="cabinet-phones-column cabinet-phones-radios" data-id={{ person_phone.id }}>
+                                            <label>
+                                                <input type="radio" name="is_main_phone" value="{{ person_phone.id }}" {% val_if_eq person_phone.id main_phone_id 'checked' %}>
+                                                <div class="checkbox--visible checkbox--visible-radio"></div>
+                                            </label>
+                                        </div>
+                                        <div class="cabinet-phones-column del-row" data-id='{{ person_phone.id }}' data-new='no' style="{% values_by_condition phones_one 'display: none;' %}">
+                                            <div class="del" data-id={{ person_phone.id }} data-phone={{ person_phone.phone__number }} data-new-del='no'></div>
+                                        </div>
+                                    {% endif %}
 
                                 {% endfor %}
                                 <div class="cabinet-phones-column cabinet-phones-phone template" data-id='new' data-new='new' id="temlateNewFirstElement" style='display: none;'>
                                     <span>+38 (0</span>
-                                    <input class="phone-number-input" type="text" autocomplete="off" disabled>
+                                    <input class="phone-number-input" type="text" autocomplete="off" disabled data-valid="true" data-wrong-values="">
                                 </div>
                                 <div class="cabinet-phones-column cabinet-phones-messangers template" data-id='new' data-new='new' style='display: none;'>
                                     {% for m in messengers %}

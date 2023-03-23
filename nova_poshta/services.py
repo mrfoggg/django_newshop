@@ -252,8 +252,6 @@ warehouse_parameters = main_parameters + coordinates_parameters + (
 )
 
 
-
-
 def get_response(request_dict):
     request_json = json.dumps(request_dict, indent=4)
     response = requests.post(url_np, data=request_json, timeout=timeout_limit)
@@ -397,7 +395,7 @@ def build_objects_to_create(data, db_model, parameters_template, is_sub_request=
                 if not Settlement.objects.filter(ref=settlement_ref).exists():
                     settlement_response_data = get_one_settlement_api_data(settlement_ref)
                     new_msg = \
-                    build_objects_to_create(settlement_response_data, Settlement, settlement_parameters, True)[1]
+                        build_objects_to_create(settlement_response_data, Settlement, settlement_parameters, True)[1]
                     new_msg_2 = settlement_type_create_if_not_exists(settlement_response_data)
                     messages += new_msg
                     messages += new_msg_2

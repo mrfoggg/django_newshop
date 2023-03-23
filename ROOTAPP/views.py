@@ -219,7 +219,7 @@ def get_and_check_registration_phone(request):
     phone = Phone.objects.get_or_create(number=number.as_e164)[0]
     print('PHONE', phone)
     if Person.objects.filter(main_phone=phone).exists():
-        user, is_created_user = Person.objects.get_or_create(main_phone=phone, is_customer=True)
+        user, is_created_user = Person.objects.get_or_create(main_phone=phone)
     else:
         user, is_created_user = Person.objects.get_or_create(main_phone=phone, username=number, is_customer=True)
         user_phone, is_create_phone = PersonPhone.objects.get_or_create(phone=phone, person=user)
@@ -395,6 +395,7 @@ def update_user_phones(request):
             str_phone = ''.join(x for x in phone_inp if x.isdigit())
             number = PhoneNumber.from_string(str_phone, region='UA')
             if not geocoder.description_for_number(number, "ru"):
+                print(f'НЕВЕРНЫЙ НОМЕР: {number}')
                 errors_list.append(f'Номер {number.as_e164} не сбережено. Невірний номер')
                 numbers_data[ph_key] = {'valid': False}
                 wrong_inputs_id_list.append(key[6:])
@@ -405,51 +406,88 @@ def update_user_phones(request):
                     'valid': True,
                     'new': new
                 }
-        if 'messengers_' in key:
-            print('mess_key -', mess_key)
-            numbers_data[mess_key]['messengers'] = request_data.getlist(key)
+                print('KEY - ', key)
+                print('numbers_data: ', numbers_data)
+                if 'messengers_' in key:
+                    print('mess_key -', mess_key)
+                    numbers_data[mess_key]['messengers'] = request_data.getlist(key)
 
     print('numbers_data: ', numbers_data)
 
     new_person_phone_id_dict = {}
+
+    is_old_person_phone_exists = PersonPhone.objects.filter(person_id=request.user.id).exists()
+    print('IS_OLD_PERSON_PHONE_EXISTS - ', is_old_person_phone_exists)
+    success_created_or_updated_person_phone_id_list = []
+    error_number_person_phone_id_list = []
     for person_phone_id, data in numbers_data.items():
         if data['valid']:
             if data['new']:
+                # создать номер телеофна в базе
                 new_phone, created = Phone.objects.get_or_create(number=data['number'])
                 if new_phone.messengers.exists():
                     old_messengers = list(new_phone.messengers.values_list('id', flat=True))
                 else:
                     new_phone.messengers.set(data['messengers'])
                     old_messengers = []
+                # создать телефон контрагента
                 new_person_phone = PersonPhone.objects.create(phone=new_phone, person_id=request.user.id)
                 new_person_phone_id_dict[person_phone_id] = {
                     'new_person_phone_id': new_person_phone.id,
-                    'old_messengers': old_messengers
+                    'old_messengers': old_messengers,
+                    'valid': True
                 }
+                success_created_or_updated_person_phone_id_list.append(new_person_phone.id)
             else:
+                # если не новая строка
+                # если номер не изменился то обновить месенжеры
                 old_number = PersonPhone.objects.get(id=person_phone_id)
+
                 if old_number.phone.number.as_e164 == data['number']:
                     old_number.phone.messengers.set(data['messengers'])
                 else:
+                    success_created_or_updated_person_phone_id_list.append(old_number.id)
+                    # если изменился то получить или  создать новый номер телефона и зменить ео в телефоне контрагента
                     new_phone, created = Phone.objects.get_or_create(number=data['number'])
                     old_number.phone = new_phone
                     old_number.save()
+                    # РЕАЛИЗВОАТЬ ИЗМЕНЕНИЕ МЕССЕНЖЕРОВ НА ФРОНТЕНДЕ ЕСЛИ НОВЫЙ НОМЕР СУЩЕСТВОВАЛ
                     new_phone.messengers.set(data['messengers'])
+        else:
+            new_person_phone_id_dict[person_phone_id] = {
+                'valid': False
+            }
     print('new_person_phone_id_dict - ', new_person_phone_id_dict)
     print('-' * 20)
-    main_phone_id_req = request_data.get('is_main_phone')
-    main_phone_id = new_person_phone_id_dict[main_phone_id_req] if 'new_' in main_phone_id_req else main_phone_id_req
+    # если не было ранее добавленых номеров
+    if not is_old_person_phone_exists:
+    # перебираем даные форм новых номеров и устанавливаем первый попавшийся корректный как номер для входа и доставки
+        for key in new_person_phone_id_dict.keys():
+            ph_id = new_person_phone_id_dict[key]['new_person_phone_id']
+            if ph_id in wrong_inputs_id_list:
+                continue
+            else:
+                main_phone_id = ph_id
+                delivery_phone_id = main_phone_id
+                break
+    else:
+        # если это не первый добавленый номер то номерами доставки и основного задаем согласно чекбокса переданой формы
+        main_phone_id_req = request_data.get('is_main_phone')
+        main_phone_id = new_person_phone_id_dict[main_phone_id_req] if 'new_' in main_phone_id_req else main_phone_id_req
+        delivery_phone_req = request_data.get('is_delivery_phone')
+        delivery_phone_id = new_person_phone_id_dict[
+            delivery_phone_req] if 'new_' in delivery_phone_req else delivery_phone_req
     main_phone = PersonPhone.objects.get(id=main_phone_id).phone
-    delivery_phone_req = request_data.get('is_delivery_phone')
-    delivery_phone_id = new_person_phone_id_dict[
-        delivery_phone_req] if 'new_' in delivery_phone_req else delivery_phone_req
     new_main_phone_id = False
     new_delivery_phone_id = False
+    # если номер входа ошибочный то не делаем ничего кроме вывода ошибки
     if main_phone_id in wrong_inputs_id_list:
         errors_list.append('Новий номер для входу не встановлено')
+    # если номер входа корректный проверяем не занят ли он для входа
     elif Person.objects.exclude(id=request.user.id).filter(main_phone=main_phone).exists():
         errors_list.append(f'Номер {number.as_e164} не можливо встановити для входу. Номер зайнятий')
     else:
+        # если все норм то задем номер как основной для текущего пользователя
         request.user.main_phone_id = PersonPhone.objects.get(id=main_phone_id).phone_id
         new_main_phone_id = main_phone_id
     if delivery_phone_id in wrong_inputs_id_list:
@@ -459,7 +497,10 @@ def update_user_phones(request):
         new_delivery_phone_id = delivery_phone_id
     request.user.save()
     return {
-        'result': False if len(errors_list) else True, 'new': new_person_phone_id_dict,
+        'is_exists_errors': False if len(errors_list) else True,
+        'success_created_or_updated_person_phone_id_list': success_created_or_updated_person_phone_id_list,
+        'new': new_person_phone_id_dict,
+        # 'wrong_inputs_id_list': wrong_inputs_id_list,
         'errors_list': errors_list, 'main_phone_id': new_main_phone_id, 'delivery_phone_id': new_delivery_phone_id
     }
 

@@ -1367,7 +1367,7 @@ $(document).ready(function(){
     //     }, 200);
     // });
 
-    ajaxForm($('#regenerateSmsTokenBtn'), (response) => {
+    ajaxForm($('#regenerateSmsTokenForm'), (response) => {
         $('#loginTitle').text(response['next_title_text']);
         runResendCodeTimer(response['resent_time']);
         runValidityTimer(response['validity_time']);
@@ -1477,53 +1477,90 @@ $(document).ready(function(){
     });
 
     ajaxForm($('#updateUserPhones'), (response) => {
-        if (response['result']){
-            notificationAddEmail.success('Телефонні номери успішно збережено');
-
-            let dictNew = response['new']
-            for(let ph in dictNew){
-                let oldNum = ph.slice(4);
+        let dictNew = response['new']
+        // console.log('new');
+        // console.log(response['new']);
+        for(let ph in dictNew){
+            let oldNum = ph.slice(4);
+            if (dictNew[ph]['valid']) {
                 let newId = dictNew[ph]['new_person_phone_id']
+                $(`input[name=new_phone_${oldNum}`).data('valid', true);
+                //переименовываем имена инпутов согласно созданых номеров контрагента
                 $(`input[name=new_phone_${oldNum}`).prop('name', `phone_${newId}`);
                 $(`input[name=new_messengers_${oldNum}]`).prop('name', `messengers_${newId}`);
+                //проставляем отмеченные мессенжеры
                 dictNew[ph]['old_messengers'].forEach((messenger_id) => {
                     $(`input[name=messengers_${newId}][value=${messenger_id}]`).prop('checked', true);
                 });
+                //старые значения чекбоксов меняем на новые
                 $(`input[value=${ph}]`).prop('value', newId);
+                //устанавливаем новые DataId для кнопок удаления номера
                 for (let deleter of $('.cabinet-phones-column .del')) {
-                    if ($(deleter).data('id')===ph)
+                    if ($(deleter).data('id') === ph)
                         $(deleter).data('id', newId);
                 }
-                for (let column of $('.cabinet-phones-column')){
-                    if ($(column).data('id')===ph){
+                // устанавливаем новые DataId для колонок и разворачиваем скрытые чекбоксы мессенжеров
+                for (let column of $('.cabinet-phones-column')) {
+                    // только для текущей колокни в переборе
+                    if ($(column).data('id') === ph) {
                         $(column).data('id', newId);
                         $(column).find(':checkbox').parent().slideDown();
                     }
                 }
+
+            } else {
+                console.log('WRONG');
+                let wrongDataIdArr = $(`input[name=new_phone_${oldNum}`).data('wrongValues') || []
+                wrongDataIdArr.push($(`input[name=new_phone_${oldNum}`).val());
+                $(`input[name=new_phone_${oldNum}`).data('wrongValues', wrongDataIdArr)
+                $(`input[name=new_phone_${oldNum}`).addClass('wrong');
+                $(`input[name=new_phone_${oldNum}`).data('valid', false);
             }
-            setTimeout(function (){
-                for (let el of $('.cabinet-phones-radios.first')) {
-                    if ($(el).data('new')==='no' && $(el).prev().prev().children('input').val()){
-                        $(el).removeClass('new').next().slideDown();
-                    }
+        }
+        //разворачиваем первые в строке перелючатели
+        setTimeout(function (){
+            for (let el of $('.cabinet-phones-radios.first')) {
+                const elPhoneInput = $(el).prev().prev().children('input')
+                //если элемент не имеет признака нового и номер телефона указан
+                console.log(el, elPhoneInput.data('valid'));
+                if ($(el).data('new')==='no' && elPhoneInput.val() && elPhoneInput.data('valid')){
+                    $(el).removeClass('new').next().slideDown();
                 }
-            }, 200);
-            for (let inp of $('.phone-number-input')){
-                $(inp).attr('value', $(inp).val());
-                $(inp).removeClass('changed');
             }
-            const checkedMainPhone = $('input:checked[name="is_main_phone"]').val();
-            $('#updateUserPhones').data('mainId', checkedMainPhone);
-            const checkedMainPhoneInputName = 'phone_' + checkedMainPhone;
+        }, 200);
+        // дл всех поле ввода номера убираем класс нового поля и задаем новые значения для чекера изменений
+        for (let inp of $('.phone-number-input')){
+            $(inp).attr('value', $(inp).val());
+            $(inp).removeClass('changed');
+        }
+        const checkedMainPhone = $('input:checked[name="is_main_phone"]').val();
+        const checkedDeliveryPhone = $('input:checked[name="is_delivery_phone"]').val();
+        //задаем новое значение хранилищу старых значений переключателей
+        $('#updateUserPhones').data('mainId', checkedMainPhone);
+        $('#updateUserPhones').data('deliveryId', checkedDeliveryPhone);
+        // const checkedMainPhoneInputName = 'phone_' + checkedMainPhone;
+
+        if (response['result']){
+            notificationAddEmail.success('Телефонні номери успішно збережено');
+
         } else {
-            for (let err of response['errors_list']){
-                notificationAddEmail.error(err);
-            }
+
+
+            //отскок переключателей в старое положение
             $(`.cabinet-phones-radios input[name="is_main_phone"][value=${$('#updateUserPhones').data('mainId')}]`).prop('checked', true);
+            $(`.cabinet-phones-radios input[name="is_delivery_phone"][value=${$('#updateUserPhones').data('deliveryId')}]`).prop('checked', true);
+        }
+
+                // получить в ответе от сервера и вывести ошибки
+        for (let err of response['errors_list']){
+            notificationAddEmail.error(err);
         }
         $('#updateUserPhones button:submit').fadeOut();
+        //обновляем визуал прееключателей
         const checkedMainPhoneInputName = 'phone_' + $('input:checked[name="is_main_phone"]').val();
+        const checkedDeliveryPhoneInputName = 'phone_' + $('input:checked[name="is_delivery_phone"]').val();
         $(`.cabinet-phones-phone input[name=${checkedMainPhoneInputName}]`).prop("disabled", true).addClass('disabled');
+        $(`.cabinet-phones-phone input[name=${checkedDeliveryPhoneInputName}]`).prop("disabled", true).addClass('disabled');
     });
 
 
@@ -1563,6 +1600,7 @@ $(document).ready(function(){
         $('.cabinet-detail-tabs-nav a').first().click();
     }
 
+    //подсвечиваем измененные поля в форме персональных данных кабинета
     $('#personalInfoForm input').keyup(function (){
         let isChangedArr = [];
         let inputs = $('#personalInfoForm input');
@@ -1669,9 +1707,22 @@ $(document).ready(function(){
         }).prop('maxlength', '9').mask("99) 999-99-99", {
             autoclear: false,
             completed: function () {
-                this.removeClass('wrong');
-                this.addClass('changed');
-                $('#updateUserPhones button:submit').fadeIn();
+                const wrongValues = this.data('wrongValues')
+                console.log(wrongValues);
+                // if (this.val()!=this.data('wrongValue')) {
+                // if (this.data('valid').includes(this.val())) {
+                if (wrongValues) {
+                    if (wrongValues.includes(this.val())){
+                        this.addClass('wrong');
+                    } else {
+                        this.removeClass('wrong');
+                        this.addClass('changed');
+                        $('#updateUserPhones button:submit').fadeIn();
+                    }
+                } else {
+                    this.addClass('changed');
+                    $('#updateUserPhones button:submit').fadeIn();
+                }
             }
         });
     });
@@ -1681,9 +1732,16 @@ $(document).ready(function(){
             console.log(this.val());
             console.log(this.attr('value'));
             if (this.val().replace(/\D+/g,"")!=this.attr('value')){
-                this.addClass('changed');
+                console.log(this.data('valid'));
+                if (this.data('valid')){
+                    this.addClass('changed');
+                } else {
+                    this.addClass('wrong');
+                }
+
             } else {
                 this.removeClass('changed');
+                this.removeClass('wrong');
             }
             checkUserPhoneChanges();
         }
@@ -1698,6 +1756,7 @@ $(document).ready(function(){
 
     });
 
+    // подсвечиваем измененные номера телефонов  в кабинете
     $('.cabinet-phones-table').on('blur', '.phone-number-input', function () {
         if ($(this).val().replace(/\D+/g,"").length < 9) {
             if ($(this).attr('value')) {
@@ -1748,11 +1807,11 @@ function ajaxForm(element, success, before_ajax = () => {}) {
 function checkUserPhoneChanges(){
     setTimeout(() => {
         if ($('#updateUserPhones .phone-number-input').hasClass('changed') && !$('#updateUserPhones .phone-number-input').hasClass('wrong')) {
-            console.log('form changed');
-            console.log($('#updateUserPhones .changed'));
+            // console.log('form changed');
+            // console.log($('#updateUserPhones .changed'));
             $('#updateUserPhones button:submit').fadeIn();
         } else {
-            console.log('form NOT changed');
+            // console.log('form NOT changed');
             $('#updateUserPhones button:submit').fadeOut();
         }
     }, 500);

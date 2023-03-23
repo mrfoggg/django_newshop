@@ -7850,6 +7850,16 @@ footer {
   width: 16rem;
   padding: 0.5rem;
   background: transparent;
+  transition: background 1s linear;
+}
+.cabinet-detail .cabinet-phones-phone input.wrong {
+  border-bottom: 2px solid red;
+}
+.cabinet-detail .cabinet-phones-phone input.wrong_pulse {
+  background: red;
+}
+.cabinet-detail .cabinet-phones-phone input.success_pulse {
+  background: green;
 }
 .cabinet-detail .cabinet-phones-messangers {
   display: flex;

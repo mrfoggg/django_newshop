@@ -1,8 +1,11 @@
+import requests
+import json
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.html import format_html
+from jsonview.decorators import json_view
 
 from nova_poshta.services import settlement_parameters, city_parameters, warehouse_parameters, get_response, \
     get_and_apply_changes, build_objects_to_create, timeout_limit
@@ -130,19 +133,19 @@ def update_np_catalogs(request, obj_type):
 
 def update_settlements(request):
     update_np_catalogs(request, Settlement)
-    return HttpResponseRedirect(reverse('admin:ROOTAPP_settlement_changelist'))
+    return HttpResponseRedirect(reverse('admin:nova_poshta_settlement_changelist'))
 
 
 def update_cities(request):
     update_np_catalogs(request, City)
-    return HttpResponseRedirect(reverse('admin:ROOTAPP_city_changelist'))
+    return HttpResponseRedirect(reverse('admin:nova_poshta_city_changelist'))
 
 
 def update_warehouses(request):
     update_np_catalogs(request, Warehouse)
-    return HttpResponseRedirect(reverse('admin:ROOTAPP_warehouse_changelist'))
+    return HttpResponseRedirect(reverse('admin:nova_poshta_warehouse_changelist'))
 
-
+@json_view
 def get_delivery_cost(request):
     number_of_attempts = 1
     max_number_of_attempts = 5
@@ -167,18 +170,18 @@ def get_delivery_cost(request):
     print('data_cost - ', data_cost)
     while number_of_attempts <= max_number_of_attempts:
         try:
-            request_json = json.dumps(data_cost, indent=4)
-            response = requests.post(url_np, data=request_json, timeout=timeout_limit)
-            print('response - ', response)
-            response_dict = json.loads(response.text)
+            # request_json = json.dumps(data_cost, indent=4)
+            # response = requests.post(url_np, data=request_json, timeout=timeout_limit)
+            response_dict = get_response(data_cost)
+            # response_dict = json.loads(response.text)
             print('response_dict - ', response_dict)
-            return JsonResponse({
+            return {
                 'settlement_to_name': str(Settlement.objects.get(ref=request.POST.get("settlement"))),
                 'cost_redelivery': response_dict['data'][0]['CostRedeliveryWarehouseWarehouse'],
                 'CostWarehouseWarehouse': response_dict['data'][0]['CostWarehouseWarehouse'],
                 'CostWarehouseDoors': response_dict['data'][0]['CostWarehouseDoors'],
                 'Cost': request.POST.get("price"),
-            }, status=200)
+            }
             break
         except requests.exceptions.Timeout:
             number_of_attempts += 1
