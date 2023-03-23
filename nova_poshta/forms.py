@@ -1,11 +1,12 @@
+from allauth.account.forms import ResetPasswordForm
 from django import forms
 from django_select2.forms import ModelSelect2Widget
 
+from nova_poshta.models import Settlement, SettlementArea, Warehouse
+
 # from django_select2 import forms as s2forms
 
-from allauth.account.forms import ResetPasswordForm
 
-from nova_poshta.models import Warehouse, SettlementArea, Settlement
 
 
 class MyCustomResetPasswordFor(ResetPasswordForm):

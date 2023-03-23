@@ -1,15 +1,15 @@
-import ipinfo
-import requests
+# import ipinfo
+# import requests
 from django.contrib import admin
-from django.contrib.auth import get_user_model
+# from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
 from django.utils.html import format_html_join
 from djmoney.models.fields import MoneyField
 
-from ROOTAPP.models import Phone, Person
 from catalog.models import Product
+from ROOTAPP.models import Person, Phone
 from site_settings.models import APIkeyIpInfo
 
 STATUSES = (

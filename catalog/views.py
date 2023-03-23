@@ -1,5 +1,5 @@
 from django.core.paginator import Paginator
-from django.db.models import Q, Min, Max, F
+from django.db.models import F, Max, Min, Q
 from django.db.models.expressions import Case, When
 from django.http.response import JsonResponse
 from django.shortcuts import render
@@ -7,14 +7,14 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
-# from nova_poshta.forms import AddressForm
-# from nova_poshta.models import Settlement
-from catalog.models import Category, Brand, ProductSeries, Product, ShotAttribute, CategoryAddictProduct
 from django.views.generic.detail import DetailView
 
+# from nova_poshta.forms import AddressForm
+# from nova_poshta.models import Settlement
+from catalog.models import (Brand, Category, CategoryAddictProduct, Product,
+                            ProductSeries, ShotAttribute)
 from nova_poshta.forms import AddressForm
 from nova_poshta.models import Settlement
-
 
 # from django.views.decorators.csrf import csrf_exempt
 

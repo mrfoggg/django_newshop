@@ -1,6 +1,7 @@
 from django.urls import path
 
-from .views import MainPageView, FavoritesView, CompareView, dispatch_view, CabinetView
+from .views import (CabinetView, CompareView, FavoritesView, MainPageView,
+                    dispatch_view)
 
 urlpatterns = [
 

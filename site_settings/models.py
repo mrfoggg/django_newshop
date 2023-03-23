@@ -1,7 +1,7 @@
+from django.core.cache import cache
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 from solo.models import SingletonModel
-from django.core.cache import cache
 
 # Create your models here.
 from ROOTAPP.models import Person

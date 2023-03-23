@@ -1,9 +1,12 @@
 from django import forms
 from django.contrib import admin
 from django.db import models
+
 # Register your models here.
 from ROOTAPP.models import Person, PersonPhone
-from .models import ByOneclick, ByOneclickPersonalComment, OneClickUserSectionComment, STATUSES_CLIENT_DISPLAY
+
+from .models import (STATUSES_CLIENT_DISPLAY, ByOneclick,
+                     ByOneclickPersonalComment, OneClickUserSectionComment)
 
 
 class ByOneclickCommentAdminInline(admin.TabularInline):

@@ -1,11 +1,9 @@
-from django.contrib.auth.models import User, AbstractUser
-from django.db import models
 from django.contrib import admin
+from django.contrib.auth.models import AbstractUser, User
+from django.db import models
 from django.utils.html import format_html
 from phonenumber_field.modelfields import PhoneNumberField
-
-from phonenumbers import carrier
-from phonenumbers import geocoder
+from phonenumbers import carrier, geocoder
 from phonenumbers.phonenumberutil import region_code_for_number
 
 from nova_poshta.models import Settlement, SettlementArea, Warehouse

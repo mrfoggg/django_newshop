@@ -1,16 +1,19 @@
 from decimal import Decimal
+
 from django.contrib import admin
 from django.db import models
-from django.db.models import Subquery, Min, Max, OuterRef, SmallIntegerField, Case, When
+from django.db.models import (Case, Max, Min, OuterRef, SmallIntegerField,
+                              Subquery, When)
 from django.db.models.expressions import F
 from django.urls import reverse
-from django.utils.html import format_html_join, format_html
+from django.utils.html import format_html, format_html_join
 from djmoney.models.fields import MoneyField
+from djmoney.money import Money
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
-from ROOTAPP.models import Person
+
 from finance.models import PriceChangelist
-from djmoney.money import Money
+from ROOTAPP.models import Person
 from site_settings.models import PhotoPlug
 
 

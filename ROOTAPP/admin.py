@@ -1,18 +1,19 @@
-from adminsortable2.admin import SortableAdminMixin
-from django.contrib import admin
 import nested_admin
+from adminsortable2.admin import SortableAdminMixin
+from django import forms
+from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
 
-from ROOTAPP.models import Phone, Messenger, Person, PersonPhone, PersonSettlement
-from django import forms
-
 # from .services.telegram_servises import get_tg_username
 # from asgiref.sync import sync_to_async
 from orders.models import ByOneclick
+from ROOTAPP.models import (Messenger, Person, PersonPhone, PersonSettlement,
+                            Phone)
+
 from .admin_forms import PersonPhonesAdminFormset
-from .forms import PersonAddress, FullAddressForm
+from .forms import FullAddressForm, PersonAddress
 
 # from .forms import AddressForm, FullAddressForm
 

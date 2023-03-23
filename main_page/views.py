@@ -1,15 +1,16 @@
 import django
 from django.contrib.postgres.aggregates import ArrayAgg
-
 from django.views.decorators.csrf import csrf_exempt
-
-from ROOTAPP.forms import PersonalInfoForm
-from ROOTAPP.models import PersonPhone, Messenger
-from catalog.models import Product, Category, ProductImage
-from catalog.views import ProductView, CategoryView
-from main_page.models import Banner, Menu, SitePhone, Schedule, PopularCategory, PopularProduct, NewProduct
-from site_settings.models import SliderConfiguration, HeaderConfiguration, PhotoPlug
 from django.views.generic.base import TemplateView, View
+
+from catalog.models import Category, Product, ProductImage
+from catalog.views import CategoryView, ProductView
+from main_page.models import (Banner, Menu, NewProduct, PopularCategory,
+                              PopularProduct, Schedule, SitePhone)
+from ROOTAPP.forms import PersonalInfoForm
+from ROOTAPP.models import Messenger, PersonPhone
+from site_settings.models import (HeaderConfiguration, PhotoPlug,
+                                  SliderConfiguration)
 
 
 class MainPageView(TemplateView):

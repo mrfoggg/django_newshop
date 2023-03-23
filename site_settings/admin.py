@@ -1,7 +1,9 @@
 from django.contrib import admin
 from solo.admin import SingletonModelAdmin
-from site_settings.models import SliderConfiguration, HeaderConfiguration, PhotoPlug, NpAPI, APIkeyIpInfo, OAuthGoogle, \
-    TwilioOTPSettings
+
+from site_settings.models import (APIkeyIpInfo, HeaderConfiguration, NpAPI,
+                                  OAuthGoogle, PhotoPlug, SliderConfiguration,
+                                  TwilioOTPSettings)
 
 admin.site.register(SliderConfiguration, SingletonModelAdmin)
 admin.site.register(HeaderConfiguration, SingletonModelAdmin)

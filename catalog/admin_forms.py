@@ -3,9 +3,12 @@ from django import forms
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ValidationError
 from django.forms import NumberInput, TextInput
-from .models import (Attribute, Category, CombinationOfCategory, Group, GroupPositionInCombinationOfCategory,
-                     MainAttrPositionInCombinationOfCategory, Product, ShotAttrPositionInCombinationOfCategory)
-from .services import check_doubles_groups, check_change_field_in_fs
+
+from .models import (Attribute, Category, CombinationOfCategory, Group,
+                     GroupPositionInCombinationOfCategory,
+                     MainAttrPositionInCombinationOfCategory, Product,
+                     ShotAttrPositionInCombinationOfCategory)
+from .services import check_change_field_in_fs, check_doubles_groups
 
 
 class ProductAttributesWidget(forms.MultiWidget):

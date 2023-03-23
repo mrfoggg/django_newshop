@@ -2,7 +2,6 @@ import json
 
 import django
 import ipinfo
-
 import requests
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -11,9 +10,10 @@ from django.urls import reverse
 from oauth2client.client import AccessTokenCredentials, Credentials
 from phonenumber_field.phonenumber import PhoneNumber
 from phonenumbers import geocoder
-from ROOTAPP.models import Phone, PersonPhone, Person
+
 # from nova_poshta.services.google_services import create_contact
-from orders.models import OneClickUserSectionComment, ByOneclick
+from orders.models import ByOneclick, OneClickUserSectionComment
+from ROOTAPP.models import Person, PersonPhone, Phone
 from site_settings.models import APIkeyIpInfo, OAuthGoogle
 
 

@@ -1,12 +1,11 @@
-from datetime import time
-
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
+
+from catalog.models import Category, PlacementWithPriceManager, Product
 from ROOTAPP.models import Messenger, Phone
-from catalog.models import Category, Product, PlacementWithPriceManager
 
 
 class SitePhone(models.Model):

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from nova_poshta.models import Warehouse, City, Settlement
+from nova_poshta.models import City, Settlement, Warehouse
 
 
 class WarehouseForSettlementInline(admin.TabularInline):

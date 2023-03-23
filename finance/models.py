@@ -1,10 +1,8 @@
 from datetime import datetime
 
 from django.db import models
-
 # Create your models here.
 from djmoney.models.fields import MoneyField
-
 # from catalog.models import Product
 from djmoney.money import Money
 

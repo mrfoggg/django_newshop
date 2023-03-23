@@ -3,13 +3,13 @@ from adminsortable2.admin import SortableAdminMixin
 from django import forms
 from django.contrib import admin
 from django_summernote.admin import SummernoteModelAdmin
+from django_summernote.utils import get_attachment_model
+from django_svg_image_form_field import SvgAndImageFormField
 from mptt.admin import DraggableMPTTAdmin
 
-from main_page.admin_form import MenuAdminForm, BannerForm
-from main_page.models import StaticPage, Menu, Banner, PopularCategory, PopularProduct, NewProduct, Schedule, \
-    SitePhone
-from django_svg_image_form_field import SvgAndImageFormField
-from django_summernote.utils import get_attachment_model
+from main_page.admin_form import BannerForm, MenuAdminForm
+from main_page.models import (Banner, Menu, NewProduct, PopularCategory,
+                              PopularProduct, Schedule, SitePhone, StaticPage)
 
 admin.site.unregister(get_attachment_model())
 

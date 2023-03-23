@@ -3,8 +3,10 @@ from django.core.exceptions import ValidationError
 from django.db.models import Count, Max
 from django.utils.encoding import force_str
 
-from .models import Attribute, Category, CombinationOfCategory, Group, Product, GroupPositionInCombinationOfCategory, \
-    GroupPlacement, MainAttrPositionInCombinationOfCategory, ShotAttrPositionInCombinationOfCategory
+from .models import (Attribute, Category, CombinationOfCategory, Group,
+                     GroupPlacement, GroupPositionInCombinationOfCategory,
+                     MainAttrPositionInCombinationOfCategory, Product,
+                     ShotAttrPositionInCombinationOfCategory)
 
 
 def check_doubles_groups(items: list):

@@ -1,8 +1,10 @@
 from datetime import datetime, timezone
+
 import django
+import google_auth_oauthlib.flow
 import pytz
 from django.contrib.auth import login, logout
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.views import View
@@ -10,13 +12,13 @@ from jsonview.decorators import json_view
 from otp_twilio.models import TwilioSMSDevice
 from phonenumber_field.phonenumber import PhoneNumber
 from phonenumbers import geocoder
-from ROOTAPP.forms import PersonForm, PersonEmailForm, PersonalInfoForm
-from ROOTAPP.models import get_phone_full_str, Person, PersonPhone, Phone
-from Shop_DJ import settings
-from catalog.models import Product
 from sorl.thumbnail import get_thumbnail
+
+from catalog.models import Product
+from ROOTAPP.forms import PersonalInfoForm, PersonEmailForm, PersonForm
+from ROOTAPP.models import Person, PersonPhone, Phone, get_phone_full_str
 from servises import get_products_annotated_prices
-import google_auth_oauthlib.flow
+from Shop_DJ import settings
 from site_settings.models import OAuthGoogle
 
 

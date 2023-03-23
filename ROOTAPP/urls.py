@@ -1,10 +1,12 @@
 from django.urls import path
 
-from ROOTAPP.views import (ProductActionsView, CheckoutView, ByNowView,
-                           request_google_auth, google_response, get_and_check_registration_phone,
-                           get_registration_name, verify_sms_token, regenerate_sms_token, logout_view, add_email,
-                           update_user_personal, update_user_phones, del_user_phone,
-                           )
+from ROOTAPP.views import (ByNowView, CheckoutView, ProductActionsView,
+                           add_email, del_user_phone,
+                           get_and_check_registration_phone,
+                           get_registration_name, google_response, logout_view,
+                           regenerate_sms_token, request_google_auth,
+                           update_user_personal, update_user_phones,
+                           verify_sms_token)
 
 app_name = 'root_app'
 urlpatterns = [

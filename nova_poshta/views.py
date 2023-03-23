@@ -1,5 +1,6 @@
-import requests
 import json
+
+import requests
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -7,9 +8,11 @@ from django.urls import reverse
 from django.utils.html import format_html
 from jsonview.decorators import json_view
 
-from nova_poshta.services import settlement_parameters, city_parameters, warehouse_parameters, get_response, \
-    get_and_apply_changes, build_objects_to_create, timeout_limit
-from nova_poshta.models import Settlement, City, Warehouse
+from nova_poshta.models import City, Settlement, Warehouse
+from nova_poshta.services import (build_objects_to_create, city_parameters,
+                                  get_and_apply_changes, get_response,
+                                  settlement_parameters, timeout_limit,
+                                  warehouse_parameters)
 
 
 def update_np_catalogs(request, obj_type):

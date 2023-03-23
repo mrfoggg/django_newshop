@@ -1,10 +1,9 @@
 import asyncio
 import random
 
+from django_telethon_session.sessions import DjangoSession
 from telethon import TelegramClient
 from telethon.tl import functions, types
-from django_telethon_session.sessions import DjangoSession
-
 
 #
 # sessions = DjangoSession()
@@ -26,5 +25,3 @@ from django_telethon_session.sessions import DjangoSession
 #
 #     with client:
 #         return client.loop.run_until_complete(main())
-
-

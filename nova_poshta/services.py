@@ -1,11 +1,12 @@
+import json
 from collections import namedtuple
 
-import json
 import requests
-
 from deepdiff import DeepDiff
 
-from nova_poshta.models import TypeOfWarehouse, SettlementArea, CityArea, SettlementRegion, Settlement, SettlementType
+from nova_poshta.models import (CityArea, Settlement, SettlementArea,
+                                SettlementRegion, SettlementType,
+                                TypeOfWarehouse)
 
 url_np = 'https://api.novaposhta.ua/v2.0/json/'
 

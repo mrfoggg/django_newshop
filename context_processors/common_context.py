@@ -1,13 +1,13 @@
-from allauth.socialaccount.forms import SignupForm, DisconnectForm
-from django.db.models import Subquery, OuterRef, Case, When, F
+from allauth.socialaccount.forms import DisconnectForm, SignupForm
+from django.db.models import Case, F, OuterRef, Subquery, When
 from django.forms import modelform_factory
 from django.urls import reverse
 
+from catalog.models import Product, ProductImage
+from main_page.models import Menu, Schedule, SitePhone
+from orders.models import ByOneclick
 from ROOTAPP.forms import PersonEmailForm
 from ROOTAPP.models import Person
-from catalog.models import Product, ProductImage
-from main_page.models import SitePhone, Schedule, Menu
-from orders.models import ByOneclick
 from servises import get_products_annotated_prices
 from site_settings.models import HeaderConfiguration, PhotoPlug
 

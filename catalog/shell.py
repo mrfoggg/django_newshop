@@ -1,4 +1,4 @@
-from catalog.models import Category, Product, Attribute, Group, FixedTextValue
+from catalog.models import Attribute, Category, FixedTextValue, Group, Product
 
 Category.objects.all().delete()
 Group.objects.all().delete()

@@ -1,42 +1,50 @@
 import copy
+
 import nested_admin
-from adminsortable2.admin import SortableAdminBase, SortableTabularInline, SortableAdminMixin, SortableInlineAdminMixin
+from adminsortable2.admin import (SortableAdminBase, SortableAdminMixin,
+                                  SortableInlineAdminMixin,
+                                  SortableTabularInline)
+from baton.admin import MultipleChoiceListFilter
 from django.contrib import admin
 from django.contrib.admin.actions import delete_selected
-from django.core.exceptions import ValidationError
+from django.core import serializers
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Max
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
+from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.encoding import force_str
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django_summernote.admin import SummernoteModelAdmin
 from mptt.admin import DraggableMPTTAdmin
-from baton.admin import MultipleChoiceListFilter
 
-from ROOTAPP.models import Person
 from finance.admin import ProductPriceProductInline
-from .admin_forms import (CombinationOfCategoryAdminForm, GroupPlacementInlineFS,
-                          GroupPositionInCombinationOfCategoryInLineFS,
-                          MainAttrPositionInCombinationOfCategoryInLineFS, ProductForm,
-                          ProductPlacementInlineForProductFS, ShotAttrPositionInCombinationOfCategoryInLineFS,
-                          AttributeForm, GroupForm, CategoryForm)
-from .models import (Attribute, Category, CombinationOfCategory, FixedTextValue, Group, GroupPlacement,
-                     GroupPositionInCombinationOfCategory, MainAttribute, MainAttrPositionInCombinationOfCategory,
-                     Product, ProductPlacement, ShotAttribute, ShotAttrPositionInCombinationOfCategory, UnitOfMeasure,
-                     Country, Brand, ProductSeries, PricesOtherShop, OtherShop, ProductImage, Filter, ProductSupplier,
-                     CategoryAddictProduct, Discount,
-                     )
-from .services import (clean_combination_of_category,
-                       get_changes_in_categories_fs, get_changes_in_groups_fs,
-                       update_combination_in_fs_product, set_prod_pos_to_end, create_group_placement_at_end_combination,
-                       DeleteQSMixin,
-                       create_main_attr_placement_at_end_combination, create_shot_attr_placement_at_end_combination,
-                       remove_keys_in_products, remove_keys_in_products_in_qs_deleted_attr)
+from ROOTAPP.models import Person
 
-from django.core import serializers
-from django.http import HttpResponse
-from django.core.exceptions import PermissionDenied
-from django.utils.translation import gettext as _, gettext_lazy
-from django.template.response import TemplateResponse
+from .admin_forms import (AttributeForm, CategoryForm,
+                          CombinationOfCategoryAdminForm, GroupForm,
+                          GroupPlacementInlineFS,
+                          GroupPositionInCombinationOfCategoryInLineFS,
+                          MainAttrPositionInCombinationOfCategoryInLineFS,
+                          ProductForm, ProductPlacementInlineForProductFS,
+                          ShotAttrPositionInCombinationOfCategoryInLineFS)
+from .models import (Attribute, Brand, Category, CategoryAddictProduct,
+                     CombinationOfCategory, Country, Discount, Filter,
+                     FixedTextValue, Group, GroupPlacement,
+                     GroupPositionInCombinationOfCategory, MainAttribute,
+                     MainAttrPositionInCombinationOfCategory, OtherShop,
+                     PricesOtherShop, Product, ProductImage, ProductPlacement,
+                     ProductSeries, ProductSupplier, ShotAttribute,
+                     ShotAttrPositionInCombinationOfCategory, UnitOfMeasure)
+from .services import (DeleteQSMixin, clean_combination_of_category,
+                       create_group_placement_at_end_combination,
+                       create_main_attr_placement_at_end_combination,
+                       create_shot_attr_placement_at_end_combination,
+                       get_changes_in_categories_fs, get_changes_in_groups_fs,
+                       remove_keys_in_products,
+                       remove_keys_in_products_in_qs_deleted_attr,
+                       set_prod_pos_to_end, update_combination_in_fs_product)
 
 
 @admin.action(description='Сериализовать')

@@ -1,8 +1,8 @@
 from django import forms
 from django.forms.models import modelform_factory
 
+from nova_poshta.forms import area_widget, settlement_widget, warehouse_widget
 from ROOTAPP.models import Person, PersonAddress
-from nova_poshta.forms import warehouse_widget, settlement_widget, area_widget
 
 
 class PersonForm(forms.ModelForm):

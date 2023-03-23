@@ -2,7 +2,7 @@ from django import forms
 from django.forms.widgets import TextInput
 from django_svg_image_form_field import SvgAndImageFormField
 
-from main_page.models import Menu, Banner
+from main_page.models import Banner, Menu
 
 
 class MenuAdminForm(forms.ModelForm):
