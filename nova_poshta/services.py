@@ -250,6 +250,11 @@ warehouse_parameters = main_parameters + coordinates_parameters + (
         api_field='DistrictCode',
         description='Код района'
     ),
+    parameter_template(
+        db_field='deny_to_select',
+        api_field='DenyToSelect',
+        description='Запрет выбора отделения'
+    ),
 )
 
 
