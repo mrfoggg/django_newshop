@@ -1,5 +1,5 @@
 {% load static %}
-{{ city_form.media.css }}
+{{ settlement_form.media.css }}
 <link rel="stylesheet" href={% static "select2.min.css" %}>
 <p>
     <a class="btn btn-primary" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
@@ -17,7 +17,7 @@
             <form action="{% url 'nova_poshta:update_warehouses' %}">
                 <div style="display: flex" class="select_settlement">
 
-                    {{ city_form.as_p }}
+                    {{ settlement_form.as_p }}
 
                 </div>
                 <button type="submit" class="btn btn-primary">Обновить</button>
@@ -25,7 +25,7 @@
         </div>
     </div>
 </div>
-{{ city_form.media.js }}
+{{ settlement_form.media.js }}
 
 
 <style>

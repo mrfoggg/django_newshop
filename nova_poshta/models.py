@@ -227,3 +227,16 @@ class Warehouse(NpDataModel, Coordinates):
     def __str__(self):
         return f'{self.description_ua} ({self.type_warehouse})'
 
+
+class Street(NpDataModel):
+    description_ua = models.CharField('Название улицы укр.', max_length=100, default=None, null=True)
+    streets_type_ref = models.CharField('Ref типа улицы', max_length=36, default=None, null=True)
+    streets_type = models.CharField('Название типа улицы', max_length=36, default=None, null=True)
+
+    class Meta:
+        verbose_name = 'Улица'
+        verbose_name_plural = 'Улицы'
+        ordering = ('description_ua',)
+
+    def __str__(self):
+        return f'{self.streets_type} {self.description_ua}'

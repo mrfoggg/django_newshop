@@ -9,11 +9,11 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic.detail import DetailView
 
-# from nova_poshta.forms import AddressForm
+# from nova_poshta.forms import SettlementForm
 # from nova_poshta.models import Settlement
 from catalog.models import (Brand, Category, CategoryAddictProduct, Product,
                             ProductSeries, ShotAttribute)
-from nova_poshta.forms import AddressForm
+from nova_poshta.forms import SettlementForm
 from nova_poshta.models import Settlement
 
 # from django.views.decorators.csrf import csrf_exempt
@@ -364,7 +364,7 @@ class ProductView(DetailView):
             'url_product_actions': reverse('root_app:product_actions'),
             'size': True if product.width or product.length or product.height or product.weight else False,
             'package_size': True if product.package_width or product.package_length or product.package_height else False,
-            'address_form': AddressForm, 'addict_product_category': CategoryAddictProduct.objects.filter(
+            'settlement_form': SettlementForm, 'addict_product_category': CategoryAddictProduct.objects.filter(
                 category__productplacement__product=product
             ).select_related('category').prefetch_related()
         }

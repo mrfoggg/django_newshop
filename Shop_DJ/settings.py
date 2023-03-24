@@ -35,7 +35,7 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     # 'django.contrib.sites',
     # 'django_select2',
-    "debug_toolbar",
+    # "debug_toolbar",
     'baton',
     'django.contrib.admin',
     'django.contrib.auth',

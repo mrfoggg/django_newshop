@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from nova_poshta.models import City, Settlement, Warehouse
+from nova_poshta.forms import SettlementForm
+from nova_poshta.models import City, Settlement, Warehouse, Street
 
 
 class WarehouseForSettlementInline(admin.TabularInline):
@@ -47,7 +48,7 @@ class CityAdmin(admin.ModelAdmin):
     # )
     list_display = ('description_ru', 'description_ua', 'type', 'area',)
     list_display_links = ('description_ru', 'description_ua')
-    list_filter = ('area__description_ru', )
+    list_filter = ('area__description_ru',)
     baton_cl_includes = [
         ('nova_poshta/button_update_cities.html', 'top',),
     ]
@@ -70,14 +71,14 @@ class WarehouseAdmin(admin.ModelAdmin):
 
     autocomplete_fields = ('settlement',)
     list_filter = ('type_warehouse',)
-    list_display = ('stl_descr_ru', 'settlement', 'city', '__str__', )
+    list_display = ('stl_descr_ru', 'settlement', 'city', '__str__',)
     search_fields = ('description_ua', 'settlement__description_ua', 'settlement__description_ru')
     ordering = ('settlement', 'number')
     list_display_links = ('__str__',)
 
     def changelist_view(self, request, extra_context=None):
         # extra_context = extra_context or {}
-        # extra_context = {'city_form': AddressForm}
+        extra_context = {'settlement_form': SettlementForm}
         return super().changelist_view(
             request, extra_context=extra_context,
         )
@@ -100,3 +101,5 @@ class WarehouseAdmin(admin.ModelAdmin):
         css = {
             "all": ("select2.min.css",)}
 
+
+admin.site.register(Street)

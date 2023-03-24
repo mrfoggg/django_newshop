@@ -4,27 +4,26 @@ from django_select2.forms import ModelSelect2Widget
 
 from nova_poshta.models import Settlement, SettlementArea, Warehouse
 
+
 # from django_select2 import forms as s2forms
 
 
+# class MyCustomResetPasswordForm(ResetPasswordForm):
+#     email = forms.EmailField(
+#         label="e-mail адреса",
+#         required=True,
+#         initial='asd@df.ua',
+#         widget=forms.TextInput(
+#             attrs={
+#                 "type": "email",
+#                 "placeholder": "e-mail адр",
+#                 "autocomplete": "email",
+#             }
+#         ),
+#     )
 
 
-class MyCustomResetPasswordFor(ResetPasswordForm):
-    email = forms.EmailField(
-        label="e-mail адреса",
-        required=True,
-        initial='asd@df.ua',
-        widget=forms.TextInput(
-            attrs={
-                "type": "email",
-                "placeholder": "e-mail адр",
-                "autocomplete": "email",
-            }
-        ),
-    )
-
-
-class AddressForm(forms.Form):
+class SettlementForm(forms.Form):
     area = forms.ModelChoiceField(
         queryset=SettlementArea.objects.all(),
         label="Область",
@@ -74,12 +73,12 @@ warehouse_widget = ModelSelect2Widget(
 )
 
 
-class SettlementSelectWidget(ModelSelect2Widget):
-    model = Settlement
-    search_fields = [
-        'description_ua__icontains',
-        'description_ru__icontains',
-    ]
-    max_results = 50
+# class SettlementSelectWidget(ModelSelect2Widget):
+#     model = Settlement
+#     search_fields = [
+#         'description_ua__icontains',
+#         'description_ru__icontains',
+#     ]
+#     max_results = 50
 
 # PersonInlineFormset = inlineformset_factory(Person, PersonPhone, fields=('phone', 'is_nova_poshta'))

@@ -148,6 +148,7 @@ def update_warehouses(request):
     update_np_catalogs(request, Warehouse)
     return HttpResponseRedirect(reverse('admin:nova_poshta_warehouse_changelist'))
 
+
 @json_view
 def get_delivery_cost(request):
     number_of_attempts = 1
@@ -191,4 +192,3 @@ def get_delivery_cost(request):
             print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
 
     return response('')
-

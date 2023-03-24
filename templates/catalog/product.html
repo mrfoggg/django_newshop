@@ -135,7 +135,7 @@
                     <h3>Для розрахунку вартості доставки вкажіть адресу:</h3>
                     <form data-url={% url 'nova_poshta:get_delivery_cost' %} method="POST" class="change-form input-data-delivery-cost" id="get_delivery_cost">
 {#                        {% csrf_token %}#}
-                        {{ address_form.as_p }}
+                        {{ settlement_form.as_p }}
                         <input type="hidden" name="settlement_from_ref" value={{ settlement_from.ref }}>
                         <input type="hidden" name="width" value={{ product.package_width }}>
                         <input type="hidden" name="height" value={{ product.package_height }}>

@@ -6,7 +6,7 @@ from deepdiff import DeepDiff
 
 from nova_poshta.models import (CityArea, Settlement, SettlementArea,
                                 SettlementRegion, SettlementType,
-                                TypeOfWarehouse)
+                                TypeOfWarehouse, City)
 
 url_np = 'https://api.novaposhta.ua/v2.0/json/'
 
@@ -403,19 +403,20 @@ def build_objects_to_create(data, db_model, parameters_template, is_sub_request=
             else:
                 data['SettlementRef'] = None
 
-            # if not City.objects.filter(ref=(city_ref := data['CityRef'])).exists():
-            #     city_response_data = get_one_city_api_data(city_ref)
-            #     # тут делаю fix багов API - находится отделение в городе Высокие Байраки но такого города нет в справонике городов
-            #     city_data = city_response_data if city_response_data else {
-            #         'Ref': data['CityRef'], 'DescriptionRu': data['CityDescriptionRu'],
-            #         'Description': data['CityDescription'], 'Area': None, 'CityID': None, 'IsBranch': None,
-            #         'PreventEntryNewStreetsUser': None, 'SettlementType': None,
-            #     }
-            #     new_msg = build_objects_to_create(city_data, City, city_parameters, True, True)[1]
-            #     messages += new_msg
+            if not City.objects.filter(ref=(city_ref := data['CityRef'])).exists():
+                city_response_data = get_one_city_api_data(city_ref)
+                # тут делаю fix багов API - находится отделение в городе Высокие Байраки но такого города нет в
+                # справонике городов
+                city_data = city_response_data if city_response_data else {
+                    'Ref': data['CityRef'], 'DescriptionRu': data['CityDescriptionRu'],
+                    'Description': data['CityDescription'], 'Area': None, 'CityID': None, 'IsBranch': None,
+                    'PreventEntryNewStreetsUser': None, 'SettlementType': None,
+                }
+                new_msg = build_objects_to_create(city_data, City, city_parameters, True, True)[1]
+                messages += new_msg
 
-            # if not TypeOfWarehouse.objects.filter(ref=data['TypeOfWarehouse']).exists():
-            #     messages += update_all_warehouses_types()
+            if not TypeOfWarehouse.objects.filter(ref=data['TypeOfWarehouse']).exists():
+                messages += update_all_warehouses_types()
 
     obj_to_create = db_model()
     for param in parameters_template:

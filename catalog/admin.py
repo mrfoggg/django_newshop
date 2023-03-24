@@ -1,21 +1,19 @@
 import copy
 
 import nested_admin
-from adminsortable2.admin import (SortableAdminBase, SortableAdminMixin,
-                                  SortableInlineAdminMixin,
-                                  SortableTabularInline)
+from adminsortable2.admin import SortableAdminBase, SortableInlineAdminMixin, SortableTabularInline
 from baton.admin import MultipleChoiceListFilter
 from django.contrib import admin
 from django.contrib.admin.actions import delete_selected
 from django.core import serializers
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ValidationError
 from django.db.models import Max
 from django.http import HttpResponse, HttpResponseRedirect
-from django.template.response import TemplateResponse
+# from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.encoding import force_str
-from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy
+# from django.utils.translation import gettext as _
+# from django.utils.translation import gettext_lazy
 from django_summernote.admin import SummernoteModelAdmin
 from mptt.admin import DraggableMPTTAdmin
 
@@ -107,13 +105,14 @@ class GroupPlacementInline(SortableInlineAdminMixin, admin.TabularInline):
     extra = 0
     fields = ('group', 'attributes_list', 'position')
     ordering = ['position']
+
     @admin.display(description='Содержжит атрибуты')
     def attributes_list(self, obj):
         return obj.group.attributes_list
 
 
 class AttributeInline(SortableTabularInline):
-# class AttributeInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+    # class AttributeInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     model = Attribute
     # readonly_fields = ('name', 'type_of_value', 'unit_of_measure', 'fixed_values_list',)
     readonly_fields = ('fixed_values_list',)
@@ -329,6 +328,7 @@ class BrandListFilter(MultipleChoiceListFilter):
     def lookups(self, request, model_admin):
         return Brand.objects.values_list('id', 'name')
 
+
 @admin.register(Product)
 class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     form = ProductForm
@@ -348,6 +348,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     change_form_template = "product_changeform.html"
     actions = [export_as_json]
     list_filter = ('admin_category', BrandListFilter)
+    view_on_site = True
     fieldsets = (
         ("Основное", {
             'fields': (
@@ -360,7 +361,8 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
 
         ("Габбариты и вес",
          {'fields': (
-             ('length', 'width', 'height',), ('package_length', 'package_width', 'package_height'), ('weight', 'seats_amount')),
+             ('length', 'width', 'height',), ('package_length', 'package_width', 'package_height'),
+             ('weight', 'seats_amount')),
              'classes': ('tab-fs-none',),
          }),
 
@@ -439,6 +441,9 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
             ])
             return HttpResponseRedirect(reverse('admin:catalog_product_change', args=(product_copy.id,)))
         return super().response_change(request, obj)
+
+    def view_on_site(self, obj):
+        return reverse('main_page:category_and_product', args=(obj.slug,))
 
 
 @admin.register(Group)
