@@ -78,11 +78,11 @@ settlement_parameters = settlement_and_city_parameters + coordinates_parameters 
         api_field='Region',
         description='Район'
     ),
-    # parameter_template(
-    #     db_field='warehouse',
-    #     api_field='Warehouse',
-    #     description='Наличие отделений'
-    # ),
+    parameter_template(
+        db_field='warehouse',
+        api_field='Warehouse',
+        description='Наличие отделений'
+    ),
     parameter_template(
         db_field='index_1',
         api_field='Index1',
