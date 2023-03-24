@@ -457,6 +457,9 @@ def get_and_apply_changes(obj, structure, api_data):
         # print('obj.__dict__ - ', obj.__dict__)
         field_db_val = obj.__dict__[struct_field.db_field]
         api_field_val = api_data[struct_field.api_field] if struct_field.api_field in api_data.keys() else None
+        if struct_field.db_field == 'settlement_id' and api_field_val == '00000000-0000-0000-0000' \
+                                                                         '-000000000000':
+            api_field_val = None
         match str(type(field_db_val)):
             case "<class 'bool'>":
                 if field_db_val is not None:
@@ -476,6 +479,7 @@ def get_and_apply_changes(obj, structure, api_data):
                     diff = f'{pml}старое значение: </p> {pml}{replace_str_dict(field_db_val)}</p>' \
                            f'{pml}Новое значение:</p>{pml}{replace_str_dict(api_field_val)}</p>'
             case "<class 'str'>":
+
                 field_val_to_check = field_db_val if field_db_val is not None else ''
                 field_changed = False if api_field_val == field_db_val else True
                 diff = f'{pml}Старое значение: {field_val_to_check}</p>' \
