@@ -232,6 +232,9 @@ class Street(NpDataModel):
     description_ua = models.CharField('Название улицы укр.', max_length=100, default=None, null=True)
     streets_type_ref = models.CharField('Ref типа улицы', max_length=36, default=None, null=True)
     streets_type = models.CharField('Название типа улицы', max_length=36, default=None, null=True)
+    city = models.ForeignKey(City, default=None, on_delete=models.CASCADE,
+                             verbose_name="Город", related_name='streets', db_index=True)
+
 
     class Meta:
         verbose_name = 'Улица'

@@ -119,6 +119,35 @@ city_parameters = settlement_and_city_parameters + (
 
 )
 
+street_parameters = (
+    parameter_template(
+        db_field='ref',
+        api_field='Ref',
+        description=''
+    ),
+    parameter_template(
+        db_field='description_ua',
+        api_field='Description',
+        description='Название на украинском'
+    ),
+    parameter_template(
+        db_field='streets_type_ref',
+        api_field='StreetsTypeRef',
+        description='Ref типа улицы'
+    ),
+    parameter_template(
+        db_field='streets_type',
+        api_field='StreetsType',
+        description='Тип улицы'
+    ),
+    parameter_template(
+        db_field='city_id',
+        api_field='CityRef',
+        description='Город'
+    ),
+
+)
+
 warehouse_parameters = main_parameters + coordinates_parameters + (
     parameter_template(
         db_field='site_key',
@@ -480,10 +509,12 @@ def get_and_apply_changes(obj, structure, api_data):
                            f'{pml}Новое значение:</p>{pml}{replace_str_dict(api_field_val)}</p>'
             case "<class 'str'>":
 
-                field_val_to_check = field_db_val if field_db_val is not None else ''
+                # field_val_to_check = field_db_val if field_db_val is not None else ''
+                field_val_to_check = field_db_val
                 field_changed = False if api_field_val == field_db_val else True
                 diff = f'{pml}Старое значение: {field_val_to_check}</p>' \
                        f'{pml}Новое значение: {api_field_val}</p>'
+                # print('DIFF - ', diff)
             case "<class 'NoneType'>":
                 field_changed = False if field_db_val == api_field_val else True
                 diff = f'{pml}Старое значение: {field_db_val}</p>' \

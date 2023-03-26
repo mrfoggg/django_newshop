@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from nova_poshta.forms import SettlementForm
+from nova_poshta.forms import SettlementForm, CityForm
 from nova_poshta.models import City, Settlement, Warehouse, Street
 
 
@@ -101,5 +101,33 @@ class WarehouseAdmin(admin.ModelAdmin):
         css = {
             "all": ("select2.min.css",)}
 
+@admin.register(Street)
+class StreetAdmin(admin.ModelAdmin):
+    baton_cl_includes = [
+        ('nova_poshta/admin_update_streets.html', 'top',),
+    ]
 
-admin.site.register(Street)
+    autocomplete_fields = ('city',)
+    list_display = ('city', '__str__',)
+    search_fields = ('description_ua', 'city__description_ua', 'city__description_ru')
+    ordering = ('city', 'description_ua')
+    list_display_links = ('__str__',)
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = {'city_form': CityForm}
+        return super().changelist_view(
+            request, extra_context=extra_context,
+        )
+
+    # def has_change_permission(self, request, obj=None):
+    #     return False
+    #
+    # def has_add_permission(self, request, obj=None):
+    #     return False
+
+    class Media:
+        js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
+              'select2.min.js',)
+
+        css = {
+            "all": ("select2.min.css",)}

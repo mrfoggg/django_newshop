@@ -15,8 +15,6 @@ from ROOTAPP.models import (Messenger, Person, PersonPhone, PersonSettlement,
 from .admin_forms import PersonPhonesAdminFormset
 from .forms import FullAddressForm, PersonAddress
 
-# from .forms import SettlementForm, FullAddressForm
-
 admin.site.register(Messenger)
 
 

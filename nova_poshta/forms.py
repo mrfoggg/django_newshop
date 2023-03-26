@@ -2,7 +2,7 @@ from allauth.account.forms import ResetPasswordForm
 from django import forms
 from django_select2.forms import ModelSelect2Widget
 
-from nova_poshta.models import Settlement, SettlementArea, Warehouse
+from nova_poshta.models import Settlement, SettlementArea, Warehouse, CityArea, City
 
 
 # from django_select2 import forms as s2forms
@@ -47,6 +47,30 @@ class SettlementForm(forms.Form):
     )
 
 
+class CityForm(forms.Form):
+    area = forms.ModelChoiceField(
+        queryset=CityArea.objects.all(),
+        label="Область",
+        widget=ModelSelect2Widget(
+            model=CityArea,
+            search_fields=['description_ua__icontains', 'description_ru__icontains'],
+            attrs={'data-placeholder': 'назва області'}
+        )
+    )
+
+    city = forms.ModelChoiceField(
+        queryset=City.objects.all(),
+        label="Город",
+        widget=ModelSelect2Widget(
+            model=City,
+            search_fields=('description_ua__icontains', 'description_ru__icontains'),
+            dependent_fields={'area': 'area'},
+            max_results=50,
+            attrs={'data-placeholder': 'назва міста'}
+        )
+    )
+
+
 area_widget = ModelSelect2Widget(
     model=SettlementArea,
     search_fields=['description_ua__icontains', 'description_ru__icontains'],
@@ -71,7 +95,6 @@ warehouse_widget = ModelSelect2Widget(
     attrs={'data-placeholder': 'отделение', 'style': 'width: 80%;',
            'data-minimum-input-length': '0'}
 )
-
 
 # class SettlementSelectWidget(ModelSelect2Widget):
 #     model = Settlement
