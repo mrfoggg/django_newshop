@@ -8,7 +8,7 @@ from django_select2.forms import ModelSelect2Widget
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
 
 from nova_poshta.models import Warehouse, Street
-from nova_poshta.services import get_city_sender_for_settlement
+from nova_poshta.services import get_settlement_addict_info
 # from .services.telegram_servises import get_tg_username
 # from asgiref.sync import sync_to_async
 from orders.models import ByOneclick
@@ -123,12 +123,12 @@ class PersonAddressAdmin(admin.ModelAdmin):
         if obj:
             request._obj_not_exist_ = False
             request._address_type_ = obj.address_type
-            found_settlement = get_city_sender_for_settlement(obj.settlement.description_ua, obj.settlement_id)
-            streets_this_city = Street.objects.filter(city_id=found_settlement.delivery_city_ref)
-            obj.city_id = found_settlement.delivery_city_ref
-            if not found_settlement.address_delivery_allowed:
+            settlement_addict_info = get_settlement_addict_info(obj.settlement.index_1, obj.settlement_id)
+            streets_this_city = Street.objects.filter(city_id=settlement_addict_info.delivery_city_ref)
+            obj.city_id = settlement_addict_info.delivery_city_ref
+            if not settlement_addict_info.address_delivery_allowed:
                 messages.add_message(request, messages.ERROR, 'АДРЕСНАЯ ДОСТАВКА НЕДОСТУПНА')
-            if found_settlement.streets_availability:
+            if settlement_addict_info.streets_availability:
                 streets_to_select = streets_this_city
                 streets_to_select_count = streets_this_city.count()
             else:
@@ -145,7 +145,7 @@ class PersonAddressAdmin(admin.ModelAdmin):
                     messages.add_message(request, messages.SUCCESS, 'Указанный населенный пункт веберете как улицу в городе '
                                                                     'доставки. Необходимую улицу доставки укажите в '
                                                                     'коментарии')
-            request._streets_availability_ = found_settlement.streets_availability
+            request._streets_availability_ = settlement_addict_info.streets_availability
             request._streets_to_select_ = streets_to_select
             request._streets_to_select_count_ = streets_to_select_count
 

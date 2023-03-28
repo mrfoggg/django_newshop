@@ -543,7 +543,7 @@ def get_and_apply_changes(obj, structure, api_data):
         return {'changed': False}
 
 
-def get_city_sender_for_settlement(settlement_name, settlement_ref):
+def get_settlement_addict_info(settlement_name, settlement_ref):
     print('=' * 50)
     print(f'ЗАПРОС ГОРОДА ОТПРАВКИ ДЛЯ {settlement_name}')
     request_dict = {
