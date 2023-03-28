@@ -117,12 +117,15 @@ class PersonAddressAdmin(admin.ModelAdmin):
     # ) -> Optional[QuerySet]:
 
     def get_form(self, request, obj=None, **kwargs):
-        obj.save()
+        print('+'*70)
+        # obj.save()
+        print('obj - ', obj)
         if obj:
             request._obj_not_exist_ = False
             request._address_type_ = obj.address_type
-            streets_this_city = Street.objects.filter(city_id=obj.city_id)
+            # print('streets_this_city - ', streets_this_city)
             found_settlement = get_city_sender_for_settlement(obj.settlement.description_ua, obj.settlement_id)
+            streets_this_city = Street.objects.filter(city_id=found_settlement.delivery_city_ref)
             obj.city_id = found_settlement.delivery_city_ref
             if not found_settlement.address_delivery_allowed:
                 messages.add_message(request, messages.ERROR, 'АДРЕСНАЯ ДОСТАВКА НЕДОСТУПНА')
@@ -148,6 +151,8 @@ class PersonAddressAdmin(admin.ModelAdmin):
             request._streets_to_select_count_ = streets_to_select_count
 
             obj.save()
+            print('obj.street - ', obj.street)
+            print('streets_to_select - ', streets_to_select)
         return super().get_form(request, obj, **kwargs)
 
     def get_fields(self, request, obj=None):
