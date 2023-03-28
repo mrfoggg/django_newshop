@@ -50,21 +50,14 @@ class PersonalInfoForm(forms.ModelForm):
 class FullAddressForm(forms.ModelForm):
 
     def clean(self):
-        print('DATA - ', self.cleaned_data)
+        print('CLEAN - ')
+        cleaned_data = super().clean()
 
-    # street = forms.ModelChoiceField(
-    #     queryset=Street.objects.all(),
-    #     label="улица",
-    #     required=False,
-    #     widget=ModelSelect2Widget(
-    #         model=Street,
-    #         search_fields=('description_ua__icontains',),
-    #         dependent_fields={'city': 'city'},
-    #         max_results=50,
-    #         attrs={'data-placeholder': 'улица или село', 'style': 'width: 80%;',
-    #                'data-minimum-input-length': '0'}
-    #     )
-    # )
+        if 'settlement' in self.changed_data:
+            self.instance.street = None
+            self.instance.save()
+            cleaned_data['street'] = None
+        return cleaned_data
 
     class Meta:
         model = PersonAddress
@@ -74,6 +67,3 @@ class FullAddressForm(forms.ModelForm):
             'warehouse': warehouse_widget, 'street': street_widget
         }
 
-    def clean(self):
-        if self.cleaned_data['address_type']:
-            pass

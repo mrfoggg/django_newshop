@@ -114,10 +114,6 @@ class PersonAddressAdmin(admin.ModelAdmin):
         css = {
             "all": ("select2.min.css",)}
 
-    # def get_field_queryset(
-    #     self, db: Optional[str], db_field: RelatedField, request: HttpRequest
-    # ) -> Optional[QuerySet]:
-
     def get_form(self, request, obj=None, **kwargs):
         print('+'*70)
         request._obj_not_exist_ = True
@@ -148,7 +144,7 @@ class PersonAddressAdmin(admin.ModelAdmin):
                     'street': help_text,
                 }
                 kwargs.update({"help_texts": help_texts})
-
+            print('**kwargs-2  - ', kwargs)
             request._streets_availability_ = settlement_addict_info.streets_availability
             request._streets_to_select_ = streets_to_select
             request._streets_to_select_count_ = streets_to_select_count
