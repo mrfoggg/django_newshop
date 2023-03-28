@@ -123,7 +123,6 @@ class PersonAddressAdmin(admin.ModelAdmin):
         if obj:
             request._obj_not_exist_ = False
             request._address_type_ = obj.address_type
-            # print('streets_this_city - ', streets_this_city)
             found_settlement = get_city_sender_for_settlement(obj.settlement.description_ua, obj.settlement_id)
             streets_this_city = Street.objects.filter(city_id=found_settlement.delivery_city_ref)
             obj.city_id = found_settlement.delivery_city_ref
@@ -151,8 +150,6 @@ class PersonAddressAdmin(admin.ModelAdmin):
             request._streets_to_select_count_ = streets_to_select_count
 
             obj.save()
-            print('obj.street - ', obj.street)
-            print('streets_to_select - ', streets_to_select)
         return super().get_form(request, obj, **kwargs)
 
     def get_fields(self, request, obj=None):
@@ -169,7 +166,6 @@ class PersonAddressAdmin(admin.ModelAdmin):
             if request._streets_availability_:
                 return ()
             else:
-                print('streets_to_select_count - ', request._streets_to_select_count_)
                 return ('city', 'street',) if request._streets_to_select_count_ == 1 else ('city',)
         else:
             return ()
