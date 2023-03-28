@@ -97,15 +97,15 @@ warehouse_widget = ModelSelect2Widget(
 )
 
 
-# street_widget = ModelSelect2Widget(
-#     model=Street,
-#     search_fields=('description__icontains',),
-#     dependent_fields={'city': 'city'},
-#     max_results=50,
-#     minimum_results_for_search=10,
-#     attrs={'data-placeholder': 'улица или село', 'style': 'width: 80%;',
-#            'data-minimum-input-length': '0'}
-# )
+street_widget = ModelSelect2Widget(
+    model=Street,
+    search_fields=('description__icontains',),
+    dependent_fields={'city': 'city'},
+    max_results=50,
+    minimum_results_for_search=10,
+    attrs={'data-placeholder': 'улица или село', 'style': 'width: 80%;',
+           'data-minimum-input-length': '0'}
+)
 
 
 

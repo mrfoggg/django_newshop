@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import nested_admin
 from adminsortable2.admin import SortableAdminMixin
 from django import forms
@@ -118,15 +120,14 @@ class PersonAddressAdmin(admin.ModelAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         print('+'*70)
-        # obj.save()
-        print('obj - ', obj)
+        request._obj_not_exist_ = True
         if obj:
             request._obj_not_exist_ = False
             request._address_type_ = obj.address_type
             settlement_addict_info = get_settlement_addict_info(obj.settlement.index_1, obj.settlement_id)
             streets_this_city = Street.objects.filter(city_id=settlement_addict_info.delivery_city_ref)
             obj.city_id = settlement_addict_info.delivery_city_ref
-            if not settlement_addict_info.address_delivery_allowed:
+            if not settlement_addict_info.address_delivery_allowed and obj.address_type == 3:
                 messages.add_message(request, messages.ERROR, 'АДРЕСНАЯ ДОСТАВКА НЕДОСТУПНА')
             if settlement_addict_info.streets_availability:
                 streets_to_select = streets_this_city
@@ -138,18 +139,22 @@ class PersonAddressAdmin(admin.ModelAdmin):
                 if streets_to_select_count == 1:
                     obj.street = streets_to_select.first()
                     request._is_street_field_read_only_ = True
-                    messages.add_message(request, messages.SUCCESS, 'Указанный населенный пункт выбран как улица в городе '
-                                                                    'доставки. Необходимую улицу доставки укажите в '
-                                                                    'коментарии')
+                    help_text = 'Указанный населенный пункт выбран как улица в городе доставки. Необходимую улицу ' \
+                                 'доставки укажите в коментарии'
                 else:
-                    messages.add_message(request, messages.SUCCESS, 'Указанный населенный пункт веберете как улицу в городе '
-                                                                    'доставки. Необходимую улицу доставки укажите в '
-                                                                    'коментарии')
+                    help_text = 'Указанный населенный пункт веберете как улицу в городе доставки. Необходимую улицу' \
+                                ' доставки укажите в коментарии'
+                help_texts = {
+                    'street': help_text,
+                }
+                kwargs.update({"help_texts": help_texts})
+
             request._streets_availability_ = settlement_addict_info.streets_availability
             request._streets_to_select_ = streets_to_select
             request._streets_to_select_count_ = streets_to_select_count
 
             obj.save()
+
         return super().get_form(request, obj, **kwargs)
 
     def get_fields(self, request, obj=None):
