@@ -6,7 +6,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from phonenumbers import carrier, geocoder
 from phonenumbers.phonenumberutil import region_code_for_number
 
-from nova_poshta.models import Settlement, SettlementArea, Warehouse
+from nova_poshta.models import Settlement, SettlementArea, Warehouse, City, Street
 
 TYPES_OF_PHONE = (
     (1, "Viber"),
@@ -126,10 +126,21 @@ class PersonSettlement(models.Model):
 
 
 class PersonAddress(models.Model):
+    ADDRESS_TYPE = (
+        (1, "На отделение"),
+        (2, "На почтомат"),
+        (3, "На адрес"),
+    )
+    address_type = models.SmallIntegerField('Тип адреса', choices=ADDRESS_TYPE, default=1)
     area = models.ForeignKey(SettlementArea, on_delete=models.CASCADE, verbose_name="Область")
-    settlement = models.ForeignKey(Settlement, on_delete=models.CASCADE, verbose_name="Населенный пункт", )
-    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, verbose_name="Отделение", )
+    settlement = models.ForeignKey(Settlement, on_delete=models.CASCADE, verbose_name="Населенный пункт")
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, blank=True, null=True, verbose_name="Отделение")
     person = models.ForeignKey(Person, on_delete=models.CASCADE, verbose_name="Контрагент")
+    city = models.ForeignKey(City, on_delete=models.CASCADE, blank=True, null=True,
+                             verbose_name="Город Новой почты откуда производится доставка")
+    street = models.ForeignKey(Street, on_delete=models.CASCADE, blank=True, null=True,
+                               verbose_name="Улица или село адресной доставки")
+    comment = models.CharField('Коментарий к адресу', max_length=128, default=None, null=True, blank=True)
 
     class Meta:
         verbose_name = "Адрес доставки контрагента"
@@ -138,4 +149,4 @@ class PersonAddress(models.Model):
         ordering = ('area',)
 
     def __str__(self):
-        return f'{self.settlement}, {self.warehouse}'
+        return f'{self.settlement}, {self.warehouse if self.address_type in (1, 2) else self.street}'

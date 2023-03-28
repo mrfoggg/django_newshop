@@ -541,3 +541,31 @@ def get_and_apply_changes(obj, structure, api_data):
         }
     else:
         return {'changed': False}
+
+
+def get_city_sender_for_settlement(settlement_name, settlement_ref):
+    print('=' * 50)
+    print(f'ЗАПРОС ГОРОДА ОТПРАВКИ ДЛЯ {settlement_name}')
+    request_dict = {
+        "modelName": "Address",
+        "calledMethod": "searchSettlements",
+        "methodProperties": {"CityName": settlement_name, "Limit": "50", "Page": "1"}
+    }
+    response_data = get_response(request_dict)
+
+    found_settlement = next(x for x in response_data['data'][0]['Addresses'] if x["Ref"] == settlement_ref)
+    delivery_city_ref = found_settlement['DeliveryCity']
+    address_delivery_allowed = found_settlement['AddressDeliveryAllowed']
+    streets_availability = found_settlement['StreetsAvailability']
+    # if not address_delivery_allowed:
+    #     messages.add_message(request, messages.ERROR, 'АДРЕСНАЯ ДОСТАВКА НЕДОСТУПНА')
+    print('='*50)
+    print('Город отправки на адрес:', City.objects.get(ref=delivery_city_ref))
+    print('Доступен для адресной доставки:', address_delivery_allowed)
+    print('streets_availability', streets_availability)
+    print()
+    result = namedtuple('result', 'delivery_city_ref address_delivery_allowed streets_availability')
+    result.delivery_city_ref = found_settlement['DeliveryCity']
+    result.address_delivery_allowed = found_settlement['AddressDeliveryAllowed']
+    result.streets_availability = found_settlement['StreetsAvailability']
+    return result

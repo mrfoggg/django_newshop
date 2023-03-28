@@ -17,6 +17,18 @@ class WarehouseForSettlementInline(admin.TabularInline):
         return False
 
 
+class StreetForCityInline(admin.TabularInline):
+    model = Street
+    extra = 0
+    # fields = ('number', 'type_warehouse', 'description_ru', 'warehouse_status', 'deny_to_select', 'place_max_weight',
+    #           'total_max_weight', 'map_link')
+    # readonly_fields = ('map_link',)
+    show_change_link = True
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Settlement)
 class SettlementAdmin(admin.ModelAdmin):
     fields = [x.name for x in Settlement._meta.fields]
@@ -53,7 +65,7 @@ class CityAdmin(admin.ModelAdmin):
         ('nova_poshta/button_update_cities.html', 'top',),
     ]
     search_fields = ('description_ru', 'description_ua',)
-    inlines = (WarehouseForSettlementInline,)
+    inlines = (WarehouseForSettlementInline, StreetForCityInline)
 
     def has_change_permission(self, request, obj=None):
         return False
@@ -101,6 +113,7 @@ class WarehouseAdmin(admin.ModelAdmin):
         css = {
             "all": ("select2.min.css",)}
 
+
 @admin.register(Street)
 class StreetAdmin(admin.ModelAdmin):
     baton_cl_includes = [
@@ -119,11 +132,11 @@ class StreetAdmin(admin.ModelAdmin):
             request, extra_context=extra_context,
         )
 
-    # def has_change_permission(self, request, obj=None):
-    #     return False
-    #
-    # def has_add_permission(self, request, obj=None):
-    #     return False
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
     class Media:
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',

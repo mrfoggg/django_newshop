@@ -1,8 +1,10 @@
 from django import forms
 from django.forms.models import modelform_factory
+from django_select2.forms import ModelSelect2Widget
 
 from nova_poshta.forms import area_widget, settlement_widget, warehouse_widget
 from ROOTAPP.models import Person, PersonAddress
+from nova_poshta.models import Street
 
 
 class PersonForm(forms.ModelForm):
@@ -46,6 +48,23 @@ class PersonalInfoForm(forms.ModelForm):
 
 
 class FullAddressForm(forms.ModelForm):
+
+    def clean(self):
+        print('DATA - ', self.cleaned_data)
+    street = forms.ModelChoiceField(
+        queryset=Street.objects.all(),
+        label="улица",
+        required=False,
+        widget=ModelSelect2Widget(
+            model=Street,
+            search_fields=('description_ua__icontains',),
+            dependent_fields={'city': 'city'},
+            max_results=50,
+            attrs={'data-placeholder': 'улица или село', 'style': 'width: 80%;',
+                   'data-minimum-input-length': '0'}
+        )
+    )
+
     class Meta:
         model = PersonAddress
         exclude = []
@@ -53,3 +72,7 @@ class FullAddressForm(forms.ModelForm):
             'area': area_widget, 'settlement': settlement_widget,
             'warehouse': warehouse_widget
         }
+
+    def clean(self):
+        if self.cleaned_data['address_type']:
+            pass

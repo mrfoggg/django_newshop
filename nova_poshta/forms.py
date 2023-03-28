@@ -2,7 +2,7 @@ from allauth.account.forms import ResetPasswordForm
 from django import forms
 from django_select2.forms import ModelSelect2Widget
 
-from nova_poshta.models import Settlement, SettlementArea, Warehouse, CityArea, City
+from nova_poshta.models import Settlement, SettlementArea, Warehouse, CityArea, City, Street
 
 
 # from django_select2 import forms as s2forms
@@ -96,6 +96,20 @@ warehouse_widget = ModelSelect2Widget(
            'data-minimum-input-length': '0'}
 )
 
+
+# street_widget = ModelSelect2Widget(
+#     model=Street,
+#     search_fields=('description__icontains',),
+#     dependent_fields={'city': 'city'},
+#     max_results=50,
+#     minimum_results_for_search=10,
+#     attrs={'data-placeholder': 'улица или село', 'style': 'width: 80%;',
+#            'data-minimum-input-length': '0'}
+# )
+
+
+
+
 # class SettlementSelectWidget(ModelSelect2Widget):
 #     model = Settlement
 #     search_fields = [
@@ -105,3 +119,5 @@ warehouse_widget = ModelSelect2Widget(
 #     max_results = 50
 
 # PersonInlineFormset = inlineformset_factory(Person, PersonPhone, fields=('phone', 'is_nova_poshta'))
+
+

@@ -235,7 +235,6 @@ class Street(NpDataModel):
     city = models.ForeignKey(City, default=None, on_delete=models.CASCADE,
                              verbose_name="Город", related_name='streets', db_index=True)
 
-
     class Meta:
         verbose_name = 'Улица'
         verbose_name_plural = 'Улицы'
