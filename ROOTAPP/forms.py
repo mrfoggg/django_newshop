@@ -55,7 +55,8 @@ class FullAddressForm(forms.ModelForm):
 
         if 'settlement' in self.changed_data:
             self.instance.street = None
-            self.instance.save()
+            if self.instance.id:
+                self.instance.save()
             cleaned_data['street'] = None
         return cleaned_data
 

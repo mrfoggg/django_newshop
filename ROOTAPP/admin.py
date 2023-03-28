@@ -158,7 +158,7 @@ class PersonAddressAdmin(admin.ModelAdmin):
             if obj.address_type in (1, 2):
                 return self.fields + ('warehouse', 'comment')
             else:
-                return self.fields + ('city', 'street', 'comment')
+                return self.fields + ('city', 'street', 'build', 'comment')
         else:
             return self.fields + ('warehouse', 'comment')
 
@@ -167,7 +167,7 @@ class PersonAddressAdmin(admin.ModelAdmin):
             if request._streets_availability_:
                 return ()
             else:
-                return ('city', 'street',) if request._streets_to_select_count_ == 1 else ('city',)
+                return ('city', 'street',) if request._streets_to_select_count_ == 1 else ()
         else:
             return ()
 

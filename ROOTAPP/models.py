@@ -141,6 +141,7 @@ class PersonAddress(models.Model):
     street = models.ForeignKey(Street, on_delete=models.CASCADE, blank=True, null=True,
                                verbose_name="Улица или село адресной доставки")
     comment = models.CharField('Коментарий к адресу', max_length=128, default=None, null=True, blank=True)
+    build = models.CharField('Номер дома', max_length=8, default=None, null=True, blank=True)
 
     class Meta:
         verbose_name = "Адрес доставки контрагента"
@@ -149,4 +150,12 @@ class PersonAddress(models.Model):
         ordering = ('area',)
 
     def __str__(self):
-        return f'{self.settlement}, {self.warehouse if self.address_type in (1, 2) else self.street}'
+        match self.address_type:
+            case 1:
+                address = self.warehouse if self.warehouse else '(отделение не указано)'
+            case 2:
+                address = self.warehouse if self.warehouse else '(почтомат не указан)'
+            case 3:
+                address = self.warehouse if self.warehouse else '(улица не указана)'
+
+        return f'{self.settlement}, {address}'
