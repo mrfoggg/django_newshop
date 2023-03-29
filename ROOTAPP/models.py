@@ -133,7 +133,7 @@ class PersonAddress(models.Model):
     )
     address_type = models.SmallIntegerField('Тип адреса', choices=ADDRESS_TYPE, default=1)
     area = models.ForeignKey(SettlementArea, on_delete=models.CASCADE, verbose_name="Область")
-    settlement = models.ForeignKey(Settlement, on_delete=models.CASCADE, verbose_name="Населенный пункт")
+    settlement = models.ForeignKey(Settlement, on_delete=models.CASCADE, null=True, verbose_name="Населенный пункт")
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, blank=True, null=True, verbose_name="Отделение")
     person = models.ForeignKey(Person, on_delete=models.CASCADE, verbose_name="Контрагент")
     city = models.ForeignKey(City, on_delete=models.CASCADE, blank=True, null=True,
@@ -156,6 +156,6 @@ class PersonAddress(models.Model):
             case 2:
                 address = self.warehouse if self.warehouse else '(почтомат не указан)'
             case 3:
-                address = self.warehouse if self.warehouse else '(улица не указана)'
+                address = f'{self.street} {self.build if self.build else ""}' if self.street else '(улица не указана)'
 
         return f'{self.settlement}, {address}'

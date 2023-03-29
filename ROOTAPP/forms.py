@@ -48,23 +48,22 @@ class PersonalInfoForm(forms.ModelForm):
 
 
 class FullAddressForm(forms.ModelForm):
-
-    def clean(self):
-        print('CLEAN - ')
-        cleaned_data = super().clean()
-
-        if 'settlement' in self.changed_data:
-            self.instance.street = None
-            if self.instance.id:
-                self.instance.save()
-            cleaned_data['street'] = None
-        return cleaned_data
+    # def clean(self):
+    #     print('CLEAN - ')
+    #     cleaned_data = super().clean()
+    #
+    #     if 'settlement' in self.changed_data:
+    #         self.instance.street = None
+    #         if self.instance.id:
+    #             self.instance.save()
+    #         cleaned_data['street'] = None
+    #     return cleaned_data
 
     class Meta:
         model = PersonAddress
         exclude = []
         widgets = {
             'area': area_widget, 'settlement': settlement_widget,
-            'warehouse': warehouse_widget, 'street': street_widget
+            'warehouse': warehouse_widget, 'street': street_widget,
         }
 

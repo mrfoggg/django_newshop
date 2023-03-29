@@ -746,7 +746,7 @@ $(document).ready(function(){
         $(".django-select2").djangoSelect2({
             language: "uk",
             theme: "flat"
-        })
+        });
     }
 
     $(document).on('select2:open', () => {

@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from nova_poshta.forms import SettlementForm, CityForm
-from nova_poshta.models import City, Settlement, Warehouse, Street
+from nova_poshta.models import City, Settlement, Warehouse, Street, SettlementArea
 
 
 class WarehouseForSettlementInline(admin.TabularInline):
@@ -144,3 +144,10 @@ class StreetAdmin(admin.ModelAdmin):
 
         css = {
             "all": ("select2.min.css",)}
+
+@admin.register(SettlementArea)
+class SettlementAreaAdmin(admin.ModelAdmin):
+    search_fields = ('description_ua',)
+
+
+# admin.site.register(SettlementArea)

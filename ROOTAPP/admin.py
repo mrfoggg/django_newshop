@@ -45,6 +45,15 @@ class PersonOneClickInline(nested_admin.NestedTabularInline):
     extra = 0
 
 
+class PersonAddressInlineAdmin(nested_admin.NestedTabularInline):
+    fields = ('address_type', 'area', 'settlement')
+    readonly_fields = ('settlement',)
+    model = PersonAddress
+    autocomplete_fields = ('area', )
+    extra = 0
+    show_change_link = True
+
+
 class PhoneAdminForm(forms.ModelForm):
     class Meta:
         model = Phone
@@ -81,9 +90,14 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
     )
     search_fields = ('last_name', 'first_name', 'middle_name')
     # autocomplete_fields = ('main_phone',)
-    inlines = (PersonPhoneInlineAdmin, PersonOneClickInline, PersonSettlementInline)
+    inlines = (PersonPhoneInlineAdmin, PersonOneClickInline, PersonSettlementInline, PersonAddressInlineAdmin)
     list_display = ('__str__', 'email', 'main_phone', 'is_customer', 'is_supplier')
     list_filter = ('is_customer', 'is_supplier')
+
+    # class Media:
+    #     js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
+    #           'select2.min.js', 'select2_inline_fix.js')
+        # js = ('select2_inline_fix.js',)
 
     # read
 
@@ -101,10 +115,10 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
 
 
 # без использования декоратора так как перопрелеляется __init__
-# @admin.register(PersonAddress)
+@admin.register(PersonAddress)
 class PersonAddressAdmin(admin.ModelAdmin):
     form = FullAddressForm
-    fields = ('address_type', 'area', 'settlement', 'person')
+    fields = ('address_type', 'area', 'settlement', 'person', )
     autocomplete_fields = ('person', 'city',)
 
     class Media:
@@ -112,46 +126,21 @@ class PersonAddressAdmin(admin.ModelAdmin):
               'select2.min.js')
 
         css = {
-            "all": ("select2.min.css",)}
+            "all": ("select2.min.css", 'select2_inline_fix.js')}
 
     def get_form(self, request, obj=None, **kwargs):
         print('+'*70)
         request._obj_not_exist_ = True
+        form = super().get_form(request, obj, **kwargs)
         if obj:
-            request._obj_not_exist_ = False
-            request._address_type_ = obj.address_type
-            settlement_addict_info = get_settlement_addict_info(obj.settlement.index_1, obj.settlement_id)
-            streets_this_city = Street.objects.filter(city_id=settlement_addict_info.delivery_city_ref)
-            obj.city_id = settlement_addict_info.delivery_city_ref
-            if not settlement_addict_info.address_delivery_allowed and obj.address_type == 3:
-                messages.add_message(request, messages.ERROR, 'АДРЕСНАЯ ДОСТАВКА НЕДОСТУПНА')
-            if settlement_addict_info.streets_availability:
-                streets_to_select = streets_this_city
-                streets_to_select_count = streets_this_city.count()
-            else:
-                streets_to_select = streets_this_city.filter(
-                    description_ua__icontains=obj.settlement.description_ua)
-                streets_to_select_count = streets_to_select.count()
-                if streets_to_select_count == 1:
-                    obj.street = streets_to_select.first()
-                    request._is_street_field_read_only_ = True
-                    help_text = 'Указанный населенный пункт выбран как улица в городе доставки. Необходимую улицу ' \
-                                 'доставки укажите в коментарии'
-                else:
-                    help_text = 'Указанный населенный пункт веберете как улицу в городе доставки. Необходимую улицу' \
-                                ' доставки укажите в коментарии'
-                help_texts = {
-                    'street': help_text,
-                }
-                kwargs.update({"help_texts": help_texts})
-            print('**kwargs-2  - ', kwargs)
-            request._streets_availability_ = settlement_addict_info.streets_availability
-            request._streets_to_select_ = streets_to_select
-            request._streets_to_select_count_ = streets_to_select_count
-
-            obj.save()
-
-        return super().get_form(request, obj, **kwargs)
+            if obj.settlement:
+                request._obj_not_exist_ = False
+                request._address_type_ = obj.address_type
+                settlement_addict_info = get_settlement_addict_info(obj.settlement.index_1, obj.settlement_id)
+                obj.city_id = settlement_addict_info.delivery_city_ref
+                obj.save()
+                form.base_fields["street"].queryset = Street.objects.filter(city=obj.city)
+        return form
 
     def get_fields(self, request, obj=None):
         if obj is not None:
@@ -164,19 +153,10 @@ class PersonAddressAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            if request._streets_availability_:
-                return ()
-            else:
-                return ('city', 'street',) if request._streets_to_select_count_ == 1 else ()
+            if obj.person:
+                return('person', 'city')
         else:
-            return ()
-
-    # def get_autocomplete_fields(self, request, obj=None):
-    #     if obj:
-    #         return ('city', 'street',) if request._streets_availability_ else ()
-    #     else:
-    #         return ()
-
+            return ('city',)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'warehouse':
@@ -194,14 +174,11 @@ class PersonAddressAdmin(admin.ModelAdmin):
                                                                    '841339c7-591a-42e2-8233-7a0a00f0ed6f',
                                                                    '9a68df70-0267-42a8-bb5c-37f427e36ee4')
                                                                   )
-        if not request._obj_not_exist_:
-            if db_field.name == 'street' and not request._streets_availability_ and request._streets_to_select_count_ > 1:
-                kwargs["queryset"] = request._streets_to_select_
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 # без использования декоратора так как перопрелеляется __init__
-admin.site.register(PersonAddress, PersonAddressAdmin)
+# admin.site.register(PersonAddress, PersonAddressAdmin)
 
 # @admin.register(PersonSettlement)
 # class PersonAddressAdmin(admin.ModelAdmin):
