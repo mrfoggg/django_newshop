@@ -15,10 +15,9 @@ from nova_poshta.services import get_settlement_addict_info
 # from asgiref.sync import sync_to_async
 from orders.models import ByOneclick
 from ROOTAPP.models import (Messenger, Person, PersonPhone, PersonSettlement,
-                            Phone)
+                            Phone, PersonAddress)
 
-from .admin_forms import PersonPhonesAdminFormset
-from .forms import FullAddressForm, PersonAddress
+from .admin_forms import PersonPhonesAdminFormset, FullAddressForm
 
 admin.site.register(Messenger)
 
@@ -46,12 +45,14 @@ class PersonOneClickInline(nested_admin.NestedTabularInline):
 
 
 class PersonAddressInlineAdmin(nested_admin.NestedTabularInline):
-    fields = ('address_type', 'area', 'settlement')
-    readonly_fields = ('settlement',)
+    fields = ('area',)
     model = PersonAddress
-    autocomplete_fields = ('area', )
+    autocomplete_fields = ('area',)
     extra = 0
     show_change_link = True
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 class PhoneAdminForm(forms.ModelForm):
@@ -72,6 +73,10 @@ class PhoneAdmin(admin.ModelAdmin):
     search_fields = ('number',)
 
     def get_form(self, request, obj=None, **kwargs):
+        request._show_types_field_ = False
+        if obj:
+            if obj.settlement:
+                request._show_types_field_ = True
         form = super(PhoneAdmin, self).get_form(request, obj, **kwargs)
         form.base_fields['messengers'].widget = forms.CheckboxSelectMultiple()
         return form
@@ -97,7 +102,7 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
     # class Media:
     #     js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
     #           'select2.min.js', 'select2_inline_fix.js')
-        # js = ('select2_inline_fix.js',)
+    # js = ('select2_inline_fix.js',)
 
     # read
 
@@ -118,18 +123,23 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
 @admin.register(PersonAddress)
 class PersonAddressAdmin(admin.ModelAdmin):
     form = FullAddressForm
-    fields = ('address_type', 'area', 'settlement', 'person', )
+    fields = ['person', 'area', 'settlement', ]
     autocomplete_fields = ('person', 'city',)
+    readonly_fields = ['city']
+    radio_fields = {"address_type": admin.HORIZONTAL}
+
+    # radio_fields = {"address_type": admin.VERTICAL}
 
     class Media:
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
-              'select2.min.js')
+              'select2.min.js',
+              'root_app/person_address_admin_form.js')
 
         css = {
-            "all": ("select2.min.css", 'select2_inline_fix.js')}
+            "all": ("select2.min.css")}
 
     def get_form(self, request, obj=None, **kwargs):
-        print('+'*70)
+        # print('+'*70)
         request._obj_not_exist_ = True
         form = super().get_form(request, obj, **kwargs)
         if obj:
@@ -138,25 +148,60 @@ class PersonAddressAdmin(admin.ModelAdmin):
                 request._address_type_ = obj.address_type
                 settlement_addict_info = get_settlement_addict_info(obj.settlement.index_1, obj.settlement_id)
                 obj.city_id = settlement_addict_info.delivery_city_ref
-                obj.save()
-                form.base_fields["street"].queryset = Street.objects.filter(city=obj.city)
-        return form
 
-    def get_fields(self, request, obj=None):
-        if obj is not None:
-            if obj.address_type in (1, 2):
-                return self.fields + ('warehouse', 'comment')
-            else:
-                return self.fields + ('city', 'street', 'build', 'comment')
-        else:
-            return self.fields + ('warehouse', 'comment')
+                # проверка доступности видов доставки и задание соответсвующийх варианов выбора
+                # будет передалано под AJAX
+                # types_to_choice = ()
+                # all_settlement_warehouses = obj.settlement.warehouses.all()
+                # print('all_settlement_warehouses - ', all_settlement_warehouses)
+                # if all_settlement_warehouses.exists():
+                #     types_to_choice += ((1, "На отделение"),)
+                #     if all_settlement_warehouses.filter(
+                #             type_warehouse_id__in=('95dc212d-479c-4ffb-a8ab-8c1b9073d0bc',
+                #                                    'f9316480-5f2d-425d-bc2c-ac7cd29decf0'
+                #                                    )
+                #     ).exists():
+                #         types_to_choice += ((1, "На почтомат"),)
+                # form.base_fields["address_type"].choices = types_to_choice
+
+            #     задание вариантов выбора улиц в зависимости от города
+            if obj.city and "street" in form.base_fields:
+                form.base_fields["street"].queryset = Street.objects.filter(city=obj.city)
+
+            # будет передалано под AJAX
+            # для типов отделение илт почтомат
+            # match obj.address_type:
+            #     case 1:
+            #         form.base_fields["warehouse"].queryset = Warehouse.objects.filter(
+            #             type_warehouse_id__in=('6f8c7162-4b72-4b0a-88e5-906948c6a92f',
+            #                                    '841339c7-591a-42e2-8233-7a0a00f0ed6f',
+            #                                    '9a68df70-0267-42a8-bb5c-37f427e36ee4')
+            #         )
+            #     case 2:
+            #         form.base_fields["warehouse"].queryset = Warehouse.objects.filter(
+            #             type_warehouse_id__in=('95dc212d-479c-4ffb-a8ab-8c1b9073d0bc',
+            #                                    'f9316480-5f2d-425d-bc2c-ac7cd29decf0'
+            #                                    )
+            #         )
+
+        return form
+    # будет передалано под AJAX
+    # def get_fields(self, request, obj=None):
+    #     new_fields = []
+    #     if obj is not None:
+    #         new_fields.append('address_type')
+    #         if obj.address_type == 1:
+    #             new_fields.extend(['warehouse', 'comment'])
+    #         else:
+    #             new_fields.extend(['city', 'street', 'build', 'comment'])
+    #     return self.fields + new_fields
 
     def get_readonly_fields(self, request, obj=None):
+        new_rof = []
         if obj:
             if obj.person:
-                return('person', 'city')
-        else:
-            return ('city',)
+                new_rof.append('person')
+        return self.readonly_fields + new_rof
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'warehouse':
@@ -164,18 +209,19 @@ class PersonAddressAdmin(admin.ModelAdmin):
                 request._address_type_ = 1
             match request._address_type_:
                 case 2:
+                    print('WAREHOUS')
                     kwargs["queryset"] = Warehouse.objects.filter(type_warehouse_id__in=
                                                                   ('95dc212d-479c-4ffb-a8ab-8c1b9073d0bc',
                                                                    'f9316480-5f2d-425d-bc2c-ac7cd29decf0')
                                                                   )
                 case 1:
+                    print('PPOSHTOMAT')
                     kwargs["queryset"] = Warehouse.objects.filter(type_warehouse_id__in=
                                                                   ('6f8c7162-4b72-4b0a-88e5-906948c6a92f',
                                                                    '841339c7-591a-42e2-8233-7a0a00f0ed6f',
                                                                    '9a68df70-0267-42a8-bb5c-37f427e36ee4')
                                                                   )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
 
 # без использования декоратора так как перопрелеляется __init__
 # admin.site.register(PersonAddress, PersonAddressAdmin)

@@ -17,6 +17,8 @@ from sorl.thumbnail import get_thumbnail
 from catalog.models import Product
 from ROOTAPP.forms import PersonalInfoForm, PersonEmailForm, PersonForm
 from ROOTAPP.models import Person, PersonPhone, Phone, get_phone_full_str
+from nova_poshta.models import Settlement, Warehouse
+from nova_poshta.services import get_settlement_addict_info
 from servises import get_products_annotated_prices
 from Shop_DJ import settings
 from site_settings.models import OAuthGoogle
@@ -463,7 +465,7 @@ def update_user_phones(request):
     print('-' * 20)
     # если не было ранее добавленых номеров
     if not is_old_person_phone_exists:
-    # перебираем даные форм новых номеров и устанавливаем первый попавшийся корректный как номер для входа и доставки
+        # перебираем даные форм новых номеров и устанавливаем первый попавшийся корректный как номер для входа и доставки
         for key in new_person_phone_id_dict.keys():
             ph_id = new_person_phone_id_dict[key]['new_person_phone_id']
             if ph_id in wrong_inputs_id_list:
@@ -475,7 +477,8 @@ def update_user_phones(request):
     else:
         # если это не первый добавленый номер то номерами доставки и основного задаем согласно чекбокса переданой формы
         main_phone_id_req = request_data.get('is_main_phone')
-        main_phone_id = new_person_phone_id_dict[main_phone_id_req] if 'new_' in main_phone_id_req else main_phone_id_req
+        main_phone_id = new_person_phone_id_dict[
+            main_phone_id_req] if 'new_' in main_phone_id_req else main_phone_id_req
         delivery_phone_req = request_data.get('is_delivery_phone')
         delivery_phone_id = new_person_phone_id_dict[
             delivery_phone_req] if 'new_' in delivery_phone_req else delivery_phone_req
@@ -513,3 +516,20 @@ def del_user_phone(request):
     PersonPhone.objects.get(id=id_to_del).delete()
     hide_del_btn = True if PersonPhone.objects.filter(person_id=request.user.id).count() == 1 else False
     return {'id': id_to_del, 'hide_del_btn': hide_del_btn}
+
+
+@json_view
+def get_settlement_info(request):
+    settlement_ref = request.POST.get('settlement_ref')
+    settlement_name = Settlement.objects.get(ref=settlement_ref).description_ua
+    settlement_api_info = get_settlement_addict_info(settlement_name, settlement_ref)
+    is_warehouses_exists = Warehouse.objects.filter(settlement_id=settlement_ref).exists()
+    print('delivery_city_ref -', settlement_api_info.delivery_city_ref)
+    print('address_delivery_allowed -', settlement_api_info.address_delivery_allowed)
+    print('streets_availability -', settlement_api_info.streets_availability)
+    print('is_warehouses_exists -', is_warehouses_exists)
+    return {
+        'address_delivery_allowed': settlement_api_info.address_delivery_allowed,
+        'delivery_city_ref': settlement_api_info.delivery_city_ref,
+        'is_warehouses_exists': is_warehouses_exists,
+    }

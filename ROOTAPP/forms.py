@@ -1,14 +1,10 @@
 from django import forms
 from django.forms.models import modelform_factory
-from django_select2.forms import ModelSelect2Widget
 
-from nova_poshta.forms import area_widget, settlement_widget, warehouse_widget, street_widget
-from ROOTAPP.models import Person, PersonAddress
-from nova_poshta.models import Street
+from ROOTAPP.models import Person
 
 
 class PersonForm(forms.ModelForm):
-    # main_phone = forms.CharField(label="Номер телефону")
     first_name = forms.CharField(label='Прізвище')
     last_name = forms.CharField(label="Ім'я")
     middle_name = forms.CharField(label="По-батькові")
@@ -21,12 +17,6 @@ class PersonForm(forms.ModelForm):
             'first_name': "Обов'язкове", 'last_name': "Обов'язкове поле", 'middle_name': "Обов'язкове поле",
             'email': "Обов'язкове поле"
         }
-
-
-PersonEmailForm = modelform_factory(
-    Person,
-    fields=('email',)
-)
 
 
 class PersonalInfoForm(forms.ModelForm):
@@ -47,23 +37,7 @@ class PersonalInfoForm(forms.ModelForm):
         fields = ('last_name', 'first_name', 'middle_name',)
 
 
-class FullAddressForm(forms.ModelForm):
-    # def clean(self):
-    #     print('CLEAN - ')
-    #     cleaned_data = super().clean()
-    #
-    #     if 'settlement' in self.changed_data:
-    #         self.instance.street = None
-    #         if self.instance.id:
-    #             self.instance.save()
-    #         cleaned_data['street'] = None
-    #     return cleaned_data
-
-    class Meta:
-        model = PersonAddress
-        exclude = []
-        widgets = {
-            'area': area_widget, 'settlement': settlement_widget,
-            'warehouse': warehouse_widget, 'street': street_widget,
-        }
-
+PersonEmailForm = modelform_factory(
+    Person,
+    fields=('email',)
+)

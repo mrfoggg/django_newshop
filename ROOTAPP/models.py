@@ -127,11 +127,11 @@ class PersonSettlement(models.Model):
 
 class PersonAddress(models.Model):
     ADDRESS_TYPE = (
-        (1, "На отделение"),
-        (2, "На почтомат"),
-        (3, "На адрес"),
+        (1, "На отделение или почтомат"),
+        # (2, "На почтомат"),
+        (2, "На адрес"),
     )
-    address_type = models.SmallIntegerField('Тип адреса', choices=ADDRESS_TYPE, default=1)
+    address_type = models.SmallIntegerField('Тип адреса', choices=ADDRESS_TYPE, default=1, null=True)
     area = models.ForeignKey(SettlementArea, on_delete=models.CASCADE, verbose_name="Область")
     settlement = models.ForeignKey(Settlement, on_delete=models.CASCADE, null=True, verbose_name="Населенный пункт")
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, blank=True, null=True, verbose_name="Отделение")
