@@ -18,13 +18,17 @@
 })(jQuery, undefined)
 
 function showOrHideAddressFields(deliveryType){
+    console.log('deliveryType - ', deliveryType)
     const addressDeliveryFields = $('.field-city, .field-street, .field-build, .field-comment');
     if (deliveryType==1){
         $('.field-warehouse').show();
         addressDeliveryFields.hide();
-    } else {
+    } else if (deliveryType==2) {
         $('.field-warehouse').hide();
         addressDeliveryFields.show();
+    } else {
+        $('.field-warehouse').hide();
+        addressDeliveryFields.hide();
     }
 }
 
@@ -43,31 +47,37 @@ function actionsWhenSettlementSet(settlement, onLoad){
                 //показать или скрыть необходимы варианты типов адреса
                 if (response['is_warehouses_exists']){
                     $('#id_address_type input[value="1"]').parent().show();
-                    $('.field-warehouse').show();
                 } else {
                     $('#id_address_type input[value="1"]').parent().hide();
-                    $('.field-warehouse').hide();
                 }
                 if (response['address_delivery_allowed']){
                     $('#id_address_type input[value="2"]').parent().show();
-                    addressDeliveryFields.show();
                 } else {
                     $('#id_address_type input[value="2"]').parent().hide();
-                    addressDeliveryFields.hide();
                 }
+                // если нет доступных вариантов доставки
                 if (!response['is_warehouses_exists']&&!response['address_delivery_allowed']){
                     $('.field-address_type').show();
                     $('#id_address_type').after('<p id="delivery_not_allowed_msg">НЕТ ДОСТУПНЫХ ВАРИАНТОВ ДОСТАВКИ</p>');
                     $('.field-warehouse').hide();
                     addressDeliveryFields.hide();
+                    $('input[name="address_type"]').prop('checked', false);
                 }
 
-                // вернуть в норму прозрачность всей формы
                 setTimeout(function (){
+                    // вернуть в норму прозрачность всей формы
                     $('#personaddress_form').css('opacity', '100%');
-                    if (!onLoad)
-                        $('#id_address_type input:visible').first().prop('checked', true);
-                    showOrHideAddressFields($('input[name="address_type"]').val());
+                    //если эта функция вызвана не при загрузке страницы то выбрать первый доступный тип доставки
+                    if (!onLoad){
+                        let deliveryTypeToSet = $('#id_address_type input:visible').first();
+                        deliveryTypeToSet.prop('checked', true);
+                        showOrHideAddressFields(deliveryTypeToSet.val());
+                    }
+                    else {
+                        // console.log('address_type- ', $('input[name="address_type"]').val());
+                        showOrHideAddressFields($('input[name="address_type"]:checked').val());
+                    }
+
                 }, 450)
             }
         }, 200);

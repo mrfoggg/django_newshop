@@ -137,7 +137,7 @@ class PersonAddress(models.Model):
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, blank=True, null=True, verbose_name="Отделение")
     person = models.ForeignKey(Person, on_delete=models.CASCADE, verbose_name="Контрагент")
     city = models.ForeignKey(City, on_delete=models.CASCADE, blank=True, null=True,
-                             verbose_name="Город Новой почты откуда производится доставка")
+                             verbose_name="Город Новой почты откуда производится адресная доставка")
     street = models.ForeignKey(Street, on_delete=models.CASCADE, blank=True, null=True,
                                verbose_name="Улица или село адресной доставки")
     comment = models.CharField('Коментарий к адресу', max_length=128, default=None, null=True, blank=True)
