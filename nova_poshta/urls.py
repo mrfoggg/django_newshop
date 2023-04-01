@@ -1,7 +1,7 @@
 from django.urls import path
 
 from nova_poshta.views import (get_delivery_cost, update_cities,
-                               update_settlements, update_warehouses, update_streets)
+                               update_settlements, update_warehouses, update_streets, get_streets)
 
 app_name = 'nova_poshta'
 urlpatterns = [
@@ -10,4 +10,5 @@ urlpatterns = [
     path('update_warehouses/', update_warehouses, name='update_warehouses'),
     path('update_streets/', update_streets, name='update_streets'),
     path('get_delivery_cost/', get_delivery_cost, name='get_delivery_cost'),
+    path('get_streets/', get_streets, name='get_streets'),
 ]

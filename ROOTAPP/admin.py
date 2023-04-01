@@ -9,7 +9,7 @@ from django.utils.html import format_html
 from django_select2.forms import ModelSelect2Widget
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
 
-from nova_poshta.models import Warehouse, Street
+from nova_poshta.models import Warehouse, Street, City
 from nova_poshta.services import get_settlement_addict_info
 # from .services.telegram_servises import get_tg_username
 # from asgiref.sync import sync_to_async
@@ -124,8 +124,11 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
 class PersonAddressAdmin(admin.ModelAdmin):
     form = FullAddressForm
     fields = ('person', 'area', 'settlement', 'address_type', 'warehouse', 'city', 'street', 'build', 'comment')
-    autocomplete_fields = ('person', 'city',)
+    autocomplete_fields = ('person',
+                           # 'city',
+                           )
     readonly_fields = ['city']
+    # readonly_fields = []
     radio_fields = {"address_type": admin.HORIZONTAL}
 
     # radio_fields = {"address_type": admin.VERTICAL}
@@ -166,8 +169,19 @@ class PersonAddressAdmin(admin.ModelAdmin):
                 # form.base_fields["address_type"].choices = types_to_choice
 
             #     задание вариантов выбора улиц в зависимости от города
-            if obj.city and "street" in form.base_fields:
-                form.base_fields["street"].queryset = Street.objects.filter(city=obj.city)
+
+
+
+
+            # if obj.city and "street" in form.base_fields:
+            #     form.base_fields["street"].queryset = Street.objects.filter(city=obj.city)
+
+
+            # form.base_fields["city"].queryset = City.objects.filter(ref='db5c8980-391c-11dd-90d9-001a92567626')
+
+
+
+
 
             # будет передалано под AJAX
             # для типов отделение илт почтомат

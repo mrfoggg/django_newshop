@@ -99,7 +99,7 @@ warehouse_widget = ModelSelect2Widget(
 
 street_widget = ModelSelect2Widget(
     model=Street,
-    search_fields=('description__icontains',),
+    search_fields=('description_ua__icontains',),
     dependent_fields={'city': 'city'},
     max_results=50,
     minimum_results_for_search=10,

@@ -7,6 +7,7 @@ from django.contrib.auth import login, logout
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.views import View
 from jsonview.decorators import json_view
 from otp_twilio.models import TwilioSMSDevice
@@ -17,7 +18,7 @@ from sorl.thumbnail import get_thumbnail
 from catalog.models import Product
 from ROOTAPP.forms import PersonalInfoForm, PersonEmailForm, PersonForm
 from ROOTAPP.models import Person, PersonPhone, Phone, get_phone_full_str
-from nova_poshta.models import Settlement, Warehouse
+from nova_poshta.models import Settlement, Warehouse, City
 from nova_poshta.services import get_settlement_addict_info
 from servises import get_products_annotated_prices
 from Shop_DJ import settings
@@ -528,8 +529,16 @@ def get_settlement_info(request):
     print('address_delivery_allowed -', settlement_api_info.address_delivery_allowed)
     print('streets_availability -', settlement_api_info.streets_availability)
     print('is_warehouses_exists -', is_warehouses_exists)
-    return {
+    response = {
         'address_delivery_allowed': settlement_api_info.address_delivery_allowed,
         'delivery_city_ref': settlement_api_info.delivery_city_ref,
         'is_warehouses_exists': is_warehouses_exists,
     }
+    if settlement_api_info.address_delivery_allowed:
+        city = City.objects.get(ref=(city_ref := settlement_api_info.delivery_city_ref))
+        city_name = f'{city.type.description_ua} {city.description_ua}'
+        city_url = mark_safe(reverse('admin:nova_poshta_city_change', args=[city_ref]))
+        city_link = f'<a href={city_url} target="_blank">{city_name}</a>'
+        response['city'] = city_link
+        response['city_ref'] = city_ref
+    return response

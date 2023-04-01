@@ -236,3 +236,8 @@ def get_delivery_cost(request):
             print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
 
     return response('')
+
+
+def get_streets(request):
+    print('GET AJAX SELECT OPTIONS')
+    return Street.objects.filter(description_ua__icontains='бобр').values_list('ref', 'description_ua')

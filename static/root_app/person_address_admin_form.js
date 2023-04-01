@@ -7,6 +7,7 @@
             $('#delivery_not_allowed_msg').remove();
             actionsWhenSettlementSet($(this).val(), false);
         });
+        // $('#id_settlement').prop('disabled', 'disabled');
 
         $('input[name="address_type"]').on('change', function (){
             showOrHideAddressFields($(this).val());
@@ -52,6 +53,23 @@ function actionsWhenSettlementSet(settlement, onLoad){
                 }
                 if (response['address_delivery_allowed']){
                     $('#id_address_type input[value="2"]').parent().show();
+                    $('.field-city .readonly').html(response['city']);
+
+                    //скрытый select который испольщзется для работы фильтрации поля с улицами по ref города этого поля
+                    let cityInputHtml =
+                    `<div style="display: none"> 
+                        <label for="id_city">Город Новой почты откуда производится адресная доставка:</label>
+                        <div class="related-widget-wrapper" data-model-ref="Город новой почты">
+                            <select name="city" id="id_city">
+                                <option value="${response['city_ref']}" selected></option>
+                            </select>
+            
+                               <a class="related-widget-wrapper-link view-related" id="view_id_city" data-href-template="/admin/nova_poshta/city/__fk__/change/?_to_field=ref" href="/admin/nova_poshta/city/db5c8980-391c-11dd-90d9-001a92567626/change/?_to_field=ref" aria-label="View selected Город новой почты"><img src="/static/admin/img/icon-viewlink.svg" alt="Переглянути"></a>
+                        </div>
+                    </div>`
+                    $('.field-city .readonly').append(cityInputHtml);
+                    if (!onLoad)
+                        $('#id_street').val(null).trigger('change');
                 } else {
                     $('#id_address_type input[value="2"]').parent().hide();
                 }
@@ -74,10 +92,8 @@ function actionsWhenSettlementSet(settlement, onLoad){
                         showOrHideAddressFields(deliveryTypeToSet.val());
                     }
                     else {
-                        // console.log('address_type- ', $('input[name="address_type"]').val());
                         showOrHideAddressFields($('input[name="address_type"]:checked').val());
                     }
-
                 }, 450)
             }
         }, 200);
