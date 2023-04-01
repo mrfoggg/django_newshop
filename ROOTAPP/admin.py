@@ -123,7 +123,7 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
 @admin.register(PersonAddress)
 class PersonAddressAdmin(admin.ModelAdmin):
     form = FullAddressForm
-    fields = ['person', 'area', 'settlement', ]
+    fields = ('person', 'area', 'settlement', 'address_type', 'warehouse', 'city', 'street', 'build', 'comment')
     autocomplete_fields = ('person', 'city',)
     readonly_fields = ['city']
     radio_fields = {"address_type": admin.HORIZONTAL}
@@ -134,12 +134,13 @@ class PersonAddressAdmin(admin.ModelAdmin):
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
               'select2.min.js',
               'root_app/person_address_admin_form.js')
-
-        css = {
-            "all": ("select2.min.css")}
+        #   с этой строкй пишет что цсс дублируется
+        # css = {
+        #     "all": ("select2.min.css")}
 
     def get_form(self, request, obj=None, **kwargs):
         # print('+'*70)
+        print('GET FORM')
         request._obj_not_exist_ = True
         form = super().get_form(request, obj, **kwargs)
         if obj:
@@ -203,25 +204,25 @@ class PersonAddressAdmin(admin.ModelAdmin):
                 new_rof.append('person')
         return self.readonly_fields + new_rof
 
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'warehouse':
-            if request._obj_not_exist_:
-                request._address_type_ = 1
-            match request._address_type_:
-                case 2:
-                    print('WAREHOUS')
-                    kwargs["queryset"] = Warehouse.objects.filter(type_warehouse_id__in=
-                                                                  ('95dc212d-479c-4ffb-a8ab-8c1b9073d0bc',
-                                                                   'f9316480-5f2d-425d-bc2c-ac7cd29decf0')
-                                                                  )
-                case 1:
-                    print('PPOSHTOMAT')
-                    kwargs["queryset"] = Warehouse.objects.filter(type_warehouse_id__in=
-                                                                  ('6f8c7162-4b72-4b0a-88e5-906948c6a92f',
-                                                                   '841339c7-591a-42e2-8233-7a0a00f0ed6f',
-                                                                   '9a68df70-0267-42a8-bb5c-37f427e36ee4')
-                                                                  )
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    # def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    #     if db_field.name == 'warehouse':
+    #         if request._obj_not_exist_:
+    #             request._address_type_ = 1
+    #         match request._address_type_:
+    #             case 2:
+    #                 print('WAREHOUS')
+    #                 kwargs["queryset"] = Warehouse.objects.filter(type_warehouse_id__in=
+    #                                                               ('95dc212d-479c-4ffb-a8ab-8c1b9073d0bc',
+    #                                                                'f9316480-5f2d-425d-bc2c-ac7cd29decf0')
+    #                                                               )
+    #             case 1:
+    #                 print('PPOSHTOMAT')
+    #                 kwargs["queryset"] = Warehouse.objects.filter(type_warehouse_id__in=
+    #                                                               ('6f8c7162-4b72-4b0a-88e5-906948c6a92f',
+    #                                                                '841339c7-591a-42e2-8233-7a0a00f0ed6f',
+    #                                                                '9a68df70-0267-42a8-bb5c-37f427e36ee4')
+    #                                                               )
+    #     return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 # без использования декоратора так как перопрелеляется __init__
 # admin.site.register(PersonAddress, PersonAddressAdmin)
