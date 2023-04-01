@@ -88,7 +88,7 @@ settlement_widget = ModelSelect2Widget(
 
 warehouse_widget = ModelSelect2Widget(
     model=Warehouse,
-    search_fields=('description_ua__icontains', 'description_ru__icontains'),
+    search_fields=('description_ua__icontains', 'description_ru__icontains', 'type_warehouse__description_ru__icontains'),
     dependent_fields={'settlement': 'settlement'},
     max_results=50,
     # minimum_results_for_search=1,
