@@ -525,6 +525,7 @@ def get_settlement_info(request):
     settlement_addict_info = get_settlement_addict_info(settlement_name, settlement_ref)
     is_warehouses_exists = Warehouse.objects.filter(settlement_id=settlement_ref).exists()
     response = {'is_warehouses_exists': is_warehouses_exists, 'errors': settlement_addict_info.errors}
+    print('settlement_addict_info - ', settlement_addict_info.errors)
 
     if not settlement_addict_info.errors:
         response |= {

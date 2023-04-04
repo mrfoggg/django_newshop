@@ -590,6 +590,7 @@ def get_settlement_addict_info(settlement_name, settlement_ref):
         "methodProperties": {"CityName": settlement_name, "Limit": "50", "Page": "1"}
     }
     resp = get_np_api_response(request_dict)
+    print('resp - ', resp.errors)
     response_data, response_errors = resp.data, resp.errors
     settlement_addict_info = namedtuple(
         'settlement_addict_info', 'delivery_city_ref address_delivery_allowed streets_availability errors'
@@ -602,5 +603,5 @@ def get_settlement_addict_info(settlement_name, settlement_ref):
         settlement_addict_info.errors = response_errors
 
     else:
-        settlement_addict_info.errors = None
+        settlement_addict_info.errors = resp.errors
     return settlement_addict_info
