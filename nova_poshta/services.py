@@ -4,11 +4,13 @@ from collections import namedtuple
 import requests
 from deepdiff import DeepDiff
 
+from all_services import print_block_to_console
 from nova_poshta.models import (CityArea, Settlement, SettlementArea,
                                 SettlementRegion, SettlementType,
                                 TypeOfWarehouse, City)
 
 url_np = 'https://api.novaposhta.ua/v2.0/json/'
+# url_np = ''
 
 pml = '<p style="margin-left: 2rem;">'
 
@@ -287,10 +289,45 @@ warehouse_parameters = main_parameters + coordinates_parameters + (
 )
 
 
-def get_response(request_dict):
-    request_json = json.dumps(request_dict, indent=4)
-    response = requests.post(url_np, data=request_json, timeout=timeout_limit)
-    return json.loads(response.text)
+def get_np_api_response(request_dict, max_attempts_count=5):
+    result = False
+    attempts_count = 0
+    error_massage = None
+    while not result:
+        try:
+            request_json = json.dumps(request_dict, indent=4)
+            response = requests.post(url_np, data=request_json, timeout=timeout_limit)
+            try:
+                result = json.loads(response.text)
+            except ValueError:
+
+                print(err := f'Ошибка декодирования ответа от API. Тело ответа: {response.text}')
+                result = {'success': False, 'errorCodes': 'отсутвуют', 'errors': err, 'warnings': 'отсутвуют'}
+                break
+        except requests.exceptions.Timeout:
+            if attempts_count < max_attempts_count:
+                print(
+                    f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка запроса API NP #{attempts_count}')
+                attempts_count += 1
+            else:
+                error_massage = f'Маскимальное количество попыток соединения исчерпано ({max_attempts_count}). ' \
+                                f'СЕРВЕР НОВОЙ ПОЧТЫ НЕ ОТВЕЧАЕТ БОЛЕЕ {timeout_limit}c'
+                print(error_massage)
+        except:
+            print(err := f'Невозможно выполнить запрос к API. ')
+            result = {'success': False, 'errorCodes': 'отсутвуют', 'errors': 'отсутвуют', 'warnings': 'отсутвуют'}
+            break
+
+    Resp = namedtuple('Resp', 'data errors')
+    if error_massage:
+        return Resp(None, error_massage)
+    else:
+        if result['success']:
+            return Resp(result['data'], None)
+        else:
+            api_error = f" Ошибки API - {result['errors']}, коды ошибок - {result['errorCodes']}, " \
+                        f"'warnings': {result['warnings']}"
+            return Resp(None, api_error)
 
 
 def settlement_area_create_if_not_exists(data):
@@ -342,7 +379,7 @@ def update_all_warehouses_types():
     is_response_types_success = False
     while not is_response_types_success:
         try:
-            response_type_dict = get_response(
+            response_type_dict = get_np_api_response(
                 {
                     "modelName": "Address",
                     "calledMethod": "getWarehouseTypes",
@@ -383,7 +420,7 @@ def get_one_settlement_api_data(settlement_ref):
     while not is_success:
         try:
             is_success = True
-            return get_response(settlement_request_dict)['data'][0]
+            return get_np_api_response(settlement_request_dict)['data'][0]
         except requests.exceptions.Timeout:
             print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
             print()
@@ -403,7 +440,7 @@ def get_one_city_api_data(city_ref):
     while not is_success:
         try:
             is_success = True
-            resp_data = get_response(city_request_dict)['data']
+            resp_data = get_np_api_response(city_request_dict)['data']
             return resp_data[0] if resp_data else False
         except requests.exceptions.Timeout:
             print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
@@ -544,28 +581,26 @@ def get_and_apply_changes(obj, structure, api_data):
 
 
 def get_settlement_addict_info(settlement_name, settlement_ref):
-    print('=' * 50)
-    print(f'ЗАПРОС ГОРОДА ОТПРАВКИ ДЛЯ {settlement_name}')
+    print_block_to_console(f'ЗАПРОС ДПОПЛНИТЕЛЬНОЙ ИНФОРМАЦИИ ДЛЯ НАСЕЛЕННОГО ПУНКТА {settlement_name} '
+          f'(а именно город откуда в него производится адресная доставка, доступность адресной доставки, а так же '
+          f'параметр StreetsAvailability)')
     request_dict = {
         "modelName": "Address",
         "calledMethod": "searchSettlements",
         "methodProperties": {"CityName": settlement_name, "Limit": "50", "Page": "1"}
     }
-    response_data = get_response(request_dict)
+    resp = get_np_api_response(request_dict)
+    response_data, response_errors = resp.data, resp.errors
+    settlement_addict_info = namedtuple(
+        'settlement_addict_info', 'delivery_city_ref address_delivery_allowed streets_availability errors'
+    )
+    if response_data:
+        found_settlement = next(x for x in response_data[0]['Addresses'] if x["Ref"] == settlement_ref)
+        settlement_addict_info.delivery_city_ref = found_settlement['DeliveryCity']
+        settlement_addict_info.address_delivery_allowed = found_settlement['AddressDeliveryAllowed']
+        settlement_addict_info.streets_availability = found_settlement['StreetsAvailability']
+        settlement_addict_info.errors = response_errors
 
-    found_settlement = next(x for x in response_data['data'][0]['Addresses'] if x["Ref"] == settlement_ref)
-    delivery_city_ref = found_settlement['DeliveryCity']
-    address_delivery_allowed = found_settlement['AddressDeliveryAllowed']
-    streets_availability = found_settlement['StreetsAvailability']
-    # if not address_delivery_allowed:
-    #     messages.add_message(request, messages.ERROR, 'АДРЕСНАЯ ДОСТАВКА НЕДОСТУПНА')
-    print('='*50)
-    print('Город отправки на адрес:', City.objects.get(ref=delivery_city_ref))
-    print('Доступен для адресной доставки:', address_delivery_allowed)
-    print('streets_availability', streets_availability)
-    print()
-    result = namedtuple('result', 'delivery_city_ref address_delivery_allowed streets_availability')
-    result.delivery_city_ref = found_settlement['DeliveryCity']
-    result.address_delivery_allowed = found_settlement['AddressDeliveryAllowed']
-    result.streets_availability = found_settlement['StreetsAvailability']
-    return result
+    else:
+        settlement_addict_info.errors = None
+    return settlement_addict_info

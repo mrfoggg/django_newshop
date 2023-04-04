@@ -10,7 +10,7 @@ from jsonview.decorators import json_view
 
 from nova_poshta.models import City, Settlement, Warehouse, Street
 from nova_poshta.services import (build_objects_to_create, city_parameters,
-                                  get_and_apply_changes, get_response,
+                                  get_and_apply_changes, get_np_api_response,
                                   settlement_parameters, timeout_limit,
                                   warehouse_parameters, street_parameters)
 
@@ -43,6 +43,7 @@ def update_np_catalogs(request, obj_type):
         else [None]
     cities_list_len = len(search_data)
     city_count = 1
+    # 'это можеть быть одно действие или последовательный запрос улиц по городу / гороам
     for search_data in search_data:
         objects_position, added_objects_count, edited_objects_count = 1, 0, 0
         page, ln = 1, objects_limit
@@ -70,15 +71,21 @@ def update_np_catalogs(request, obj_type):
             city = City.objects.get(ref=search_data)
             print(f'Запрос списка улиц по городу: #{city_count} из {cities_list_len} -',  city)
 
-        # print('ln ', ln)
-        # print('objects_limit ', objects_limit)
         while ln == objects_limit:
             objects_to_create, changed_objects, changed_fields = [], [], set()
             new_objects_names, changed_objects_names = [], []
             objects_request_dict["methodProperties"]["Page"] = str(page)
             print(f'Запрос страницы сервера #{page}')
+
+            np_api_response = get_np_api_response(objects_request_dict)
+            objects_response_data = np_api_response.data
+            objects_response_errors = np_api_response.errors
+            if objects_response_errors:
+                messages.add_message(request, messages.ERROR, objects_response_errors)
+            else:
+                pass
             try:
-                objects_response_data = get_response(objects_request_dict)
+                objects_response_data = get_np_api_response(objects_request_dict)
                 ln = len(all_objects_data := objects_response_data['data'])
 
                 print(f'Статус запроса {objects_response_data["success"]}')
@@ -111,6 +118,7 @@ def update_np_catalogs(request, obj_type):
                         message_text += f'Найдено {object_name} <br>'
                         print(f'Найдено {object_name}')
 
+                    # проверить есть ли такой объект, если да то проверить изменения в нем
                     if obj_type.objects.filter(ref=obj_data['Ref']).exists():
                         object_changes_data = get_and_apply_changes(
                             obj_type.objects.get(ref=obj_data['Ref']), data_structure, obj_data
@@ -122,6 +130,7 @@ def update_np_catalogs(request, obj_type):
                             changed_objects.append(object_changes_data['changed_obj'])
                             changed_fields.update(object_changes_data['changed_fields'])
                             print(f'Изменено: {object_name}')
+
                     else:
                         new_objects, mess_new_obj = build_objects_to_create(obj_data, obj_type, data_structure)
                         objects_to_create.append(new_objects)
@@ -133,7 +142,7 @@ def update_np_catalogs(request, obj_type):
                         added_objects_count += 1
                     objects_total_position += 1
                     objects_position += 1
-                # for obj_data in all_objects_data
+                # for obj_data in all_objects_data / конец цикла перебора данных API
                 print('-' * 80)
 
                 if len(objects_to_create):
@@ -162,9 +171,7 @@ def update_np_catalogs(request, obj_type):
         city_count += 1
         if search_data:
             message_text += f'<p>добавлено {added_objects_count} улиц, изменено {edited_objects_count} улиц</p> <br>'
-    # for search_data in search_data
     print('=' * 80)
-
     total_info = f'На сервере просмотрено {objects_total_position - 1} элементов справочника.<br>Всего добавлено элементов' \
                  f' {total_added_objects_count}, всего изменено элементов {total_edited_objects_count} '
     messages.add_message(request, messages.SUCCESS, format_html(message_text))
@@ -220,7 +227,7 @@ def get_delivery_cost(request):
         try:
             # request_json = json.dumps(data_cost, indent=4)
             # response = requests.post(url_np, data=request_json, timeout=timeout_limit)
-            response_dict = get_response(data_cost)
+            response_dict = get_np_api_response(data_cost)
             # response_dict = json.loads(response.text)
             print('response_dict - ', response_dict)
             return {

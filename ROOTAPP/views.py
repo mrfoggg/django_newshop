@@ -521,24 +521,21 @@ def del_user_phone(request):
 
 @json_view
 def get_settlement_info(request):
-    settlement_ref = request.POST.get('settlement_ref')
-    settlement_name = Settlement.objects.get(ref=settlement_ref).description_ua
-    settlement_api_info = get_settlement_addict_info(settlement_name, settlement_ref)
+    settlement_name = Settlement.objects.get(ref=(settlement_ref := request.POST.get('settlement_ref'))).description_ua
+    settlement_addict_info = get_settlement_addict_info(settlement_name, settlement_ref)
     is_warehouses_exists = Warehouse.objects.filter(settlement_id=settlement_ref).exists()
-    print('delivery_city_ref -', settlement_api_info.delivery_city_ref)
-    print('address_delivery_allowed -', settlement_api_info.address_delivery_allowed)
-    print('streets_availability -', settlement_api_info.streets_availability)
-    print('is_warehouses_exists -', is_warehouses_exists)
-    response = {
-        'address_delivery_allowed': settlement_api_info.address_delivery_allowed,
-        'delivery_city_ref': settlement_api_info.delivery_city_ref,
-        'is_warehouses_exists': is_warehouses_exists,
-    }
-    if settlement_api_info.address_delivery_allowed:
-        city = City.objects.get(ref=(city_ref := settlement_api_info.delivery_city_ref))
-        city_name = f'{city.type.description_ua} {city.description_ua}'
-        city_url = mark_safe(reverse('admin:nova_poshta_city_change', args=[city_ref]))
-        city_link = f'<a href={city_url} target="_blank">{city_name}</a>'
-        response['city'] = city_link
-        response['city_ref'] = city_ref
+    response = {'is_warehouses_exists': is_warehouses_exists, 'errors': settlement_addict_info.errors}
+
+    if not settlement_addict_info.errors:
+        response |= {
+            'address_delivery_allowed': settlement_addict_info.address_delivery_allowed,
+            'delivery_city_ref': settlement_addict_info.delivery_city_ref,
+        }
+        if settlement_addict_info.address_delivery_allowed:
+            city = City.objects.get(ref=(city_ref := settlement_addict_info.delivery_city_ref))
+            city_name = f'{city.type.description_ua} {city.description_ua}'
+            city_url = mark_safe(reverse('admin:nova_poshta_city_change', args=[city_ref]))
+            city_link = f'<a href={city_url} target="_blank">{city_name}</a>'
+            response |= {'city': city_link, 'city_ref': city_ref}
+
     return response

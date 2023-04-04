@@ -135,81 +135,26 @@ class PersonAddressAdmin(admin.ModelAdmin):
 
     class Media:
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
-              'select2.min.js',
+              'select2.min.js', 'notyf.min.js',
               'root_app/person_address_admin_form.js')
         #   с этой строкй пишет что цсс дублируется
         # css = {
         #     "all": ("select2.min.css")}
 
-    def get_form(self, request, obj=None, **kwargs):
-        # print('+'*70)
-        print('GET FORM')
-        request._obj_not_exist_ = True
-        form = super().get_form(request, obj, **kwargs)
-        if obj:
-            if obj.settlement:
-                request._obj_not_exist_ = False
-                request._address_type_ = obj.address_type
-                settlement_addict_info = get_settlement_addict_info(obj.settlement.index_1, obj.settlement_id)
-                obj.city_id = settlement_addict_info.delivery_city_ref
+        css = {
+            "all": ("notyf.min.css", )}
 
-                # проверка доступности видов доставки и задание соответсвующийх варианов выбора
-                # будет передалано под AJAX
-                # types_to_choice = ()
-                # all_settlement_warehouses = obj.settlement.warehouses.all()
-                # print('all_settlement_warehouses - ', all_settlement_warehouses)
-                # if all_settlement_warehouses.exists():
-                #     types_to_choice += ((1, "На отделение"),)
-                #     if all_settlement_warehouses.filter(
-                #             type_warehouse_id__in=('95dc212d-479c-4ffb-a8ab-8c1b9073d0bc',
-                #                                    'f9316480-5f2d-425d-bc2c-ac7cd29decf0'
-                #                                    )
-                #     ).exists():
-                #         types_to_choice += ((1, "На почтомат"),)
-                # form.base_fields["address_type"].choices = types_to_choice
-
-            #     задание вариантов выбора улиц в зависимости от города
-
-
-
-
-            # if obj.city and "street" in form.base_fields:
-            #     form.base_fields["street"].queryset = Street.objects.filter(city=obj.city)
-
-
-            # form.base_fields["city"].queryset = City.objects.filter(ref='db5c8980-391c-11dd-90d9-001a92567626')
-
-
-
-
-
-            # будет передалано под AJAX
-            # для типов отделение илт почтомат
-            # match obj.address_type:
-            #     case 1:
-            #         form.base_fields["warehouse"].queryset = Warehouse.objects.filter(
-            #             type_warehouse_id__in=('6f8c7162-4b72-4b0a-88e5-906948c6a92f',
-            #                                    '841339c7-591a-42e2-8233-7a0a00f0ed6f',
-            #                                    '9a68df70-0267-42a8-bb5c-37f427e36ee4')
-            #         )
-            #     case 2:
-            #         form.base_fields["warehouse"].queryset = Warehouse.objects.filter(
-            #             type_warehouse_id__in=('95dc212d-479c-4ffb-a8ab-8c1b9073d0bc',
-            #                                    'f9316480-5f2d-425d-bc2c-ac7cd29decf0'
-            #                                    )
-            #         )
-
-        return form
-    # будет передалано под AJAX
-    # def get_fields(self, request, obj=None):
-    #     new_fields = []
-    #     if obj is not None:
-    #         new_fields.append('address_type')
-    #         if obj.address_type == 1:
-    #             new_fields.extend(['warehouse', 'comment'])
-    #         else:
-    #             new_fields.extend(['city', 'street', 'build', 'comment'])
-    #     return self.fields + new_fields
+    # def get_form(self, request, obj=None, **kwargs):
+    #     # print('+'*70)
+    #     print('GET FORM')
+    #     form = super().get_form(request, obj, **kwargs)
+    #     if obj:
+    #         if obj.settlement:
+    #             request._obj_not_exist_ = False
+    #             request._address_type_ = obj.address_type
+    #             settlement_addict_info = get_settlement_addict_info(obj.settlement.index_1, obj.settlement_id)
+    #             obj.city_id = settlement_addict_info.delivery_city_ref
+    #     return form
 
     def get_readonly_fields(self, request, obj=None):
         new_rof = []
@@ -217,30 +162,3 @@ class PersonAddressAdmin(admin.ModelAdmin):
             if obj.person:
                 new_rof.append('person')
         return self.readonly_fields + new_rof
-
-    # def formfield_for_foreignkey(self, db_field, request, **kwargs):
-    #     if db_field.name == 'warehouse':
-    #         if request._obj_not_exist_:
-    #             request._address_type_ = 1
-    #         match request._address_type_:
-    #             case 2:
-    #                 print('WAREHOUS')
-    #                 kwargs["queryset"] = Warehouse.objects.filter(type_warehouse_id__in=
-    #                                                               ('95dc212d-479c-4ffb-a8ab-8c1b9073d0bc',
-    #                                                                'f9316480-5f2d-425d-bc2c-ac7cd29decf0')
-    #                                                               )
-    #             case 1:
-    #                 print('PPOSHTOMAT')
-    #                 kwargs["queryset"] = Warehouse.objects.filter(type_warehouse_id__in=
-    #                                                               ('6f8c7162-4b72-4b0a-88e5-906948c6a92f',
-    #                                                                '841339c7-591a-42e2-8233-7a0a00f0ed6f',
-    #                                                                '9a68df70-0267-42a8-bb5c-37f427e36ee4')
-    #                                                               )
-    #     return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-# без использования декоратора так как перопрелеляется __init__
-# admin.site.register(PersonAddress, PersonAddressAdmin)
-
-# @admin.register(PersonSettlement)
-# class PersonAddressAdmin(admin.ModelAdmin):
-#     autocomplete_fields = ('settlement',)
