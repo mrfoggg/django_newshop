@@ -39,6 +39,7 @@ def update_np_catalogs(request, obj_type):
 
     objects_limit = int(objects_request_dict['methodProperties']['Limit'])
 
+    # перебирать все города в базе и запрашивать по ним улицы если только не указан в форме определенный город
     search_data = City.objects.values_list('ref', flat=True) if obj_type == Street and 'city' not in data.keys() \
         else [None]
     cities_list_len = len(search_data)
@@ -82,23 +83,15 @@ def update_np_catalogs(request, obj_type):
             objects_response_errors = np_api_response.errors
             if objects_response_errors:
                 messages.add_message(request, messages.ERROR, objects_response_errors)
+                break
             else:
-                pass
-            try:
-                objects_response_data = get_np_api_response(objects_request_dict)
-                ln = len(all_objects_data := objects_response_data['data'])
-
-                print(f'Статус запроса {objects_response_data["success"]}')
-                if not objects_response_data["success"]:
-                    print('OBJECTS_REQUEST_DICT - ', objects_request_dict)
-                    print('OBJECTS_RESPONSE_DATA - ', objects_response_data)
+                ln = len(all_objects_data := objects_response_data)
 
                 print(elements_countown:=f'Получены данные {ln} элементов справочника, лимит: {objects_limit}')
                 print()
                 message_text += f'<p>{elements_countown}</p>'
                 if not search_data:
-                    message_text += f'Загрузка страницы №{page} (по {objects_limit} ' \
-                                    f'объектов на старнице) -  {objects_response_data["success"]} + <br>'
+                    message_text += f'Загрузка страницы №{page} (по {objects_limit} объектов на старнице) <br>'
                 page += 1
 
                 for obj_data in all_objects_data:
@@ -118,7 +111,7 @@ def update_np_catalogs(request, obj_type):
                         message_text += f'Найдено {object_name} <br>'
                         print(f'Найдено {object_name}')
 
-                    # проверить есть ли такой объект, если да то проверить изменения в нем
+                    # проверить есть ли ужк такой объект в локальной базе, если да то проверить изменения в нем в API
                     if obj_type.objects.filter(ref=obj_data['Ref']).exists():
                         object_changes_data = get_and_apply_changes(
                             obj_type.objects.get(ref=obj_data['Ref']), data_structure, obj_data
@@ -132,14 +125,21 @@ def update_np_catalogs(request, obj_type):
                             print(f'Изменено: {object_name}')
 
                     else:
-                        new_objects, mess_new_obj = build_objects_to_create(obj_data, obj_type, data_structure)
-                        objects_to_create.append(new_objects)
-                        if not search_data:
-                            message_text += mess_new_obj
-                        new_objects_names.append(object_name)
-                        print(f'Добавлено: {object_name}')
-                        total_added_objects_count += 1
-                        added_objects_count += 1
+                        result_build_objects_to_create = build_objects_to_create(obj_data, obj_type, data_structure)
+                        if result_build_objects_to_create['error_messages']:
+                            messages.add_message(
+                                request, messages.ERROR, result_build_objects_to_create['error_messages'])
+                            break
+                        else:
+                            new_objects = result_build_objects_to_create['obj_to_create']
+                            mess_new_obj = result_build_objects_to_create['messages']
+                            objects_to_create.append(new_objects)
+                            if not search_data:
+                                message_text += mess_new_obj
+                            new_objects_names.append(object_name)
+                            print(f'Добавлено: {object_name}')
+                            total_added_objects_count += 1
+                            added_objects_count += 1
                     objects_total_position += 1
                     objects_position += 1
                 # for obj_data in all_objects_data / конец цикла перебора данных API
@@ -160,14 +160,6 @@ def update_np_catalogs(request, obj_type):
                         message_text += f'<li>{edited}</li>'
                     message_text += '</ul>'
 
-                # message_text += '<br>'
-
-            except requests.exceptions.Timeout:
-                print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
-                print()
-                message_text += f'Превышен лимит {timeout_limit}c врмени ожидания загрузки данных страницы №{page} ' \
-                                f'/ Повторная попытка - <br>'
-        # while ln == objects_limit
         city_count += 1
         if search_data:
             message_text += f'<p>добавлено {added_objects_count} улиц, изменено {edited_objects_count} улиц</p> <br>'

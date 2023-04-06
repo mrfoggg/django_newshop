@@ -317,13 +317,19 @@ def get_np_api_response(request_dict, max_attempts_count=5):
             print(err := f'Невозможно выполнить запрос к API. ')
             result = {'success': False, 'errorCodes': 'отсутвуют', 'errors': 'отсутвуют', 'warnings': 'отсутвуют'}
             break
-
+    print(f'Статус запроса {result["success"]}')
     Resp = namedtuple('Resp', 'data errors')
     if error_massage:
         return Resp(None, error_massage)
     else:
         if result['success']:
-            return Resp(result['data'], None)
+            # print("len(result['data']) = ", len(result['data']))
+            if len(result['data']):
+                print("len(result['data']) = ", len(result['data']))
+                return Resp(result['data'], None)
+            else:
+                print('Данные не найдены')
+                return Resp(None, 'Данные не найдены')
         else:
             api_error = f" Ошибки API - {result['errors']}, коды ошибок - {result['errorCodes']}, " \
                         f"'warnings': {result['warnings']}"
@@ -376,34 +382,28 @@ def settlement_type_create_if_not_exists(data):
 
 def update_all_warehouses_types():
     print('Обновление списка типов отделений')
-    is_response_types_success = False
-    while not is_response_types_success:
-        try:
-            response_type_dict = get_np_api_response(
-                {
-                    "modelName": "Address",
-                    "calledMethod": "getWarehouseTypes",
-                    "methodProperties": {}
-                }
+
+    response_type_dict = get_np_api_response(
+        {
+            "modelName": "Address",
+            "calledMethod": "getWarehouseTypes",
+            "methodProperties": {}
+        }
+    )
+    if errors := response_type_dict.errors:
+        return {'success': False, 'message': f' Ошибка обновление типов отделений: {errors}'}
+    print(f'Получены данные {len(all_types_data := response_type_dict.data)} типов отделений')
+    types_to_create = []
+    for type_data in all_types_data:
+        types_to_create.append(
+            TypeOfWarehouse(
+                ref=type_data['Ref'],
+                description_ru=type_data['Description'],
+                description_ua=type_data['DescriptionRu']
             )
-            is_response_types_success = True
-            print(f'Статус запроса {response_type_dict["success"]}')
-            print(f'Получены данные {len(all_types_data := response_type_dict["data"])} типов '
-                  f'отделений')
-            types_to_create = []
-            for type_data in all_types_data:
-                types_to_create.append(
-                    TypeOfWarehouse(
-                        ref=type_data['Ref'],
-                        description_ru=type_data['Description'],
-                        description_ua=type_data['DescriptionRu']
-                    )
-                )
-            TypeOfWarehouse.objects.bulk_create(types_to_create)
-            return '<h5>Справочник типов отделений обновлен</h5>'
-        except requests.exceptions.Timeout:
-            print(
-                f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка запроса типов отд')
+        )
+    TypeOfWarehouse.objects.bulk_create(types_to_create)
+    return {'success': False, 'message': '<h5>Справочник типов отделений обновлен</h5>'}
 
 
 def get_one_settlement_api_data(settlement_ref):
@@ -416,15 +416,7 @@ def get_one_settlement_api_data(settlement_ref):
             "Ref": settlement_ref
         }
     }
-    is_success = False
-    while not is_success:
-        try:
-            is_success = True
-            return get_np_api_response(settlement_request_dict)['data'][0]
-        except requests.exceptions.Timeout:
-            print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
-            print()
-
+    return get_np_api_response(settlement_request_dict)
 
 def get_one_city_api_data(city_ref):
     print('Запрос данных отсутствующего в справочнике города')
@@ -436,19 +428,21 @@ def get_one_city_api_data(city_ref):
             "Ref": city_ref
         }
     }
-    is_success = False
-    while not is_success:
-        try:
-            is_success = True
-            resp_data = get_np_api_response(city_request_dict)['data']
-            return resp_data[0] if resp_data else False
-        except requests.exceptions.Timeout:
-            print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
-            print()
+    return get_np_api_response(city_request_dict)
+    # is_success = False
+    # while not is_success:
+    #     try:
+    #         is_success = True
+    #         resp_data = get_np_api_response(city_request_dict)['data']
+    #         return resp_data[0] if resp_data else False
+    #     except requests.exceptions.Timeout:
+    #         print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
+    #         print()
 
 
 def build_objects_to_create(data, db_model, parameters_template, is_sub_request=False, fix=False):
     messages = ''
+    error_messages = ''
     match db_model.__name__:
         case 'Settlement':
             messages += settlement_type_create_if_not_exists(data)
@@ -465,12 +459,17 @@ def build_objects_to_create(data, db_model, parameters_template, is_sub_request=
         case 'Warehouse':
             if not (settlement_ref := data['SettlementRef']) == '00000000-0000-0000-0000-000000000000':
                 if not Settlement.objects.filter(ref=settlement_ref).exists():
-                    settlement_response_data = get_one_settlement_api_data(settlement_ref)
-                    new_msg = \
-                        build_objects_to_create(settlement_response_data, Settlement, settlement_parameters, True)[1]
-                    new_msg_2 = settlement_type_create_if_not_exists(settlement_response_data)
-                    messages += new_msg
-                    messages += new_msg_2
+                    one_settlement_data = get_one_settlement_api_data(settlement_ref)
+                    if one_settlement_data.errors:
+                        error_messages += one_settlement_data.errors
+                        error_messages += f'<h5> Данные наcеленного пункта с ref {settlement_ref} не получены</h5>'
+                    else:
+                        settlement_response_data = one_settlement_data.data[0]
+                        new_msg = build_objects_to_create(
+                            settlement_response_data, Settlement, settlement_parameters, True)['messages']
+                        new_msg_2 = settlement_type_create_if_not_exists(settlement_response_data)
+                        messages += new_msg
+                        messages += new_msg_2
             else:
                 data['SettlementRef'] = None
 
@@ -478,23 +477,33 @@ def build_objects_to_create(data, db_model, parameters_template, is_sub_request=
                 city_response_data = get_one_city_api_data(city_ref)
                 # тут делаю fix багов API - находится отделение в городе Высокие Байраки но такого города нет в
                 # справонике городов
-                city_data = city_response_data if city_response_data else {
+                city_data = city_response_data.data if city_response_data.data else {
                     'Ref': data['CityRef'], 'DescriptionRu': data['CityDescriptionRu'],
                     'Description': data['CityDescription'], 'Area': None, 'CityID': None, 'IsBranch': None,
                     'PreventEntryNewStreetsUser': None, 'SettlementType': None,
                 }
-                new_msg = build_objects_to_create(city_data, City, city_parameters, True, True)[1]
-                messages += new_msg
+                if city_response_data.errors:
+                    error_messages += city_response_data.errors
+                    error_messages += f'<h5> Данные города с ref {city_ref} не получены</h5>'
+                else:
+                    new_msg = build_objects_to_create(city_data[0], City, city_parameters, True, True)['messages']
+                    messages += new_msg
 
             if not TypeOfWarehouse.objects.filter(ref=data['TypeOfWarehouse']).exists():
-                messages += update_all_warehouses_types()
-
+                result_update_all_warehouses_types = update_all_warehouses_types()
+                if result_update_all_warehouses_types['success']:
+                    messages += result_update_all_warehouses_types['message']
+                else:
+                    error_messages += result_update_all_warehouses_types['message']
+                    return {'error_messages': error_messages}
+    if error_messages:
+        pass
     obj_to_create = db_model()
     for param in parameters_template:
         setattr(obj_to_create, param.db_field, data[param.api_field] if param.api_field in data.keys() else None)
     if is_sub_request:
         obj_to_create.save()
-    return obj_to_create, messages
+    return {'obj_to_create': obj_to_create, 'messages': messages, 'error_messages': error_messages}
 
 
 # def create_obj_if_not_exists(obj_model, ref, obj_parameters):
@@ -582,8 +591,8 @@ def get_and_apply_changes(obj, structure, api_data):
 
 def get_settlement_addict_info(settlement_name, settlement_ref):
     print_block_to_console(f'ЗАПРОС ДПОПЛНИТЕЛЬНОЙ ИНФОРМАЦИИ ДЛЯ НАСЕЛЕННОГО ПУНКТА {settlement_name} '
-          f'(а именно город откуда в него производится адресная доставка, доступность адресной доставки, а так же '
-          f'параметр StreetsAvailability)')
+                           f'(а именно город откуда в него производится адресная доставка, доступность адресной доставки, а так же '
+                           f'параметр StreetsAvailability)')
     request_dict = {
         "modelName": "Address",
         "calledMethod": "searchSettlements",
