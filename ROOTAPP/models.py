@@ -131,7 +131,7 @@ class PersonAddress(models.Model):
         # (2, "На почтомат"),
         (2, "На адрес"),
     )
-    address_type = models.SmallIntegerField('Тип доставки', choices=ADDRESS_TYPE, default=1, null=True)
+    address_type = models.SmallIntegerField('Тип доставки', choices=ADDRESS_TYPE, default=None, null=True, blank=True)
     area = models.ForeignKey(SettlementArea, on_delete=models.CASCADE, verbose_name="Область")
     settlement = models.ForeignKey(Settlement, on_delete=models.CASCADE, null=True, verbose_name="Населенный пункт")
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, blank=True, null=True, verbose_name="Отделение")
@@ -150,12 +150,13 @@ class PersonAddress(models.Model):
         ordering = ('area',)
 
     def __str__(self):
-        match self.address_type:
-            case 1:
-                address = self.warehouse if self.warehouse else '(отделение не указано)'
-            case 2:
-                address = self.warehouse if self.warehouse else '(почтомат не указан)'
-            case 3:
-                address = f'{self.street} {self.build if self.build else ""}' if self.street else '(улица не указана)'
-
-        return f'{self.settlement}, {address}'
+        if self.settlement:
+            address = f'{self.get_address_type_display() if self.address_type else "нет доступных вариантов доставки"}: {self.settlement}, '
+            if self.address_type == 1:
+                return address + (self.warehouse if self.warehouse else 'отделение или почтомат не указаны')
+            elif self.address_type == 2:
+                return address + (self.street.description_ua if self.street else 'улица не указана')
+            else:
+                return address
+        else:
+            return f'{self.area} обл.'

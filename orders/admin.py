@@ -5,8 +5,8 @@ from django.db import models
 # Register your models here.
 from ROOTAPP.models import Person, PersonPhone
 
-from .models import (STATUSES_CLIENT_DISPLAY, ByOneclick,
-                     ByOneclickPersonalComment, OneClickUserSectionComment)
+from .models import (BY_ONECLICK_STATUSES_CLIENT_DISPLAY, ByOneclick,
+                     ByOneclickPersonalComment, OneClickUserSectionComment, ClientOrder)
 
 
 class ByOneclickCommentAdminInline(admin.TabularInline):
@@ -33,7 +33,7 @@ class ByOneclickAdminForm(forms.ModelForm):
     def clean(self):
         if 'status' in self.changed_data:
             new_user_comment = OneClickUserSectionComment(
-                order=self.instance, comment_type=1, description=STATUSES_CLIENT_DISPLAY[self.cleaned_data["status"]])
+                order=self.instance, comment_type=1, description=BY_ONECLICK_STATUSES_CLIENT_DISPLAY[self.cleaned_data["status"]])
             new_user_comment.save()
             self.instance.is_active = False if self.cleaned_data['status'] in [4, 5, 7] else True
         self.save()
@@ -64,4 +64,4 @@ class ByOneclickAdmin(admin.ModelAdmin):
             "all": ('admin/textarea-autoheight.css',)
         }
 
-# admin.site.register(ByOneclick)
+admin.site.register(ClientOrder)

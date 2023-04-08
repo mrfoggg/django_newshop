@@ -49,7 +49,7 @@
                 addressDeliveryFields.hide();
             }
         }
-
+        $('#id_address_type_0').hide();
         function actionsWhenSettlementSet(settlement, onLoad){
             const addressDeliveryFields = $('.field-city, .field-street, .field-build, .field-comment');
             if (settlement){
@@ -64,7 +64,6 @@
                     success: function (response) {
                         let is_warehouses_exists = response['is_warehouses_exists'];
                         let address_delivery_allowed = response['address_delivery_allowed'];
-                        console.log('SUCCESS', response['success']);
                         if (response['errors']) {
                             notification.error(`Ошибки получения ответа от API новой почты: ${response['errors']}`);
                             notification.error('Доступность адресной доставки неизвестна');
@@ -106,11 +105,11 @@
                         }
                         // если нет доступных вариантов доставки
                         if (!is_warehouses_exists && !address_delivery_allowed){
+                            $('#id_address_type_0').prop('checked', true);
                             $('.field-address_type').show();
                             $('#id_address_type').after('<p id="delivery_not_allowed_msg">НЕТ ДОСТУПНЫХ ВАРИАНТОВ ДОСТАВКИ</p>');
                             $('.field-warehouse').hide();
                             addressDeliveryFields.hide();
-                            $('input[name="address_type"]').prop('checked', false);
                         }
 
                         setTimeout(function (){
@@ -120,11 +119,13 @@
                             if (!onLoad){
                                 let deliveryTypeToSet = $('#id_address_type input:visible').first();
                                 deliveryTypeToSet.prop('checked', true);
+                                console.log('deliveryTypeToSet - ', deliveryTypeToSet);
                                 showOrHideAddressFields(deliveryTypeToSet.val());
                             }
                             else {
                                 showOrHideAddressFields($('input[name="address_type"]:checked').val());
                             }
+                            console.log('CHECKED - ', $('#id_address_type input:checked'));
                         }, 450)
                     }
                 }, 200);

@@ -323,12 +323,10 @@ def get_np_api_response(request_dict, max_attempts_count=5):
         return Resp(None, error_massage)
     else:
         if result['success']:
-            # print("len(result['data']) = ", len(result['data']))
             if len(result['data']):
-                print("len(result['data']) = ", len(result['data']))
                 return Resp(result['data'], None)
             else:
-                print('Данные не найдены')
+                print(f'Данные по запросу {request_dict} не найдены')
                 return Resp(None, 'Данные не найдены')
         else:
             api_error = f" Ошибки API - {result['errors']}, коды ошибок - {result['errorCodes']}, " \
@@ -418,6 +416,7 @@ def get_one_settlement_api_data(settlement_ref):
     }
     return get_np_api_response(settlement_request_dict)
 
+
 def get_one_city_api_data(city_ref):
     print('Запрос данных отсутствующего в справочнике города')
     city_request_dict = {
@@ -429,15 +428,6 @@ def get_one_city_api_data(city_ref):
         }
     }
     return get_np_api_response(city_request_dict)
-    # is_success = False
-    # while not is_success:
-    #     try:
-    #         is_success = True
-    #         resp_data = get_np_api_response(city_request_dict)['data']
-    #         return resp_data[0] if resp_data else False
-    #     except requests.exceptions.Timeout:
-    #         print(f'Превышен лимит ожидания {timeout_limit}c / Повторная попытка - ')
-    #         print()
 
 
 def build_objects_to_create(data, db_model, parameters_template, is_sub_request=False, fix=False):
@@ -449,7 +439,7 @@ def build_objects_to_create(data, db_model, parameters_template, is_sub_request=
             messages += settlement_area_create_if_not_exists(data)
             messages += region_create_if_not_exists(data)
             if is_sub_request:
-                messages += f'<h5>Создан населенный пункт {data["DescriptionRu"]}</h5>'
+                messages += f'<h5>Создан населенный пункт {data["Description"]}</h5>'
         case 'City':
             if not fix:
                 messages += settlement_type_create_if_not_exists(data)

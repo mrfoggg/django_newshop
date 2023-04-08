@@ -9,10 +9,27 @@ from django.utils.html import format_html_join
 from djmoney.models.fields import MoneyField
 
 from catalog.models import Product
-from ROOTAPP.models import Person, Phone
+from ROOTAPP.models import Person, Phone, PersonAddress
 from site_settings.models import APIkeyIpInfo
 
-STATUSES = (
+CLIENT_ORDER_STATUSES = (
+    (1, "Ожидает обработки"),
+    (2, "В обработке"),
+    (3, "На удержании"),
+    (5, "Отменен"),
+    (6, "Недозвон"),
+    (7, "Отменено пользователем"),
+    (7, "Ожидает отправки"),
+)
+
+SOURCE = (
+    (1, "Заказ на сайте"),
+    (2, "Заказ в один клик"),
+    (3, "По телефону"),
+    (4, "ОЛХ"),
+)
+
+BY_ONECLICK_STATUSES = (
     (1, "Ожидает обработки"),
     (2, "В обработке"),
     (3, "На удержании"),
@@ -22,7 +39,7 @@ STATUSES = (
     (7, "Отменено пользователем"),
 )
 
-EXTEND_STATUSES = (
+BY_ONECLICK_EXTEND_STATUSES = (
     (2, "Уточнить информацию перед звонком"),
     (3, "Клиент ожидает дополнительную информацию"),
     (4, "Товар не подходит"),
@@ -32,7 +49,7 @@ EXTEND_STATUSES = (
     (8, "Предложены другие варианты (не подхолит, отмена заказа)"),
 )
 
-STATUSES_CLIENT_DISPLAY = {
+BY_ONECLICK_STATUSES_CLIENT_DISPLAY = {
     1: 'очікую обробки',
     2: 'в обробці',
     3: 'заявка на утриманні',
@@ -43,6 +60,31 @@ STATUSES_CLIENT_DISPLAY = {
 }
 
 
+class ClientOrder(models.Model):
+    is_active = models.BooleanField(default=True, verbose_name='Проведен')
+    created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name='Добавлено')
+    updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
+    status = models.SmallIntegerField('Статус', choices=CLIENT_ORDER_STATUSES, default=1, db_index=True)
+    extend_status = models.SmallIntegerField(
+        'Подробный статус', choices=BY_ONECLICK_EXTEND_STATUSES, default=1, db_index=True)
+    source = models.SmallIntegerField(
+        'Подробный статус', choices=SOURCE, default=1, db_index=True)
+    person = models.ForeignKey(
+        Person, verbose_name="Покупатель", default=None, blank=True, null=True, on_delete=models.SET_NULL)
+    address = models.ForeignKey(
+        PersonAddress, verbose_name="Адрес доставки", default=None, blank=True, null=True, on_delete=models.SET_NULL)
+    session_key = models.CharField('Ключ сессии', max_length=32, blank=True, null=True)
+    user_ip_info = models.TextField('Информация по IP посетителя', blank=True, null=True, default=None)
+
+    class Meta:
+        ordering = ('created',)
+        verbose_name = "Заказ покупателя"
+        verbose_name_plural = "Заказы покупателя"
+
+    def __str__(self):
+        return f'{self.created} - {self.person}'
+
+
 class ByOneclick(models.Model):
     product = models.ForeignKey(Product, verbose_name='Товар', on_delete=models.SET_NULL, null=True)
     price = MoneyField('Цена на момент создания заявки', max_digits=14, decimal_places=2, default_currency='UAH',
@@ -50,8 +92,9 @@ class ByOneclick(models.Model):
     phone = models.ForeignKey(Phone, verbose_name='Телефон', on_delete=models.SET_NULL, null=True)
     is_active = models.BooleanField(default=True, verbose_name='Активно')
     created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name='Добавлено')
-    status = models.SmallIntegerField('Статус', choices=STATUSES, default=1, db_index=True)
-    extend_status = models.SmallIntegerField('Подробный статус', choices=EXTEND_STATUSES, default=1, db_index=True)
+    status = models.SmallIntegerField('Статус', choices=BY_ONECLICK_STATUSES, default=1, db_index=True)
+    extend_status = models.SmallIntegerField(
+        'Подробный статус', choices=BY_ONECLICK_EXTEND_STATUSES, default=1, db_index=True)
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
     person = models.ForeignKey(
         Person, verbose_name="Пользователь", default=None, blank=True, null=True, on_delete=models.SET_NULL)
@@ -99,7 +142,7 @@ class ByOneclick(models.Model):
 
     @property
     def client_display_status(self):
-        return STATUSES_CLIENT_DISPLAY[self.status]
+        return BY_ONECLICK_STATUSES_CLIENT_DISPLAY[self.status]
 
 
 TYPES_USER_SECTION_COMMENTS = (
@@ -141,6 +184,5 @@ class ByOneclickPersonalComment(models.Model):
 class Basket(models.Model):
     customer = models.ForeignKey(Person, verbose_name="Пользователь", on_delete=models.SET_NULL, null=True)
     # customer = models.ForeignKey(get_user_model(), verbose_name="Пользователь", on_delete=models.SET_NULL, null=True)
-
 
 # В заказе должно быть поле тип заказа: на сайте, ванклик или по телефону
