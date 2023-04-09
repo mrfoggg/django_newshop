@@ -89,7 +89,8 @@ class Person(AbstractUser):
         verbose_name_plural = 'Контрагенты'
 
     def __str__(self):
-        return f'N{self.id} - {self.last_name} {self.first_name} {self.middle_name}'
+        full_name = f'{self.last_name} {self.first_name} {self.middle_name if self.middle_name else ""}'
+        return f'id_{self.id}: {full_name} {self.main_phone if self.main_phone else ""}'
 
 
 class PersonPhone(models.Model):
@@ -151,12 +152,15 @@ class PersonAddress(models.Model):
 
     def __str__(self):
         if self.settlement:
-            address = f'{self.get_address_type_display() if self.address_type else "нет доступных вариантов доставки"}: {self.settlement}, '
+            address_type = self.get_address_type_display() + ' / ' if self.address_type else "нет доступных вариантов доставки"
+            settlement = f'{self.settlement} / {address_type}'
             if self.address_type == 1:
-                return address + (self.warehouse if self.warehouse else 'отделение или почтомат не указаны')
+                return settlement + (self.warehouse.__str__() if self.warehouse else 'отделение или почтомат не указаны')
             elif self.address_type == 2:
-                return address + (self.street.description_ua if self.street else 'улица не указана')
+                street = f'{self.street.__str__()}'
+                build = f', дом №{self.build}' if self.build else ''
+                return settlement + (street + build if self.street else 'улица не указана')
             else:
-                return address
+                return settlement
         else:
             return f'{self.area} обл.'

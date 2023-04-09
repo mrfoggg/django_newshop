@@ -59,18 +59,49 @@ BY_ONECLICK_STATUSES_CLIENT_DISPLAY = {
     7: 'відмінено користувачем',
 }
 
+SUPPLIER_ORDER_STATUSES = (
+    (1, "Предзаказы"),
+    (2, "Не подан поставщику"),
+    (3, "Запрошен счет"),
+    (4, "Ожидает оплаты"),
+    (5, "Ожидает отправки"),
+)
 
-class ClientOrder(models.Model):
+REALISATION_STATUSES = (
+    (1, "Оформить доставку"),
+    (2, "Передано на упаковку"),
+    (3, "Упаковано, ожидает отправки"),
+    (4, "В пути на перевозчика"),
+    (5, "Отправлено")
+)
+
+PAYMENT_TYPE = (
+    (1, "Наложенный платеж"),
+    (2, "Оплата по счету"),
+    (3, "Оплата на карту"),
+    (3, "Оплата по закрытию текущего договора"),
+)
+
+
+class Document(models.Model):
     is_active = models.BooleanField(default=True, verbose_name='Проведен')
+    mark_to_delete = models.BooleanField(default=False, verbose_name='Помечен на удаление')
     created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name='Добавлено')
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
+
+    class Meta:
+        abstract = True
+
+
+class ClientOrder(Document):
     status = models.SmallIntegerField('Статус', choices=CLIENT_ORDER_STATUSES, default=1, db_index=True)
+    person = models.ForeignKey(
+        Person, verbose_name="Покупатель", default=None, blank=True, null=True, on_delete=models.SET_NULL)
     extend_status = models.SmallIntegerField(
         'Подробный статус', choices=BY_ONECLICK_EXTEND_STATUSES, default=1, db_index=True)
     source = models.SmallIntegerField(
-        'Подробный статус', choices=SOURCE, default=1, db_index=True)
-    person = models.ForeignKey(
-        Person, verbose_name="Покупатель", default=None, blank=True, null=True, on_delete=models.SET_NULL)
+        'Источник заказ', choices=SOURCE, default=1, db_index=True)
+    payment_type = models.SmallIntegerField('Способ оплаты', choices=PAYMENT_TYPE, default=1)
     address = models.ForeignKey(
         PersonAddress, verbose_name="Адрес доставки", default=None, blank=True, null=True, on_delete=models.SET_NULL)
     session_key = models.CharField('Ключ сессии', max_length=32, blank=True, null=True)
@@ -82,7 +113,58 @@ class ClientOrder(models.Model):
         verbose_name_plural = "Заказы покупателя"
 
     def __str__(self):
-        return f'{self.created} - {self.person}'
+        return f'{self.created.strftime("%d-%m-%Y %H:%M")} / {self.person}'
+
+
+class SupplierOrder(Document):
+    person = models.ForeignKey(
+        Person, verbose_name="Поставщик", default=None, blank=True, null=True, on_delete=models.SET_NULL)
+    status = models.SmallIntegerField('Статус', choices=SUPPLIER_ORDER_STATUSES, default=1, db_index=True)
+
+    class Meta:
+        ordering = ('created',)
+        verbose_name = "Заказ поставщику"
+        verbose_name_plural = "Заказы поставщику"
+
+    def __str__(self):
+        return f'{self.created.strftime("%d-%m-%Y %H:%M")} / {self.person}'
+
+
+class ProductInOrder(models.Model):
+    product = models.ForeignKey(Product, verbose_name='Товар в заказе', on_delete=models.SET_NULL, null=True,
+                                blank=True)
+    quantity = models.SmallIntegerField('Количество', default=1)
+    client_order = models.ForeignKey(ClientOrder, verbose_name='Заказ покупателя', on_delete=models.SET_NULL, null=True,
+                                     blank=True)
+    client_order_position = models.PositiveSmallIntegerField("Позиция в заказе покупателя", blank=True, null=True,
+                                                             db_index=True)
+    supplier_order = models.ForeignKey(SupplierOrder, verbose_name='Заказ покупателя', on_delete=models.SET_NULL,
+                                       null=True, blank=True)
+    supplier_order_position = models.PositiveSmallIntegerField("Позиция в заказе постащику", blank=True, null=True,
+                                                               db_index=True)
+
+    class Meta:
+        verbose_name = 'Товар в заказах покупателю и поставщику'
+        verbose_name_plural = 'Товары в заказах покупателю и поставщику'
+
+    def __str__(self):
+        return self.product
+
+
+class Realization(Document):
+    status = models.SmallIntegerField('Статус', choices=REALISATION_STATUSES, default=1, db_index=True)
+
+    class Meta:
+        ordering = ('created',)
+        verbose_name = "Реализация"
+        verbose_name_plural = "Реализация"
+
+    def __str__(self):
+        return f'{self.created.strftime("%d-%m-%Y %H:%M")}'
+
+
+class ProductInOrder(models.Model):
+    pass
 
 
 class ByOneclick(models.Model):

@@ -94,17 +94,9 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
         ('is_customer', 'is_supplier', 'is_staff', 'is_superuser'), 'main_phone', 'delivery_phone'
     )
     search_fields = ('last_name', 'first_name', 'middle_name')
-    # autocomplete_fields = ('main_phone',)
     inlines = (PersonPhoneInlineAdmin, PersonOneClickInline, PersonSettlementInline, PersonAddressInlineAdmin)
     list_display = ('__str__', 'email', 'main_phone', 'is_customer', 'is_supplier')
     list_filter = ('is_customer', 'is_supplier')
-
-    # class Media:
-    #     js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
-    #           'select2.min.js', 'select2_inline_fix.js')
-    # js = ('select2_inline_fix.js',)
-
-    # read
 
     def get_form(self, request, obj=None, **kwargs):
         if obj:
@@ -118,43 +110,33 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
             kwargs["queryset"] = request._person_phones
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+    def get_search_results(self, request, queryset, search_term):
+        queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
+        try:
+            if request.GET['model_name'] == 'clientorder':
+                queryset = queryset.filter(is_customer=True)
+        except:
+            pass
+        return queryset, may_have_duplicates
+
 
 # без использования декоратора так как перопрелеляется __init__
 @admin.register(PersonAddress)
 class PersonAddressAdmin(admin.ModelAdmin):
     form = FullAddressForm
     fields = ('person', 'area', 'settlement', 'address_type', 'warehouse', 'city', 'street', 'build', 'comment')
-    autocomplete_fields = ('person',
-                           # 'city',
-                           )
+    autocomplete_fields = ('person',)
     readonly_fields = ['city']
-    # readonly_fields = []
     radio_fields = {"address_type": admin.HORIZONTAL}
-
     # radio_fields = {"address_type": admin.VERTICAL}
 
     class Media:
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
-              'select2.min.js', 'notyf.min.js',
-              'root_app/person_address_admin_form.js')
+              'select2.min.js', 'notyf.min.js', 'root_app/person_address_admin_form.js')
         #   с этой строкй пишет что цсс дублируется
-        # css = {
-        #     "all": ("select2.min.css")}
+        # css = {"all": ("select2.min.css")}
 
-        css = {
-            "all": ("notyf.min.css", )}
-
-    # def get_form(self, request, obj=None, **kwargs):
-    #     # print('+'*70)
-    #     print('GET FORM')
-    #     form = super().get_form(request, obj, **kwargs)
-    #     if obj:
-    #         if obj.settlement:
-    #             request._obj_not_exist_ = False
-    #             request._address_type_ = obj.address_type
-    #             settlement_addict_info = get_settlement_addict_info(obj.settlement.index_1, obj.settlement_id)
-    #             obj.city_id = settlement_addict_info.delivery_city_ref
-    #     return form
+        css = {"all": ("notyf.min.css", )}
 
     def get_readonly_fields(self, request, obj=None):
         new_rof = []

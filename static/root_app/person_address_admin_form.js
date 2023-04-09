@@ -49,7 +49,7 @@
                 addressDeliveryFields.hide();
             }
         }
-        $('#id_address_type_0').hide();
+        $('#id_address_type_0').parent().hide();
         function actionsWhenSettlementSet(settlement, onLoad){
             const addressDeliveryFields = $('.field-city, .field-street, .field-build, .field-comment');
             if (settlement){
