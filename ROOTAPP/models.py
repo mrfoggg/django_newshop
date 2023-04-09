@@ -93,6 +93,14 @@ class Person(AbstractUser):
         return f'id_{self.id}: {full_name} {self.main_phone if self.main_phone else ""}'
 
 
+class Supplier(Person):
+    class Meta:
+        proxy = True
+
+    def __str__(self):
+        return f'{self.last_name} {self.first_name}'
+
+
 class PersonPhone(models.Model):
     person = models.ForeignKey(Person, null=True, blank=True, on_delete=models.CASCADE, related_name='phones')
     phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.CASCADE)

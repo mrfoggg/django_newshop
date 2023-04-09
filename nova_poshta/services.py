@@ -300,7 +300,6 @@ def get_np_api_response(request_dict, max_attempts_count=5):
             try:
                 result = json.loads(response.text)
             except ValueError:
-
                 print(err := f'Ошибка декодирования ответа от API. Тело ответа: {response.text}')
                 result = {'success': False, 'errorCodes': 'отсутвуют', 'errors': err, 'warnings': 'отсутвуют'}
                 break

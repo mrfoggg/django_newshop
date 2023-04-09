@@ -7,9 +7,10 @@ from django.db import models
 from django.urls import reverse
 from django.utils.html import format_html_join
 from djmoney.models.fields import MoneyField
+from djmoney.money import Money
 
 from catalog.models import Product
-from ROOTAPP.models import Person, Phone, PersonAddress
+from ROOTAPP.models import Person, Phone, PersonAddress, Supplier
 from site_settings.models import APIkeyIpInfo
 
 CLIENT_ORDER_STATUSES = (
@@ -84,10 +85,11 @@ PAYMENT_TYPE = (
 
 
 class Document(models.Model):
-    is_active = models.BooleanField(default=True, verbose_name='Проведен')
+    is_active = models.BooleanField(default=False, verbose_name='Проведен')
     mark_to_delete = models.BooleanField(default=False, verbose_name='Помечен на удаление')
     created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name='Добавлено')
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
+    comment = models.TextField('Комментарий', blank=True, null=True, default=None)
 
     class Meta:
         abstract = True
@@ -118,7 +120,7 @@ class ClientOrder(Document):
 
 class SupplierOrder(Document):
     person = models.ForeignKey(
-        Person, verbose_name="Поставщик", default=None, blank=True, null=True, on_delete=models.SET_NULL)
+        Supplier, verbose_name="Поставщик", default=None, blank=True, null=True, on_delete=models.SET_NULL)
     status = models.SmallIntegerField('Статус', choices=SUPPLIER_ORDER_STATUSES, default=1, db_index=True)
 
     class Meta:
@@ -127,28 +129,61 @@ class SupplierOrder(Document):
         verbose_name_plural = "Заказы поставщику"
 
     def __str__(self):
-        return f'{self.created.strftime("%d-%m-%Y %H:%M")} / {self.person}'
+        comment = f'({self.comment})' if self.comment else ''
+        return f'{self.created.strftime("%d-%m-%Y %H:%M")} / {self.person} {comment}'
 
 
 class ProductInOrder(models.Model):
     product = models.ForeignKey(Product, verbose_name='Товар в заказе', on_delete=models.SET_NULL, null=True,
                                 blank=True)
-    quantity = models.SmallIntegerField('Количество', default=1)
+    quantity = models.SmallIntegerField('Кол-во', default=1)
     client_order = models.ForeignKey(ClientOrder, verbose_name='Заказ покупателя', on_delete=models.SET_NULL, null=True,
                                      blank=True)
     client_order_position = models.PositiveSmallIntegerField("Позиция в заказе покупателя", blank=True, null=True,
                                                              db_index=True)
-    supplier_order = models.ForeignKey(SupplierOrder, verbose_name='Заказ покупателя', on_delete=models.SET_NULL,
+    supplier_order = models.ForeignKey(SupplierOrder, verbose_name='Заказ поставщику', on_delete=models.SET_NULL,
                                        null=True, blank=True)
     supplier_order_position = models.PositiveSmallIntegerField("Позиция в заказе постащику", blank=True, null=True,
                                                                db_index=True)
+    sale_price = MoneyField('Цена продажи', max_digits=6, decimal_places=2, default_currency='UAH',
+                            default=0)
+    purchase_price = MoneyField('Закупочная цена', max_digits=6, decimal_places=2, default_currency='UAH',
+                                default=0)
 
     class Meta:
         verbose_name = 'Товар в заказах покупателю и поставщику'
         verbose_name_plural = 'Товары в заказах покупателю и поставщику'
 
     def __str__(self):
-        return self.product
+        return self.product.name
+
+    @property
+    @admin.display(description='Актуальная цена')
+    def current_price(self):
+        return self.product.current_price
+
+    @property
+    @admin.display(description='Актуальная скидка')
+    def discount(self):
+        return self.product.discount
+
+    @property
+    @admin.display(description='Актуальная цена со скидкой')
+    def current_price_discount(self):
+        # discount_val = self.discount.amount if self.discount.type_of_amount==2 else self.current_price
+        if self.discount():
+            if self.discount().type_of_amount == 2:
+                return self.current_price - Money(self.discount().amount, 'UAH')
+            else:
+                return self.current_price - self.current_price * self.discount().amount/100
+        else:
+            return self.current_price
+
+    @property
+    @admin.display(description='Актуальная цена')
+    def full_current_price_info(self):
+        discount = f' ({self.current_price} - {self.discount()})' if self.discount() else ''
+        return f'{self.current_price_discount}{discount}'
 
 
 class Realization(Document):
@@ -161,10 +196,6 @@ class Realization(Document):
 
     def __str__(self):
         return f'{self.created.strftime("%d-%m-%Y %H:%M")}'
-
-
-class ProductInOrder(models.Model):
-    pass
 
 
 class ByOneclick(models.Model):

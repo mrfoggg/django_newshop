@@ -1,14 +1,13 @@
+import nested_admin
 from django import forms
 from django.contrib import admin
 from django.db import models
-
-from ROOTAPP.admin import PersonAdmin
-# Register your models here.
 from ROOTAPP.models import Person, PersonPhone
 from .admin_form import ClientOrderAdminForm
 
 from .models import (BY_ONECLICK_STATUSES_CLIENT_DISPLAY, ByOneclick,
-                     ByOneclickPersonalComment, OneClickUserSectionComment, ClientOrder, SupplierOrder, Realization)
+                     ByOneclickPersonalComment, OneClickUserSectionComment, ClientOrder, SupplierOrder, Realization,
+                     ProductInOrder)
 
 
 class ByOneclickCommentAdminInline(admin.TabularInline):
@@ -24,6 +23,35 @@ class OneClickUserSectionCommentInline(admin.TabularInline):
     readonly_fields = ('comment_type', 'description', 'created')
     extra = 0
     max_num = 0
+
+
+class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+    fields = ('product', 'full_current_price_info', 'sale_price', 'quantity', 'supplier_order',
+              'purchase_price', 'client_order_position')
+    readonly_fields = ('full_current_price_info', )
+    model = ProductInOrder
+    extra = 0
+    autocomplete_fields = ('product', 'supplier_order')
+    sortable_field_name = 'client_order_position'
+    verbose_name = 'Товар в заказе'
+    verbose_name_plural = 'Товары в заказе'
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        # This method will turn all TextFields into giant TextFields
+        if db_field.name == 'quantity':
+            return forms.CharField(widget=forms.widgets.TextInput(attrs={'size': 4, }))
+        return super().formfield_for_dbfield(db_field, **kwargs)
+
+
+class ProductInSupplierOrder(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+    # adminsortable2 требует fields именно списком
+    fields = ('product', 'purchase_price', 'quantity', 'client_order', 'supplier_order_position')
+    model = ProductInOrder
+    extra = 0
+    autocomplete_fields = ('product', 'client_order')
+    sortable_field_name = 'supplier_order_position'
+    verbose_name = 'Товар в заказе'
+    verbose_name_plural = 'Товары в заказе'
 
 
 class ByOneclickAdminForm(forms.ModelForm):
@@ -69,7 +97,7 @@ class ByOneclickAdmin(admin.ModelAdmin):
 
 
 @admin.register(ClientOrder)
-class ClientOrderAdmin(admin.ModelAdmin):
+class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     form = ClientOrderAdminForm
     fields = (
         ('id', 'is_active', 'mark_to_delete', 'status', 'extend_status'),
@@ -80,29 +108,56 @@ class ClientOrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'is_active', 'mark_to_delete', 'status', 'payment_type', 'source', '__str__')
     list_display_links = ('__str__',)
     list_editable = ('status', 'is_active', 'mark_to_delete')
-    autocomplete_fields = ('person',)
+    autocomplete_fields = ('person', )
+    search_fields = ('person__last_name',)
+    inlines = (ProductInClientOrder,)
 
     class Media:
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
               'select2.min.js', 'notyf.min.js',
               'root_app/person_address_admin_form.js')
+        css = {'all': ('admin/price_field.css',)}
+
+    def get_search_results(self, request, queryset, search_term):
+        queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
+        if 'model_name' in request.GET.keys():
+            print('MODEL_NAME - ', request.GET['model_name'])
+            if request.GET['model_name'] == 'productinorder':
+                queryset = queryset.filter(is_active=True, mark_to_delete=False)
+        return queryset, may_have_duplicates
 
 
 @admin.register(SupplierOrder)
-class SupplierOrderAdmin(admin.ModelAdmin):
+class SupplierOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     fields = (
         ('id', 'is_active', 'mark_to_delete', 'status',),
-        'person',
+        'person', 'comment'
     )
     readonly_fields = ('id', 'created', 'updated')
     list_display = ('id', 'is_active', 'mark_to_delete', 'status', '__str__')
     list_display_links = ('__str__',)
     list_editable = ('status', 'is_active', 'mark_to_delete')
+    search_fields = ('person__last_name',)
+    inlines = (ProductInSupplierOrder,)
+
+    class Media:
+        js = ('admin/textarea-autoheight.js',)
+        css = {
+            "all": ('admin/textarea-autoheight.css',)
+        }
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'person':
             kwargs["queryset"] = Person.objects.filter(is_supplier=True)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def get_search_results(self, request, queryset, search_term):
+        queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
+        if 'model_name' in request.GET.keys():
+            if request.GET['model_name'] == 'productinorder':
+                queryset = queryset.filter(is_active=True, mark_to_delete=False)
+        return queryset, may_have_duplicates
+
 
 
 @admin.register(Realization)

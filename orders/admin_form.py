@@ -3,8 +3,8 @@ from django.contrib.auth.models import User
 from django_select2.forms import ModelSelect2Widget
 
 from ROOTAPP.models import Person, PersonAddress
-from nova_poshta.forms import address_for_order_widget
-from orders.models import ClientOrder
+# from nova_poshta.forms import address_for_order_widget
+# from orders.models import ClientOrder
 
 
 class ClientOrderAdminForm(forms.ModelForm):

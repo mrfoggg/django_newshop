@@ -185,6 +185,8 @@ class Category(MPTTModel):
         return parent_filters + filters + (children_filters if self.display_child_filters else [])
 
 
+
+
 class ProductPrice(models.Model):
     price_changelist = models.ForeignKey(PriceChangelist, on_delete=models.CASCADE, verbose_name='Установка цен')
     product = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name="Товар")
@@ -384,6 +386,14 @@ class Product(models.Model):
     @property
     def first_image(self):
         return self.images.first().image if self.images.exists() else PhotoPlug.get_solo().image
+
+    @property
+    def current_price(self):
+        return ProductPrice.objects.filter(
+            product=self).order_by('price_changelist__confirmed_date').last().price
+
+    def discount(self):
+        return Discount.objects.filter(product=self).last()
 
 
 class AddictProduct(models.Model):
@@ -716,4 +726,5 @@ class Discount(models.Model):
 
     def __str__(self):
         val = f'{round(self.amount, 2)} %' if self.type_of_amount == 1 else str(Money(self.amount, 'UAH'))
-        return f'{self.product} - {val}'
+        # return f'{self.product} - {val}'
+        return val

@@ -1,16 +1,9 @@
 from pprint import pprint
 
 import nested_admin
-from adminsortable2.admin import SortableAdminMixin
 from django import forms
-from django.contrib import admin, messages
-from django.urls import reverse
-from django.utils.html import format_html
-from django_select2.forms import ModelSelect2Widget
+from django.contrib import admin
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
-
-from nova_poshta.models import Warehouse, Street, City
-from nova_poshta.services import get_settlement_addict_info
 # from .services.telegram_servises import get_tg_username
 # from asgiref.sync import sync_to_async
 from orders.models import ByOneclick
@@ -73,10 +66,10 @@ class PhoneAdmin(admin.ModelAdmin):
     search_fields = ('number',)
 
     def get_form(self, request, obj=None, **kwargs):
-        request._show_types_field_ = False
-        if obj:
-            if obj.settlement:
-                request._show_types_field_ = True
+        # request._show_types_field_ = False
+        # if obj:
+        #     if obj.settlement:
+        #         request._show_types_field_ = True
         form = super(PhoneAdmin, self).get_form(request, obj, **kwargs)
         form.base_fields['messengers'].widget = forms.CheckboxSelectMultiple()
         return form
@@ -112,11 +105,9 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
 
     def get_search_results(self, request, queryset, search_term):
         queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
-        try:
+        if 'model_name' in request.GET.keys():
             if request.GET['model_name'] == 'clientorder':
                 queryset = queryset.filter(is_customer=True)
-        except:
-            pass
         return queryset, may_have_duplicates
 
 
