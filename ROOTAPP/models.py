@@ -93,7 +93,8 @@ class Person(AbstractUser):
         verbose_name_plural = 'Контрагенты'
 
     def __str__(self):
-        return f'id_{self.id}: {self.full_name if self.full_name else self.email} {self.main_phone if self.main_phone else ""}'
+        return f'{self.date_joined.strftime("%d-%m-%Y")}: ' \
+               f'{self.full_name if self.full_name else self.email} {self.main_phone if self.main_phone else ""}'
 
     def save(self, *args, **kwargs):
         last_name = self.last_name if self.last_name else ''

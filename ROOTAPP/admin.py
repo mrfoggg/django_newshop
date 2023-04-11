@@ -85,20 +85,17 @@ class PhoneAdmin(admin.ModelAdmin):
 @admin.register(Person)
 class PersonAdmin(nested_admin.NestedModelAdmin):
     fieldsets = (
-        ('Основные данные пользователя', {'fields': (('last_name', 'first_name', 'middle_name',),)}),
+        ('Основные данные пользователя', {'fields': (('last_name', 'first_name', 'middle_name',),
+                                                     ('full_name', 'date_joined', 'last_login'),)}),
         ('Контактная информация', {'fields': (('email',), ('main_phone', 'delivery_phone'))}),
         ('Роли пользователя', {'fields': (('is_customer', 'is_supplier'),)}),
         ('Права пользователя', {'fields': (('is_staff', 'is_superuser'),)}),
     )
-    # fields = (
-    #     ('last_name', 'first_name', 'middle_name'),
-    #     ('full_name', 'email', 'username'),
-    #     ('is_customer', 'is_supplier', 'is_staff', 'is_superuser'), ('main_phone', 'delivery_phone')
-    # )
     search_fields = ('full_name', 'main_phone__number')
     inlines = (PersonPhoneInlineAdmin, PersonOneClickInline, PersonSettlementInline, PersonAddressInlineAdmin)
     list_display = ('__str__', 'email', 'main_phone', 'is_customer', 'is_supplier')
     list_filter = ('is_customer', 'is_supplier')
+    readonly_fields = ('full_name', 'date_joined', 'last_login')
 
     class Media:
         css = {"all": ("root_app/person_form.css",)}
