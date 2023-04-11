@@ -124,7 +124,7 @@ WSGI_APPLICATION = 'Shop_DJ.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'shop_dj_db_2',
+        'NAME': 'shop_dj_db_4',
         'USER': 'shop_dj_admin',
         'PASSWORD': '7898',
         'HOST': '127.0.0.1',

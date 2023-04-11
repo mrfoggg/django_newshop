@@ -100,6 +100,7 @@ class Person(AbstractUser):
         first_name = self.first_name if self.first_name else ''
         middle_name = self.middle_name if self.middle_name else ''
         self.full_name = last_name + ' ' + first_name + ' ' + middle_name
+        self.username = self.id
         super().save(*args, **kwargs)
 
 

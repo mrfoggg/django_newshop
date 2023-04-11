@@ -85,7 +85,7 @@ class PhoneAdmin(admin.ModelAdmin):
 @admin.register(Person)
 class PersonAdmin(nested_admin.NestedModelAdmin):
     fieldsets = (
-        ('Основные данные пользователя', {'fields': (('last_name', 'first_name', 'middle_name', 'username'),)}),
+        ('Основные данные пользователя', {'fields': (('last_name', 'first_name', 'middle_name',),)}),
         ('Контактная информация', {'fields': (('email',), ('main_phone', 'delivery_phone'))}),
         ('Роли пользователя', {'fields': (('is_customer', 'is_supplier'),)}),
         ('Права пользователя', {'fields': (('is_staff', 'is_superuser'),)}),
