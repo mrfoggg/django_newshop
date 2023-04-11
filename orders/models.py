@@ -1,5 +1,8 @@
 # import ipinfo
 # import requests
+from decimal import Decimal
+from unicodedata import decimal
+
 from django.contrib import admin
 # from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
@@ -184,6 +187,44 @@ class ProductInOrder(models.Model):
     def full_current_price_info(self):
         discount = f' ({self.current_price} - {self.discount()})' if self.discount() else ''
         return f'{self.current_price_discount}{discount}'
+
+    @property
+    @admin.display(description='Сумма продажи')
+    def sale_total(self):
+        return self.sale_price * self.quantity
+
+    @property
+    @admin.display(description='Сумма закупки')
+    def purchase_total(self):
+        return self.purchase_price * self.quantity
+
+    @property
+    @admin.display(description='Маржа за шт.')
+    def margin(self):
+        return self.sale_price - self.purchase_price if self.purchase_price and self.sale_price else '-'
+
+    @property
+    @admin.display(description='Маржа всего')
+    def margin_total(self):
+        return self.margin * self.quantity if self.purchase_price and self.sale_price else '-'
+
+    @property
+    @admin.display(description='Наценка, %')
+    def margin_percent(self):
+        if self.purchase_price and self.sale_price:
+            int_val = self.margin.amount / self.purchase_price.amount * 100 if self.purchase_price.amount else 0
+            return f'{int_val:.2f} %'
+        else:
+            return '-'
+
+    @property
+    @admin.display(description='Маржа, %')
+    def profitability(self):
+        if self.purchase_price and self.sale_price:
+            int_val = self.margin.amount / self.sale_price.amount * 100 if self.sale_price.amount else 0
+            return f'{int_val:.2f} %'
+        else:
+            return '-'
 
 
 class Realization(Document):

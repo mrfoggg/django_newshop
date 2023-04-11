@@ -3,6 +3,7 @@ from pprint import pprint
 import nested_admin
 from django import forms
 from django.contrib import admin
+from django.forms import TextInput
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
 # from .services.telegram_servises import get_tg_username
 # from asgiref.sync import sync_to_async
@@ -24,7 +25,7 @@ class PersonPhoneInlineAdmin(nested_admin.NestedTabularInline):
 
 class PersonSettlementInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     model = PersonSettlement
-    extra = 2
+    extra = 0
     sortable_field_name = 'priority'
     ordering = ('priority',)
     autocomplete_fields = ('settlement',)
@@ -35,6 +36,7 @@ class PersonOneClickInline(nested_admin.NestedTabularInline):
     readonly_fields = ('product', 'created', 'updated', 'status')
     fields = ('product', 'created', 'updated', 'status')
     extra = 0
+    max_num = 0
 
 
 class PersonAddressInlineAdmin(nested_admin.NestedTabularInline):
@@ -82,20 +84,35 @@ class PhoneAdmin(admin.ModelAdmin):
 
 @admin.register(Person)
 class PersonAdmin(nested_admin.NestedModelAdmin):
-    fields = (
-        ('last_name', 'first_name', 'middle_name'), ('email', 'username'),
-        ('is_customer', 'is_supplier', 'is_staff', 'is_superuser'), 'main_phone', 'delivery_phone'
+    fieldsets = (
+        ('Основные данные пользователя', {'fields': (('last_name', 'first_name', 'middle_name', 'username'),)}),
+        ('Контактная информация', {'fields': (('email',), ('main_phone', 'delivery_phone'))}),
+        ('Роли пользователя', {'fields': (('is_customer', 'is_supplier'),)}),
+        ('Права пользователя', {'fields': (('is_staff', 'is_superuser'),)}),
     )
-    search_fields = ('last_name', 'first_name', 'middle_name')
+    # fields = (
+    #     ('last_name', 'first_name', 'middle_name'),
+    #     ('full_name', 'email', 'username'),
+    #     ('is_customer', 'is_supplier', 'is_staff', 'is_superuser'), ('main_phone', 'delivery_phone')
+    # )
+    search_fields = ('full_name', 'main_phone__number')
     inlines = (PersonPhoneInlineAdmin, PersonOneClickInline, PersonSettlementInline, PersonAddressInlineAdmin)
     list_display = ('__str__', 'email', 'main_phone', 'is_customer', 'is_supplier')
     list_filter = ('is_customer', 'is_supplier')
+
+    class Media:
+        css = {"all": ("root_app/person_form.css",)}
 
     def get_form(self, request, obj=None, **kwargs):
         if obj:
             request._person_phones = Phone.objects.filter(personphone__person=obj)
         else:
             request._person_phones = Phone.objects.none()
+
+        # form = super().get_form(request, obj, **kwargs)
+        # form.base_fields['full_name'].widget.attrs['size'] = '80'
+        # form.base_fields['full_name'].widget.attrs['style'] = 'width: 50rem;'
+        # form.base_fields['full_name'].widget = TextInput(attrs={'size': '90'})
         return super(PersonAdmin, self).get_form(request, obj, **kwargs)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):

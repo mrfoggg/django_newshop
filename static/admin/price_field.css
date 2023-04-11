@@ -1,3 +1,4 @@
-.field-sale_price input, .field-sale_price select{
+.field-sale_price input, .field-sale_price select,
+.field-purchase_price input, .field-purchase_price select{
     width: 7rem!important;
 }

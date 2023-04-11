@@ -26,9 +26,14 @@ class OneClickUserSectionCommentInline(admin.TabularInline):
 
 
 class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
-    fields = ('product', 'full_current_price_info', 'sale_price', 'quantity', 'supplier_order',
-              'purchase_price', 'client_order_position')
-    readonly_fields = ('full_current_price_info', )
+    fields = ('product', 'full_current_price_info', 'sale_price', 'quantity', 'sale_total', 'margin', 'margin_total',
+              'margin_percent', 'profitability',
+              'supplier_order',
+              'purchase_price', 'client_order_position', 'purchase_total')
+    readonly_fields = (
+        'full_current_price_info', 'sale_total', 'purchase_total', 'margin', 'margin_total', 'margin_percent',
+        'profitability'
+    )
     model = ProductInOrder
     extra = 0
     autocomplete_fields = ('product', 'supplier_order')
@@ -108,7 +113,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     list_display = ('id', 'is_active', 'mark_to_delete', 'status', 'payment_type', 'source', '__str__')
     list_display_links = ('__str__',)
     list_editable = ('status', 'is_active', 'mark_to_delete')
-    autocomplete_fields = ('person', )
+    autocomplete_fields = ('person',)
     search_fields = ('person__last_name',)
     inlines = (ProductInClientOrder,)
 
@@ -157,7 +162,6 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
             if request.GET['model_name'] == 'productinorder':
                 queryset = queryset.filter(is_active=True, mark_to_delete=False)
         return queryset, may_have_duplicates
-
 
 
 @admin.register(Realization)

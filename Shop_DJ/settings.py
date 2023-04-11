@@ -124,7 +124,7 @@ WSGI_APPLICATION = 'Shop_DJ.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'shop_dj_db',
+        'NAME': 'shop_dj_db_2',
         'USER': 'shop_dj_admin',
         'PASSWORD': '7898',
         'HOST': '127.0.0.1',
@@ -388,6 +388,8 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
+
+USERNAME_FIELD = "email"
 
 EMAIL_BACKEND ='django.core.mail.backends.console.EmailBackend'
 

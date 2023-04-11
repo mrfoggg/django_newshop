@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib import admin
 from django.contrib.auth.models import AbstractUser, User
 from django.db import models
@@ -76,7 +78,9 @@ class Phone(models.Model):
 
 
 class Person(AbstractUser):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     middle_name = models.CharField('Отчество', max_length=128, blank=True, null=True, default=None, db_index=True)
+    full_name = models.CharField('Полное имя', max_length=256, blank=True, null=True, default=None, db_index=True)
     is_customer = models.BooleanField('Является покупателем', default=False)
     is_supplier = models.BooleanField('Является поставщиком', default=False)
     main_phone = models.OneToOneField(Phone, null=True, blank=True, on_delete=models.SET_NULL,
@@ -89,8 +93,14 @@ class Person(AbstractUser):
         verbose_name_plural = 'Контрагенты'
 
     def __str__(self):
-        full_name = f'{self.last_name} {self.first_name} {self.middle_name if self.middle_name else ""}'
-        return f'id_{self.id}: {full_name} {self.main_phone if self.main_phone else ""}'
+        return f'id_{self.id}: {self.full_name if self.full_name else self.email} {self.main_phone if self.main_phone else ""}'
+
+    def save(self, *args, **kwargs):
+        last_name = self.last_name if self.last_name else ''
+        first_name = self.first_name if self.first_name else ''
+        middle_name = self.middle_name if self.middle_name else ''
+        self.full_name = last_name + ' ' + first_name + ' ' + middle_name
+        super().save(*args, **kwargs)
 
 
 class Supplier(Person):

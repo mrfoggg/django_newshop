@@ -14,7 +14,7 @@ def reformate_coord(dd):
 
 
 class NpDataModel(models.Model):
-    ref = models.CharField('Ref', max_length=36, primary_key=True)
+    ref = models.UUIDField('Ref', primary_key=True)
     updated = models.DateTimeField('Изменено', auto_now_add=False, auto_now=True)
 
     class Meta:
