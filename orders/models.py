@@ -139,7 +139,7 @@ class SupplierOrder(Document):
 class ProductInOrder(models.Model):
     product = models.ForeignKey(Product, verbose_name='Товар в заказе', on_delete=models.SET_NULL, null=True,
                                 blank=True)
-    quantity = models.SmallIntegerField('Кол-во', default=1)
+    quantity = models.PositiveSmallIntegerField('Кол-во', default=1)
     client_order = models.ForeignKey(ClientOrder, verbose_name='Заказ покупателя', on_delete=models.SET_NULL, null=True,
                                      blank=True)
     client_order_position = models.PositiveSmallIntegerField("Позиция в заказе покупателя", blank=True, null=True,
@@ -183,7 +183,7 @@ class ProductInOrder(models.Model):
             return self.current_price
 
     @property
-    @admin.display(description='Актуальная цена')
+    @admin.display(description='Текущая цена')
     def full_current_price_info(self):
         discount = f' ({self.current_price} - {self.discount()})' if self.discount() else ''
         return f'{self.current_price_discount}{discount}'
@@ -202,6 +202,7 @@ class ProductInOrder(models.Model):
     @admin.display(description='Маржа за шт.')
     def margin(self):
         return self.sale_price - self.purchase_price if self.purchase_price and self.sale_price else '-'
+        # return self.sale_price
 
     @property
     @admin.display(description='Маржа всего')

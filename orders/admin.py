@@ -2,7 +2,10 @@ import nested_admin
 from django import forms
 from django.contrib import admin
 from django.db import models
+from djmoney.forms import MoneyWidget, MoneyField
+
 from ROOTAPP.models import Person, PersonPhone
+from Shop_DJ import settings
 from .admin_form import ClientOrderAdminForm
 
 from .models import (BY_ONECLICK_STATUSES_CLIENT_DISPLAY, ByOneclick,
@@ -44,7 +47,14 @@ class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.Nested
     def formfield_for_dbfield(self, db_field, **kwargs):
         # This method will turn all TextFields into giant TextFields
         if db_field.name == 'quantity':
-            return forms.CharField(widget=forms.widgets.TextInput(attrs={'size': 4, }))
+            return forms.CharField(widget=forms.widgets.NumberInput(attrs={'size': 4, }))
+        if db_field.name in ('sale_price', 'purchase_price'):
+            return MoneyField(
+                widget=MoneyWidget(
+                    amount_widget=forms.TextInput(attrs={'size': 7, 'class': 'form-class'}),
+                    currency_widget=forms.Select(attrs={}, choices=[('UAH', 'UAH ₴')]),
+                )
+            )
         return super().formfield_for_dbfield(db_field, **kwargs)
 
 
@@ -119,8 +129,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
 
     class Media:
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
-              'select2.min.js', 'notyf.min.js',
-              'root_app/person_address_admin_form.js')
+              'order/client_order_admin_form.js')
         css = {'all': ('admin/price_field.css',)}
 
     def get_search_results(self, request, queryset, search_term):
@@ -130,6 +139,10 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
             if request.GET['model_name'] == 'productinorder':
                 queryset = queryset.filter(is_active=True, mark_to_delete=False)
         return queryset, may_have_duplicates
+
+    baton_form_includes = [
+        ('order/admin_order_ajax_urls.html', 'id', 'top', ),
+    ]
 
 
 @admin.register(SupplierOrder)

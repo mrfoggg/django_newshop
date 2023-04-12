@@ -3,7 +3,7 @@ from django.contrib import admin
 
 # Register your models here.
 from catalog.models import ProductPrice
-from finance.models import PriceChangelist
+from finance.models import PriceChangelist, PriceTypePersonBuyer, PriceTypePersonSupplier
 
 
 class ProductPriceProductInline(nested_admin.NestedTabularInline):
@@ -23,9 +23,15 @@ class ProductPricePriceChangelistInline(nested_admin.SortableHiddenMixin, nested
     autocomplete_fields = ('product',)
 
 
+class PriceTypePersonBuyerInline(nested_admin.NestedTabularInline):
+    pass
+
+
 @admin.register(PriceChangelist)
 class PriceChangelistAdmin(nested_admin.NestedModelAdmin, ):
     fields = ('confirmed_date', 'confirmed')
     inlines = (ProductPricePriceChangelistInline,)
 
-# admin.site.register(ProductPrice)
+
+admin.site.register(PriceTypePersonBuyer)
+admin.site.register(PriceTypePersonSupplier)

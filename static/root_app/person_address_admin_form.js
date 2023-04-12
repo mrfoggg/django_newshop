@@ -49,6 +49,7 @@
                 addressDeliveryFields.hide();
             }
         }
+        console.log('SettlementInfoUrl', $('#SettlementInfoUrl').data('url'));
         $('#id_address_type_0').parent().hide();
         function actionsWhenSettlementSet(settlement, onLoad){
             const addressDeliveryFields = $('.field-city, .field-street, .field-build, .field-comment');
@@ -58,7 +59,7 @@
                 $('#personaddress_form').css('opacity', '30%');
                 $.ajax({
                     type: "POST",
-                    url: 'http://127.0.0.1:8000/root_app/get_settlement_info/',
+                    url: $('#SettlementInfoUrl').data('url'),
                     data: {'settlement_ref': settlement},
                     headers: {'X-CSRFToken': getCookie('csrftoken')},
                     success: function (response) {
@@ -125,7 +126,6 @@
                             else {
                                 showOrHideAddressFields($('input[name="address_type"]:checked').val());
                             }
-                            console.log('CHECKED - ', $('#id_address_type input:checked'));
                         }, 450)
                     }
                 }, 200);

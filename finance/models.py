@@ -6,6 +6,9 @@ from djmoney.models.fields import MoneyField
 # from catalog.models import Product
 from djmoney.money import Money
 
+from ROOTAPP.models import Person
+
+
 # from catalog.models import Product
 
 
@@ -26,18 +29,27 @@ class PriceChangelist(models.Model):
         return self.confirmed_date.strftime("%m/%d/%Y, (%H:%M)")
 
 
+class PersonPriceType(models.Model):
+    name = models.CharField('Название типа цен', max_length=128, blank=True, default='', db_index=True)
+    description = models.TextField('Описание типа цен', blank=True, null=True, default=None)
+    person = models.ForeignKey(
+        Person, verbose_name="Контрагент", default=None, blank=True, null=True, on_delete=models.SET_NULL)
+    position = models.PositiveSmallIntegerField("Позиция", blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.position}. {self.name}'
+
+    class Meta:
+        abstract = True
 
 
-# class ProductPrice(models.Model):
-#     price_changelist = models.ForeignKey(PriceChangelist, on_delete=models.CASCADE, verbose_name='Установка цен')
-#     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Товар")
-#     price = MoneyField(max_digits=14, decimal_places=2, default_currency='UAH', default=0)
-#     position = models.PositiveIntegerField("Положение", null=True)
-#
-#     def __str__(self):
-#         return self.product.name
-#
-#     class Meta:
-#         verbose_name = "Строка установки цен номенклатуры"
-#         verbose_name_plural = "Строки установки цен номенклатуры"
-#         ordering = ['position']
+class PriceTypePersonBuyer(PersonPriceType):
+    class Meta:
+        verbose_name = "Тип цен контрагента покупателя"
+        verbose_name_plural = "Типы цен контрагента покупателя"
+
+
+class PriceTypePersonSupplier(PersonPriceType):
+    class Meta:
+        verbose_name = "Тип цен контрагента поставщика"
+        verbose_name_plural = "Типы цен контрагента поставщика"

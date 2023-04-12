@@ -80,6 +80,8 @@ INSTALLED_APPS = [
 ]
 SITE_ID = 1
 
+# THUMBNAIL_DEBUG = True
+
 MIDDLEWARE = [
     # 'django.contrib.redirects.middleware.RedirectFallbackMiddleware',
     # "debug_toolbar.middleware.DebugToolbarMiddleware",
@@ -406,6 +408,8 @@ OTP_TWILIO_ACCOUNT = 'AC00452becddd687f236c1f01e457d58ef'
 OTP_TWILIO_AUTH = '033011fe9a93cf9ea7a0fd2df5e4ad21'
 
 OTP_TWILIO_FROM = '+16154374918'
+
+CURRENCIES = ('UAH', 'USD', 'EUR')
 
 # SOCIALACCOUNT_FORMS = {
     # 'disconnect': 'allauth.socialaccount.forms.DisconnectForm',

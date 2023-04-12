@@ -1,4 +1,5 @@
 import json
+import uuid
 
 import requests
 from django.contrib import messages
@@ -42,10 +43,12 @@ def update_np_catalogs(request, obj_type):
     # перебирать все города в базе и запрашивать по ним улицы если только не указан в форме определенный город
     search_data = City.objects.values_list('ref', flat=True) if obj_type == Street and 'city' not in data.keys() \
         else [None]
+    print('ALL SEARCH DATA -', search_data)
     cities_list_len = len(search_data)
     city_count = 1
     # 'это можеть быть одно действие или последовательный запрос улиц по городу / гороам
     for search_data in search_data:
+        search_data = str(search_data)
         objects_position, added_objects_count, edited_objects_count = 1, 0, 0
         page, ln = 1, objects_limit
         city = ''

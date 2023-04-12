@@ -30,6 +30,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('baton/', include('baton.urls')),
     path('accounts/', include('allauth.urls')),
+    path('finance/', include('finance.urls')),
     path('nova_poshta', include('nova_poshta.urls')),
     path('root_app/', include('ROOTAPP.urls')),
     path('orders/', include('orders.urls')),

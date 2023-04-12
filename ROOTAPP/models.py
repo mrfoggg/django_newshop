@@ -83,6 +83,7 @@ class Person(AbstractUser):
     full_name = models.CharField('Полное имя', max_length=256, blank=True, null=True, default=None, db_index=True)
     is_customer = models.BooleanField('Является покупателем', default=False)
     is_supplier = models.BooleanField('Является поставщиком', default=False)
+    is_dropper = models.BooleanField('Является дропшипером', default=False)
     main_phone = models.OneToOneField(Phone, null=True, blank=True, on_delete=models.SET_NULL,
                                    verbose_name='Телефон для авторизации', related_name='login_person')
     delivery_phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.SET_NULL,
@@ -93,8 +94,10 @@ class Person(AbstractUser):
         verbose_name_plural = 'Контрагенты'
 
     def __str__(self):
+        main_phone = self.main_phone if self.main_phone and not self.is_supplier and not self.is_dropper else ""
         return f'{self.date_joined.strftime("%d-%m-%Y")}: ' \
-               f'{self.full_name if self.full_name else self.email} {self.main_phone if self.main_phone else ""}'
+               f'{self.full_name if self.full_name else self.email} {main_phone}'\
+                f'{"(поставщик)" if self.is_supplier else ""}{"(дропер)" if self.is_dropper else ""}'
 
     def save(self, *args, **kwargs):
         last_name = self.last_name if self.last_name else ''

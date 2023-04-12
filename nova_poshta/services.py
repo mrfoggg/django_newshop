@@ -356,14 +356,16 @@ def city_area_create_if_not_exists(data):
 
 
 def region_create_if_not_exists(data):
-    obj, created = SettlementRegion.objects.get_or_create(
-        ref=data['Region'],
-        defaults={
-            'description_ru': data['RegionsDescriptionRu'],
-            'description_ua': data['RegionsDescription']
-        }
-    )
-    return f'<h5>Создан район {obj} </h5>' if created else ''
+    if data['Region']:
+        obj, created = SettlementRegion.objects.get_or_create(
+            ref=data['Region'],
+            defaults={
+                'description_ru': data['RegionsDescriptionRu'],
+                'description_ua': data['RegionsDescription']
+            }
+        )
+        return f'<h5>Создан район {obj} </h5>' if created else ''
+    return ''
 
 
 def settlement_type_create_if_not_exists(data):

@@ -88,13 +88,13 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
         ('Основные данные пользователя', {'fields': (('last_name', 'first_name', 'middle_name',),
                                                      ('full_name', 'date_joined', 'last_login'),)}),
         ('Контактная информация', {'fields': (('email',), ('main_phone', 'delivery_phone'))}),
-        ('Роли пользователя', {'fields': (('is_customer', 'is_supplier'),)}),
+        ('Роли пользователя', {'fields': (('is_customer', 'is_supplier', 'is_dropper'),)}),
         ('Права пользователя', {'fields': (('is_staff', 'is_superuser'),)}),
     )
     search_fields = ('full_name', 'main_phone__number')
     inlines = (PersonPhoneInlineAdmin, PersonOneClickInline, PersonSettlementInline, PersonAddressInlineAdmin)
-    list_display = ('__str__', 'email', 'main_phone', 'is_customer', 'is_supplier')
-    list_filter = ('is_customer', 'is_supplier')
+    list_display = ('__str__', 'email', 'main_phone', 'is_customer', 'is_supplier', 'is_dropper')
+    list_filter = ('is_customer', 'is_supplier', 'is_dropper')
     readonly_fields = ('full_name', 'date_joined', 'last_login')
 
     class Media:
@@ -149,3 +149,7 @@ class PersonAddressAdmin(admin.ModelAdmin):
             if obj.person:
                 new_rof.append('person')
         return self.readonly_fields + new_rof
+
+    baton_form_includes = [
+        ('root_app/admin_address_ajax_urls.html', 'area', 'top', ),
+    ]
