@@ -5,6 +5,8 @@ from django import forms
 from django.contrib import admin
 from django.forms import TextInput
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
+
+from finance.admin import PriceTypePersonBuyerInline, PriceTypePersonSupplierInline
 # from .services.telegram_servises import get_tg_username
 # from asgiref.sync import sync_to_async
 from orders.models import ByOneclick
@@ -86,19 +88,21 @@ class PhoneAdmin(admin.ModelAdmin):
 class PersonAdmin(nested_admin.NestedModelAdmin):
     fieldsets = (
         ('Основные данные пользователя', {'fields': (('last_name', 'first_name', 'middle_name',),
-                                                     ('full_name', 'date_joined', 'last_login'),)}),
+                                                     ('full_name', 'date_joined', 'last_login'), ('comment',))}),
         ('Контактная информация', {'fields': (('email',), ('main_phone', 'delivery_phone'))}),
         ('Роли пользователя', {'fields': (('is_customer', 'is_supplier', 'is_dropper'),)}),
         ('Права пользователя', {'fields': (('is_staff', 'is_superuser'),)}),
     )
     search_fields = ('full_name', 'main_phone__number')
-    inlines = (PersonPhoneInlineAdmin, PersonOneClickInline, PersonSettlementInline, PersonAddressInlineAdmin)
+    inlines = (PersonPhoneInlineAdmin, PersonOneClickInline, PersonSettlementInline, PersonAddressInlineAdmin,
+               PriceTypePersonBuyerInline, PriceTypePersonSupplierInline)
     list_display = ('__str__', 'email', 'main_phone', 'is_customer', 'is_supplier', 'is_dropper')
     list_filter = ('is_customer', 'is_supplier', 'is_dropper')
     readonly_fields = ('full_name', 'date_joined', 'last_login')
 
     class Media:
-        css = {"all": ("root_app/person_form.css",)}
+        css = {"all": ("root_app/person_form.css", 'admin/textarea-autoheight.css')}
+        js = ('admin/textarea-autoheight.js', )
 
     def get_form(self, request, obj=None, **kwargs):
         if obj:

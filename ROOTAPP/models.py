@@ -17,6 +17,17 @@ TYPES_OF_PHONE = (
 )
 
 
+class Document(models.Model):
+    is_active = models.BooleanField(default=False, verbose_name='Проведен')
+    mark_to_delete = models.BooleanField(default=False, verbose_name='Помечен на удаление')
+    created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name='Добавлено')
+    updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
+    comment = models.TextField('Комментарий', blank=True, null=True, default=None)
+
+    class Meta:
+        abstract = True
+
+
 class Messenger(models.Model):
     type = models.SmallIntegerField(
         choices=TYPES_OF_PHONE, default=4, db_index=True, verbose_name='Мессенжер')
@@ -88,6 +99,7 @@ class Person(AbstractUser):
                                    verbose_name='Телефон для авторизации', related_name='login_person')
     delivery_phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.SET_NULL,
                                        verbose_name='Телефон для доставки', related_name='delivery_persons')
+    comment = models.TextField('Коментарий', max_length=256, blank=True, null=True, default=None)
 
     class Meta:
         verbose_name = 'Контрагент'

@@ -3,11 +3,9 @@ from django import forms
 from django.contrib import admin
 from django.db import models
 from djmoney.forms import MoneyWidget, MoneyField
-
-from ROOTAPP.models import Person, PersonPhone
-from Shop_DJ import settings
+from ROOTAPP.models import Person
+from finance.admin_forms import money_widget_only_uah
 from .admin_form import ClientOrderAdminForm
-
 from .models import (BY_ONECLICK_STATUSES_CLIENT_DISPLAY, ByOneclick,
                      ByOneclickPersonalComment, OneClickUserSectionComment, ClientOrder, SupplierOrder, Realization,
                      ProductInOrder)
@@ -49,12 +47,7 @@ class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.Nested
         if db_field.name == 'quantity':
             return forms.CharField(widget=forms.widgets.NumberInput(attrs={'size': 4, }))
         if db_field.name in ('sale_price', 'purchase_price'):
-            return MoneyField(
-                widget=MoneyWidget(
-                    amount_widget=forms.TextInput(attrs={'size': 7, 'class': 'form-class'}),
-                    currency_widget=forms.Select(attrs={}, choices=[('UAH', 'UAH ₴')]),
-                )
-            )
+            return MoneyField(widget=money_widget_only_uah)
         return super().formfield_for_dbfield(db_field, **kwargs)
 
 
@@ -117,7 +110,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     fields = (
         ('id', 'is_active', 'mark_to_delete', 'status', 'extend_status'),
         ('source', 'payment_type', 'created', 'updated'),
-        'person', 'address'
+        ('person', 'group_price_type'), 'address'
     )
     readonly_fields = ('id', 'created', 'updated')
     list_display = ('id', 'is_active', 'mark_to_delete', 'status', 'payment_type', 'source', '__str__')
@@ -149,7 +142,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
 class SupplierOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     fields = (
         ('id', 'is_active', 'mark_to_delete', 'status',),
-        'person', 'comment'
+        ('person', 'price_type'), 'comment'
     )
     readonly_fields = ('id', 'created', 'updated')
     list_display = ('id', 'is_active', 'mark_to_delete', 'status', '__str__')

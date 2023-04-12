@@ -13,7 +13,8 @@ from djmoney.models.fields import MoneyField
 from djmoney.money import Money
 
 from catalog.models import Product
-from ROOTAPP.models import Person, Phone, PersonAddress, Supplier
+from ROOTAPP.models import Person, Phone, PersonAddress, Supplier, Document
+from finance.models import PriceTypePersonBuyer, PriceTypePersonSupplier
 from site_settings.models import APIkeyIpInfo
 
 CLIENT_ORDER_STATUSES = (
@@ -81,21 +82,11 @@ REALISATION_STATUSES = (
 
 PAYMENT_TYPE = (
     (1, "Наложенный платеж"),
-    (2, "Оплата по счету"),
-    (3, "Оплата на карту"),
-    (3, "Оплата по закрытию текущего договора"),
+    (2, "Наложенный платеж на карту"),
+    (3, "Оплата по счету"),
+    (4, "Оплата на карту"),
+    (5, "Оплата по закрытию текущего договора"),
 )
-
-
-class Document(models.Model):
-    is_active = models.BooleanField(default=False, verbose_name='Проведен')
-    mark_to_delete = models.BooleanField(default=False, verbose_name='Помечен на удаление')
-    created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name='Добавлено')
-    updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
-    comment = models.TextField('Комментарий', blank=True, null=True, default=None)
-
-    class Meta:
-        abstract = True
 
 
 class ClientOrder(Document):
@@ -111,6 +102,8 @@ class ClientOrder(Document):
         PersonAddress, verbose_name="Адрес доставки", default=None, blank=True, null=True, on_delete=models.SET_NULL)
     session_key = models.CharField('Ключ сессии', max_length=32, blank=True, null=True)
     user_ip_info = models.TextField('Информация по IP посетителя', blank=True, null=True, default=None)
+    group_price_type = models.ForeignKey(PriceTypePersonBuyer, verbose_name='Тип оптовых цен контрагента',
+                                         default=None, blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         ordering = ('created',)
@@ -125,6 +118,8 @@ class SupplierOrder(Document):
     person = models.ForeignKey(
         Supplier, verbose_name="Поставщик", default=None, blank=True, null=True, on_delete=models.SET_NULL)
     status = models.SmallIntegerField('Статус', choices=SUPPLIER_ORDER_STATUSES, default=1, db_index=True)
+    price_type = models.ForeignKey(PriceTypePersonSupplier, null=True, on_delete=models.SET_NULL,
+                                   verbose_name='Тип цен')
 
     class Meta:
         ordering = ('created',)
@@ -178,7 +173,7 @@ class ProductInOrder(models.Model):
             if self.discount().type_of_amount == 2:
                 return self.current_price - Money(self.discount().amount, 'UAH')
             else:
-                return self.current_price - self.current_price * self.discount().amount/100
+                return self.current_price - self.current_price * self.discount().amount / 100
         else:
             return self.current_price
 

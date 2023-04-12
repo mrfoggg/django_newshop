@@ -19,7 +19,7 @@ from site_settings.models import PhotoPlug
 
 def get_price_sq(outerref_field):
     return Subquery(ProductPrice.objects.filter(
-        product=OuterRef(outerref_field)).order_by('price_changelist__confirmed_date').values('price')[:1]), \
+        product=OuterRef(outerref_field)).order_by('price_changelist__created').values('price')[:1]), \
            Subquery(Discount.objects.filter(product=OuterRef(outerref_field)).values('amount')[:1]), \
            Subquery(Discount.objects.filter(product=OuterRef(outerref_field)).values('type_of_amount')[:1])
 
@@ -185,8 +185,6 @@ class Category(MPTTModel):
         return parent_filters + filters + (children_filters if self.display_child_filters else [])
 
 
-
-
 class ProductPrice(models.Model):
     price_changelist = models.ForeignKey(PriceChangelist, on_delete=models.CASCADE, verbose_name='Установка цен')
     product = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name="Товар")
@@ -197,8 +195,8 @@ class ProductPrice(models.Model):
         return self.product.name
 
     class Meta:
-        verbose_name = "Строка установки цен номенклатуры"
-        verbose_name_plural = "Строки установки цен номенклатуры"
+        verbose_name = "Розничная цена на товар"
+        verbose_name_plural = "Розничные цены на товары"
         ordering = ['position']
 
 
@@ -381,7 +379,7 @@ class Product(models.Model):
     # @property
     # def price(self):
     #     return self.productprice_set.order_by(
-    #         'price_changelist__confirmed_date').last().price if self.productprice_set.exists() else Money(0, 'UAH')
+    #         'price_changelist__created').last().price if self.productprice_set.exists() else Money(0, 'UAH')
 
     @property
     def first_image(self):
@@ -390,7 +388,7 @@ class Product(models.Model):
     @property
     def current_price(self):
         return ProductPrice.objects.filter(
-            product=self).order_by('price_changelist__confirmed_date').last().price
+            product=self).order_by('price_changelist__created').last().price
 
     def discount(self):
         return Discount.objects.filter(product=self).last()

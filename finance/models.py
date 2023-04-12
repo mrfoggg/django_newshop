@@ -1,37 +1,38 @@
-from datetime import datetime
-
 from django.db import models
-# Create your models here.
-from djmoney.models.fields import MoneyField
-# from catalog.models import Product
-from djmoney.money import Money
-
-from ROOTAPP.models import Person
+from ROOTAPP.models import Person, Document
 
 
-# from catalog.models import Product
-
-
-class PriceChangelist(models.Model):
-    confirmed_date = models.DateTimeField('Изменено', auto_now_add=False, auto_now=False)
-    confirmed = models.BooleanField('Проведено', default=False)
+class Stock(models.Model):
+    name = models.CharField('Название склада', max_length=128, db_index=True)
+    person = models.ManyToManyField(
+        Person, verbose_name="Ответсвенные по складу", default=None, blank=True)
 
     def __str__(self):
-        return f'Установка цен номенлатуры №{self.id} от {self.date} - {"провдено" if self.confirmed else "не проведено"}'
+        return self.name
+
+    class Meta:
+        verbose_name = "Склад хранения"
+        verbose_name_plural = "Склады хранения"
+
+
+class PriceChangelist(Document):
+
+    def __str__(self):
+        return f'Установка розничных цен номенклатуры №{self.id} от {self.date}'
 
     class Meta:
         verbose_name = "Установка цен номенклатуры"
         verbose_name_plural = "Установки цен номенклатур"
-        ordering = ['confirmed_date']
+        ordering = ['created']
 
     @property
     def date(self):
-        return self.confirmed_date.strftime("%m/%d/%Y, (%H:%M)")
+        return self.created.strftime("%m/%d/%Y, (%H:%M)")
 
 
 class PersonPriceType(models.Model):
     name = models.CharField('Название типа цен', max_length=128, blank=True, default='', db_index=True)
-    description = models.TextField('Описание типа цен', blank=True, null=True, default=None)
+    description = models.TextField('Описание типа цен', max_length=256, blank=True, null=True, default=None)
     person = models.ForeignKey(
         Person, verbose_name="Контрагент", default=None, blank=True, null=True, on_delete=models.SET_NULL)
     position = models.PositiveSmallIntegerField("Позиция", blank=True, null=True)
@@ -53,3 +54,19 @@ class PriceTypePersonSupplier(PersonPriceType):
     class Meta:
         verbose_name = "Тип цен контрагента поставщика"
         verbose_name_plural = "Типы цен контрагента поставщика"
+
+
+class SupplierPriceChangelist(Document):
+    person = models.ForeignKey(
+        Person, verbose_name="Контрагент", default=None, blank=True, null=True, on_delete=models.SET_NULL)
+    price_type = models.ForeignKey(PriceTypePersonSupplier, null=True, on_delete=models.SET_NULL, verbose_name='Тип цен')
+
+    def __str__(self):
+        return f'Установка цен номенклатуры поставщика {self.person.full_name} ' \
+               f'от {self.created.strftime("%m.%d.%Y")} / {self.price_type.name}'
+
+    class Meta:
+        verbose_name = "Установка цен номенклатуры поставщика"
+        verbose_name_plural = "Установки цен номенклатуры поставщиков"
+        ordering = ['created']
+
