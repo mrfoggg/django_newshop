@@ -2,7 +2,7 @@ from django_select2.forms import ModelSelect2Widget
 from djmoney.forms import MoneyWidget
 from django import forms
 
-from catalog.models import ProductSupplierPriceInfo, Product
+from catalog.models import ProductSupplierPriceInfo, Product, ProductSupplierPrice
 
 money_widget_only_uah = MoneyWidget(
     amount_widget=forms.TextInput(attrs={'size': 7, 'class': 'form-class'}),
@@ -15,3 +15,5 @@ class ProductPriceChangelistInlineAdminForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance.id:
             self.fields['supplier_price_variants'].queryset = self.instance.product.supplier_prices_last_items
+        else:
+            self.fields['supplier_price_variants'].queryset = ProductSupplierPrice.objects.none()
