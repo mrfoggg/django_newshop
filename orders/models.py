@@ -10,11 +10,11 @@ from django.db import models
 from django.urls import reverse
 from django.utils.html import format_html_join
 from djmoney.models.fields import MoneyField
-from djmoney.money import Money
 
 from catalog.models import Product
 from ROOTAPP.models import Person, Phone, PersonAddress, Supplier, Document
 from finance.models import PriceTypePersonBuyer, PriceTypePersonSupplier
+from finance.services import get_margin, get_margin_percent, get_profitability
 from site_settings.models import APIkeyIpInfo
 
 CLIENT_ORDER_STATUSES = (
@@ -156,32 +156,9 @@ class ProductInOrder(models.Model):
         return self.product.name
 
     @property
-    @admin.display(description='Актуальная цена')
-    def current_price(self):
-        return self.product.current_price
-
-    @property
-    @admin.display(description='Актуальная скидка')
-    def discount(self):
-        return self.product.discount
-
-    @property
-    @admin.display(description='Актуальная цена со скидкой')
-    def current_price_discount(self):
-        # discount_val = self.discount.amount if self.discount.type_of_amount==2 else self.current_price
-        if self.discount():
-            if self.discount().type_of_amount == 2:
-                return self.current_price - Money(self.discount().amount, 'UAH')
-            else:
-                return self.current_price - self.current_price * self.discount().amount / 100
-        else:
-            return self.current_price
-
-    @property
     @admin.display(description='Текущая цена')
     def full_current_price_info(self):
-        discount = f' ({self.current_price} - {self.discount()})' if self.discount() else ''
-        return f'{self.current_price_discount}{discount}'
+        return self.product.full_current_price_info
 
     @property
     @admin.display(description='Сумма продажи')
@@ -196,31 +173,22 @@ class ProductInOrder(models.Model):
     @property
     @admin.display(description='Маржа за шт.')
     def margin(self):
-        return self.sale_price - self.purchase_price if self.purchase_price and self.sale_price else '-'
-        # return self.sale_price
+        return get_margin(self.purchase_price, self.sale_price)
 
     @property
     @admin.display(description='Маржа всего')
     def margin_total(self):
-        return self.margin * self.quantity if self.purchase_price and self.sale_price else '-'
+        return '-' if self.margin == '-' else self.margin * self.quantity
 
     @property
     @admin.display(description='Наценка, %')
     def margin_percent(self):
-        if self.purchase_price and self.sale_price:
-            int_val = self.margin.amount / self.purchase_price.amount * 100 if self.purchase_price.amount else 0
-            return f'{int_val:.2f} %'
-        else:
-            return '-'
+        return get_margin_percent(self.margin, self.purchase_price)
 
     @property
     @admin.display(description='Маржа, %')
     def profitability(self):
-        if self.purchase_price and self.sale_price:
-            int_val = self.margin.amount / self.sale_price.amount * 100 if self.sale_price.amount else 0
-            return f'{int_val:.2f} %'
-        else:
-            return '-'
+        return get_profitability(self.margin, self.sale_price)
 
 
 class Realization(Document):

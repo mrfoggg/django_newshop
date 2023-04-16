@@ -120,7 +120,14 @@ class Person(AbstractUser):
         super().save(*args, **kwargs)
 
 
+class SupplierManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_supplier=True)
+
+
 class Supplier(Person):
+    objects = SupplierManager()
+
     class Meta:
         proxy = True
 

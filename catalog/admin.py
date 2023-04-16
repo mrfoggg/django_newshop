@@ -34,7 +34,7 @@ from .models import (Attribute, Brand, Category, CategoryAddictProduct,
                      MainAttrPositionInCombinationOfCategory, OtherShop,
                      PricesOtherShop, Product, ProductImage, ProductPlacement,
                      ProductSeries, ProductSupplier, ShotAttribute,
-                     ShotAttrPositionInCombinationOfCategory, UnitOfMeasure)
+                     ShotAttrPositionInCombinationOfCategory, UnitOfMeasure, ProductSupplierPrice)
 from .services import (DeleteQSMixin, clean_combination_of_category,
                        create_group_placement_at_end_combination,
                        create_main_attr_placement_at_end_combination,
@@ -343,7 +343,8 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     # }
     search_fields = ('name', 'sku', 'admin_category__name')
     ordering = ('name',)
-    readonly_fields = ('get_sorted_groups', 'combination_of_categories')
+    readonly_fields = ('get_sorted_groups', 'combination_of_categories', 'full_current_price_info',
+                       'supplier_prices_str', 'rate')
     summernote_fields = ('description',)
     change_form_template = "product_changeform.html"
     actions = [export_as_json]
@@ -352,7 +353,9 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     fieldsets = (
         ("Основное", {
             'fields': (
-                ('name', 'sku', 'sku_manufacturer', 'rating', 'is_active'), ('slug', 'admin_category'),
+                ('name', 'sku', 'sku_manufacturer', 'rating', 'is_active'),
+                ('full_current_price_info',), ('supplier_prices_str',), ('rate', ),
+                ('slug', 'admin_category'),
                 ('brand', 'country_of_manufacture',),
                 ('series', 'url'),
             ),
@@ -581,3 +584,4 @@ class ProductSeriesAdmin(admin.ModelAdmin):
 admin.site.register(OtherShop)
 admin.site.register(ProductImage)
 admin.site.register(Filter)
+admin.site.register(ProductSupplierPrice)

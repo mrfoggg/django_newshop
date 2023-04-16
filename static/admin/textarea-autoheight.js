@@ -1,7 +1,5 @@
 $(document).ready(function (){
     const commentInputs = document.querySelectorAll('textarea');
-    console.log('commentInputs - ', commentInputs);
-
     commentInputs.forEach(function (item){
         let itemH = item.offsetHeight;
         item.style.height = item.scrollHeight + 2 + 'px';

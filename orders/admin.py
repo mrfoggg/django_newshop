@@ -55,7 +55,7 @@ class ProductInSupplierOrder(nested_admin.SortableHiddenMixin, nested_admin.Nest
     # adminsortable2 требует fields именно списком
     fields = ('product', 'purchase_price', 'quantity', 'client_order', 'supplier_order_position')
     model = ProductInOrder
-    extra = 0
+    extra = 2
     autocomplete_fields = ('product', 'client_order')
     sortable_field_name = 'supplier_order_position'
     verbose_name = 'Товар в заказе'

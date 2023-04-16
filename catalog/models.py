@@ -1,3 +1,4 @@
+from collections import namedtuple
 from decimal import Decimal
 
 from django.contrib import admin
@@ -7,13 +8,17 @@ from django.db.models import (Case, Max, Min, OuterRef, SmallIntegerField,
 from django.db.models.expressions import F
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
+from djmoney.contrib.exchange.backends import FixerBackend, OpenExchangeRatesBackend
+from djmoney.contrib.exchange.models import get_rate, convert_money
 from djmoney.models.fields import MoneyField
 from djmoney.money import Money
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
-from finance.models import PriceChangelist
-from ROOTAPP.models import Person
+from finance.models import PriceChangelist, SupplierPriceChangelist, PriceTypePersonSupplier
+from ROOTAPP.models import Person, Supplier
+from finance.services import get_margin, get_margin_percent, get_profitability
 from site_settings.models import PhotoPlug
 
 
@@ -187,9 +192,12 @@ class Category(MPTTModel):
 
 class ProductPrice(models.Model):
     price_changelist = models.ForeignKey(PriceChangelist, on_delete=models.CASCADE, verbose_name='Установка цен')
-    product = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name="Товар")
-    price = MoneyField(max_digits=14, decimal_places=2, default_currency='UAH', default=0)
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name="Товар", )
+    price = MoneyField('Новая цена', max_digits=14, decimal_places=2, default_currency='UAH', default=0)
     position = models.PositiveIntegerField("Положение", null=True)
+    supplier_price_variants = models.ForeignKey('ProductSupplierPriceInfo', blank=True, null=True,
+                                                on_delete=models.SET_NULL,
+                                                verbose_name='Цены поставщиков для расчета РЦ')
 
     def __str__(self):
         return self.product.name
@@ -198,6 +206,56 @@ class ProductPrice(models.Model):
         verbose_name = "Розничная цена на товар"
         verbose_name_plural = "Розничные цены на товары"
         ordering = ['position']
+
+    @property
+    @admin.display(description='Текущая цена')
+    def full_current_price_info(self):
+        return self.product.full_current_price_info
+
+    @property
+    @admin.display(description='Маржа')
+    def margin(self):
+        return get_margin(self.supplier_price_variants.converted_price, self.price)
+
+    @property
+    @admin.display(description='Маржа, %')
+    def margin_percent(self):
+        return get_margin_percent(self.margin, self.supplier_price_variants.converted_price)
+
+    @property
+    @admin.display(description='Наценка, %')
+    def profitability(self):
+        return get_profitability(self.margin, self.price)
+
+
+class ProductSupplierPrice(models.Model):
+    price_changelist = models.ForeignKey(SupplierPriceChangelist, on_delete=models.CASCADE,
+                                         verbose_name='Установка цен поставщика', related_name='products')
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name="Товар")
+    price = MoneyField(max_digits=14, decimal_places=2, default_currency='UAH', default=0)
+    position = models.PositiveIntegerField("Положение", null=True)
+
+    def __str__(self):
+        return self.product.name
+
+    class Meta:
+        verbose_name = "Закупочная цена на товар"
+        verbose_name_plural = "Закупочные цены на товары"
+        ordering = ['position']
+
+    @property
+    def converted_price(self):
+        return self.price if str(self.price.currency) == 'UAH' else convert_money(self.price, 'UAH')
+
+
+class ProductSupplierPriceInfo(ProductSupplierPrice):
+    def __str__(self):
+        price_not_uah_str = '' if str(self.price.currency) == 'UAH' else f' ({self.price})'
+        return f'{self.price_changelist} - {self.converted_price} {price_not_uah_str}'
+        # return str(self.price.currency)
+
+    class Meta:
+        proxy = True
 
 
 class ProductSeries(models.Model):
@@ -376,11 +434,6 @@ class Product(models.Model):
             ]])
         return characteristics
 
-    # @property
-    # def price(self):
-    #     return self.productprice_set.order_by(
-    #         'price_changelist__created').last().price if self.productprice_set.exists() else Money(0, 'UAH')
-
     @property
     def first_image(self):
         return self.images.first().image if self.images.exists() else PhotoPlug.get_solo().image
@@ -388,10 +441,54 @@ class Product(models.Model):
     @property
     def current_price(self):
         return ProductPrice.objects.filter(
-            product=self).order_by('price_changelist__created').last().price
+            product=self, price_changelist__is_active=True).order_by('price_changelist__created').last()
 
     def discount(self):
         return Discount.objects.filter(product=self).last()
+
+    @property
+    @admin.display(description='Актуальная цена со скидкой')
+    def current_price_discount(self):
+        # discount_val = self.discount.amount if self.discount.type_of_amount==2 else self.current_price
+        if self.discount():
+            if self.discount().type_of_amount == 2:
+                return self.current_price.price - Money(self.discount().amount, 'UAH')
+            else:
+                return self.current_price.price - self.current_price.price * self.discount().amount / 100
+        else:
+            return self.current_price.price
+
+    @property
+    @admin.display(description='Текущая цена')
+    def full_current_price_info(self):
+        discount = f' ({self.current_price.price} - {self.discount()})' if self.discount() else ''
+        return f'{self.current_price_discount}{discount} ' \
+               f'(№{self.current_price.price_changelist.id} ' \
+               f'{self.current_price.price_changelist.created.strftime("%m/%d/%Y")})'
+
+    @property
+    def suppliers_price_types(self):
+        return PriceTypePersonSupplier.objects.filter(person__supplierpricechangelist__products__product=self,
+                                                      person__supplierpricechangelist__is_active=True)
+
+    @property
+    def supplier_prices_last_items(self):
+        price_items_list_id = []
+        for spt in self.suppliers_price_types:
+            price_item = ProductSupplierPriceInfo.objects.filter(
+                price_changelist__price_type=spt, product=self, price_changelist__is_active=True).order_by(
+                'price_changelist__created')
+            if price_item.exists():
+                price_items_list_id.append(price_item.last().id)
+        return ProductSupplierPriceInfo.objects.filter(id__in=price_items_list_id)
+
+    @property
+    def supplier_prices_str(self):
+        return format_html_join(',', '<p>{}</p>', ((sp,) for sp in self.supplier_prices_last_items))
+
+    @property
+    def rate(self):
+        return get_rate('EUR', 'UAH')
 
 
 class AddictProduct(models.Model):

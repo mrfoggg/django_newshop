@@ -1,5 +1,5 @@
 from django.db import models
-from ROOTAPP.models import Person, Document
+from ROOTAPP.models import Person, Document, Supplier
 
 
 class Stock(models.Model):
@@ -21,8 +21,8 @@ class PriceChangelist(Document):
         return f'Установка розничных цен номенклатуры №{self.id} от {self.date}'
 
     class Meta:
-        verbose_name = "Установка цен номенклатуры"
-        verbose_name_plural = "Установки цен номенклатур"
+        verbose_name = "Установка цен номенклатуры розницы"
+        verbose_name_plural = "Установки цен номенклатур розницы"
         ordering = ['created']
 
     @property
@@ -58,12 +58,12 @@ class PriceTypePersonSupplier(PersonPriceType):
 
 class SupplierPriceChangelist(Document):
     person = models.ForeignKey(
-        Person, verbose_name="Контрагент", default=None, blank=True, null=True, on_delete=models.SET_NULL)
+        Supplier, verbose_name="Поставщик", default=None, blank=True, null=True, on_delete=models.SET_NULL,)
     price_type = models.ForeignKey(PriceTypePersonSupplier, null=True, on_delete=models.SET_NULL, verbose_name='Тип цен')
 
     def __str__(self):
-        return f'Установка цен номенклатуры поставщика {self.person.full_name} ' \
-               f'от {self.created.strftime("%m.%d.%Y")} / {self.price_type.name}'
+        return f'Установка цен №{self.id} {self.created.strftime("%d.%m.%Y")} ' \
+               f'/ {self.person.full_name}  ("{self.price_type.name}")'
 
     class Meta:
         verbose_name = "Установка цен номенклатуры поставщика"

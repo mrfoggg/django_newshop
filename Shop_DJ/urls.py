@@ -28,6 +28,7 @@ urlpatterns = [
 
     path("select2/", include("django_select2.urls")),
     path('admin/', admin.site.urls),
+    path("dynamic-admin-form/", include("dynamic_admin_forms.urls")),
     path('baton/', include('baton.urls')),
     path('accounts/', include('allauth.urls')),
     path('finance/', include('finance.urls')),

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     # 'django_select2',
     # "debug_toolbar",
     'baton',
+    'dynamic_admin_forms',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -63,6 +64,7 @@ INSTALLED_APPS = [
     'adminsortable2',
     # 'django_telethon_session',
     'djmoney',
+    'djmoney.contrib.exchange',
     'sorl.thumbnail',
     # 'django.contrib.redirects',
     'ROOTAPP',
@@ -409,10 +411,8 @@ OTP_TWILIO_AUTH = '033011fe9a93cf9ea7a0fd2df5e4ad21'
 
 OTP_TWILIO_FROM = '+16154374918'
 
-CURRENCIES = ('UAH', 'USD', 'EUR')
 
-# SOCIALACCOUNT_FORMS = {
-    # 'disconnect': 'allauth.socialaccount.forms.DisconnectForm',
-    # 'signup': 'allauth.socialaccount.forms.SignupForm',
-#     'reset_password': 'nova_poshta.forms.MyCustomResetPasswordForm',
-# }
+# https://stackoverflow.com/questions/67470542/why-is-django-money-running-incorrectly-in-my-view
+CURRENCIES = ('UAH', 'USD', 'EUR')
+OPEN_EXCHANGE_RATES_APP_ID = '4b1665e5e2e445f69420cfaef89d2ade'
+BASE_CURRENCY = 'EUR'
