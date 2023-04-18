@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.utils.html import format_html_join
 from djmoney.models.fields import MoneyField
 
-from catalog.models import Product
+from catalog.models import Product, ProductSupplierPriceInfo
 from ROOTAPP.models import Person, Phone, PersonAddress, Supplier, Document
 from finance.models import PriceTypePersonBuyer, PriceTypePersonSupplier
 from finance.services import get_margin, get_margin_percent, get_profitability
@@ -145,6 +145,9 @@ class ProductInOrder(models.Model):
                                                                db_index=True)
     sale_price = MoneyField('Цена продажи', max_digits=6, decimal_places=2, default_currency='UAH',
                             default=0)
+    supplier_price_variants = models.ForeignKey(ProductSupplierPriceInfo, blank=True, null=True,
+                                                on_delete=models.SET_NULL,
+                                                verbose_name='Цены поставщиков для расчета РЦ')
     purchase_price = MoneyField('Закупочная цена', max_digits=6, decimal_places=2, default_currency='UAH',
                                 default=0)
 

@@ -5,7 +5,7 @@ from django.db import models
 from djmoney.forms import MoneyWidget, MoneyField
 from ROOTAPP.models import Person
 from finance.admin_forms import money_widget_only_uah
-from .admin_form import ClientOrderAdminForm
+from .admin_form import ClientOrderAdminForm, ProductInClientOrderAdminInlineForm
 from .models import (BY_ONECLICK_STATUSES_CLIENT_DISPLAY, ByOneclick,
                      ByOneclickPersonalComment, OneClickUserSectionComment, ClientOrder, SupplierOrder, Realization,
                      ProductInOrder)
@@ -27,9 +27,10 @@ class OneClickUserSectionCommentInline(admin.TabularInline):
 
 
 class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
+    form = ProductInClientOrderAdminInlineForm
     fields = ('product', 'full_current_price_info', 'sale_price', 'quantity', 'sale_total', 'margin', 'margin_total',
               'margin_percent', 'profitability',
-              'supplier_order',
+              'supplier_order', 'supplier_price_variants',
               'purchase_price', 'client_order_position', 'purchase_total')
     readonly_fields = (
         'full_current_price_info', 'sale_total', 'purchase_total', 'margin', 'margin_total', 'margin_percent',
@@ -122,7 +123,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
 
     class Media:
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
-              'order/client_order_admin_form.js')
+              'js_functions_for_admin.js', 'order/client_order_admin_form.js', )
         css = {'all': ('admin/price_field.css',)}
 
     def get_search_results(self, request, queryset, search_term):

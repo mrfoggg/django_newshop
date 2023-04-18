@@ -66,7 +66,8 @@ class PriceChangelistAdmin(nested_admin.NestedModelAdmin, ):
 
     class Media:
         css = {"all": ('admin/textarea-autoheight.css', )}
-        js = ('admin/textarea-autoheight.js', 'finance/price_list_admin_form.js')
+        js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
+              'js_functions_for_admin.js', 'finance/price_list_admin_form.js', 'admin/textarea-autoheight.js')
 
     baton_form_includes = [
         ('finance/admin_pricelist_ajax_urls.html', 'created', 'top', ),
