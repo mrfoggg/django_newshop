@@ -1,21 +1,20 @@
-function ajaxUpdateSalePricesAndSupplierPriceVariants(productSelect, supplierOrderId=null) {
-    let row =  productSelect.parents('.form-row');
-    let select = row.find('.field-supplier_price_variants select');
+function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOrderId=null) {
+    let priceVariantsSelect = row.find('.field-supplier_price_variants select');
     let initSelect = '<option value="" selected="">---------</option>'
     $.ajax({
         type: "POST",
         url: $('#ajaxUrls').data('getPriceAndProductSuppliersPricesUrl'),
-        data: {'productId': productSelect.val(), 'supplierOrderId': supplierOrderId},
+        data: {'productId': productId, 'supplierOrderId': supplierOrderId},
         headers: {'X-CSRFToken': getCookie('csrftoken')},
         success: function (response) {
-            select.html(initSelect);
+            priceVariantsSelect.html(initSelect);
             for (let spi of response['supplier_prices_last_items']){
-                select.children('option').last().after(`<option value="${spi['id']}">${spi['str_present']}</option>`);
+                priceVariantsSelect.children('option').last().after(`<option value="${spi['id']}">${spi['str_present']}</option>`);
             }
             row.find('.field-full_current_price_info p').text(response['current_price']);
             if (response['supplier_prices_last_items'].length==1){
-                select.children('option').last().prop('selected', true);
-                select.trigger('change');
+                priceVariantsSelect.children('option').last().prop('selected', true);
+                priceVariantsSelect.trigger('change');
             }
             else
                 row.find('.field-margin p, .field-margin_percent p, .field-profitability p, .field-sale_total p, .field-margin_total p').text('-');

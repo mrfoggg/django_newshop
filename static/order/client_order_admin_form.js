@@ -3,13 +3,20 @@
     // init listeners
     Baton.Dispatcher.register('onReady', function () {
         setTimeout(function () {
-            $('table.inline-related').on('change', 'tbody.djn-item .field-product select', function (){
+            $('table.inline-related').on('change', 'tbody.djn-item .field-product select, tbody.djn-item .field-supplier_order select', function (){
                 let row = $(this).parents('.form-row');
-                ajaxUpdateSalePricesAndSupplierPriceVariants($(this), row.find('.field-supplier_order select').val());
+                //при выборе товара или заказ поставшику обновить варинты закупочных цен. Если выбран и заказ опставщику то будет один вариант
+                ajaxUpdateSalePricesAndSupplierPriceVariants(
+                    row,
+                    row.find('.field-product select').val(),
+                    row.find('.field-supplier_order select').val()
+                );
             });
             $('table.inline-related').on('change', 'tbody.djn-item .field-supplier_price_variants select', function (){
-                ajaxUpdateByPrice($(this));
-            })
+                // обновить закупочную цену в зависимости от выбраной установки цен поставщика
+                ajaxUpdatePurchasePrice($(this));
+            });
+
             $('table.inline-related').on('change', 'tbody.djn-item .field-sale_price input, tbody.djn-item .field-purchase_price input, tbody.djn-item .field-quantity input', function (){
                 let row = $(this).parents('.form-row');
                 let price = row.find('.field-sale_price input').val();
@@ -25,7 +32,7 @@
 
 
 // обновить закупочную цену в зависимости от выбраной установки цен поставщика
-function ajaxUpdateByPrice(select) {
+function ajaxUpdatePurchasePrice(select) {
     $.ajax({
         type: "POST",
         url: $('#ajaxUrls').data('supplierPriceByPriceItemIdUrl'),
@@ -38,6 +45,9 @@ function ajaxUpdateByPrice(select) {
         }
     }, 200);
 }
+
+// обновить варианты закупочных цен в зависимости от выбраного заказа поставщику
+
 
 
 

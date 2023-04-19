@@ -22,11 +22,15 @@ def ajax_get_product_price_and_suppliers_prices_variants(request):
     if supplier_order_id := request.POST.get('supplierOrderId'):
 
         price_type = SupplierOrder.objects.get(id=supplier_order_id).price_type
-        response['supplier_prices_last_items'] = [{'id': price_type, 'str_present': price_type.__str__()}]
+        price_item_qs = product.supplier_prices_last_items.filter(price_changelist__price_type=price_type)
+        if price_item_qs.exists():
+            price_item = price_item_qs.last()
+            response['supplier_prices_last_items'] = [{'id': price_item.id, 'str_present': price_item.__str__()}]
+        else:
+            response['supplier_prices_last_items'] = []
     else:
         response['supplier_prices_last_items'] = [{'id': pi.id, 'str_present': pi.__str__()} for pi in
                                                   product.supplier_prices_last_items]
-    print('supplier_order_id -', supplier_order_id)
     return response
 
 
@@ -62,6 +66,7 @@ def ajax_get_supplier_price_by_price_item_id(request):
     else:
         return {'price': f"{Money(0, 'UAH').amount:.2f}"}
 
-# @json_view
-# def ajax_get_supplier_price_item_id_by_supplier_price_id(request):
-#     return {'id', 'id'}
+@json_view
+def ajax_get_supplier_price_item_by_supplier_price_id(request):
+
+    return {'id', 'id'}
