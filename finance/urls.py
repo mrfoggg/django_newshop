@@ -11,4 +11,6 @@ urlpatterns = [
          name='ajax_get_calculated_finance_for_price_list'),
     path('ajax_get_supplier_price_by_price_item_id/', ajax_get_supplier_price_by_price_item_id,
          name='ajax_get_supplier_price_by_price_item_id'),
+    # path('ajax_get_supplier_price_item_id_by_supplier_price_id/', ajax_get_supplier_price_item_id_by_supplier_price_id,
+    #      name='ajax_get_supplier_price_item_id_by_supplier_price_id'),
 ]

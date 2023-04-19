@@ -1,11 +1,11 @@
-function ajaxUpdateSalePricesAndSupplierPriceVariants(productSelect) {
+function ajaxUpdateSalePricesAndSupplierPriceVariants(productSelect, supplierOrderId=null) {
     let row =  productSelect.parents('.form-row');
     let select = row.find('.field-supplier_price_variants select');
     let initSelect = '<option value="" selected="">---------</option>'
     $.ajax({
         type: "POST",
         url: $('#ajaxUrls').data('getPriceAndProductSuppliersPricesUrl'),
-        data: {'productId': productSelect.val()},
+        data: {'productId': productSelect.val(), 'supplierOrderId': supplierOrderId},
         headers: {'X-CSRFToken': getCookie('csrftoken')},
         success: function (response) {
             select.html(initSelect);
@@ -13,10 +13,36 @@ function ajaxUpdateSalePricesAndSupplierPriceVariants(productSelect) {
                 select.children('option').last().after(`<option value="${spi['id']}">${spi['str_present']}</option>`);
             }
             row.find('.field-full_current_price_info p').text(response['current_price']);
-            row.find('.field-price input').val('0.00');
+            if (response['supplier_prices_last_items'].length==1){
+                select.children('option').last().prop('selected', true);
+                select.trigger('change');
+            }
+            else
+                row.find('.field-margin p, .field-margin_percent p, .field-profitability p, .field-sale_total p, .field-margin_total p').text('-');
         }
     }, 200);
 }
+
+
+function ajaxUpdateFinanceCalculated(row, price, supplierPriceId, quantity=null, purchasePrice=null) {
+    $.ajax({
+        type: "POST",
+        url: $('#ajaxUrls').data('ajaxGetCalculatedFinanceForPriceListUrl'),
+        data: {'price': price, 'supplier_price_id': supplierPriceId, 'quantity': quantity, 'purchase_price': purchasePrice},
+        headers: {'X-CSRFToken': getCookie('csrftoken')},
+        success: function (response) {
+            row.find('.field-margin p').text(response['margin']);
+            row.find('.field-margin_percent p').text(response['margin_percent']);
+            row.find('.field-profitability p').text(response['profitability']);
+            if (quantity) {
+                row.find('.field-sale_total p').text(response['sale_total']);
+                row.find('.field-margin_total p').text(response['margin_total']);
+                row.find('.field-purchase_total p').text(response['purchase_total']);
+            }
+        }
+    }, 200);
+}
+
 
 function getCookie(name) {
     let cookieValue = null;
