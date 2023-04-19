@@ -20,12 +20,13 @@ def ajax_get_product_price_and_suppliers_prices_variants(request):
     product = Product.objects.get(id=request.POST.get('productId'))
     response = {'current_price': product.full_current_price_info if product.current_price else '-'}
     if supplier_order_id := request.POST.get('supplierOrderId'):
-        print('supplier_order_id -', supplier_order_id)
+
         price_type = SupplierOrder.objects.get(id=supplier_order_id).price_type
         response['supplier_prices_last_items'] = [{'id': price_type, 'str_present': price_type.__str__()}]
     else:
         response['supplier_prices_last_items'] = [{'id': pi.id, 'str_present': pi.__str__()} for pi in
                                                   product.supplier_prices_last_items]
+    print('supplier_order_id -', supplier_order_id)
     return response
 
 
@@ -43,13 +44,13 @@ def ajax_get_calculated_finance_for_price_list(request):
     margin_percent = get_margin_percent(margin, purchase_price)
     profitability = get_profitability(margin, price)
     response = {'margin': str(margin), 'margin_percent': str(margin_percent), 'profitability': str(profitability)}
-    if quantity := request.POST.get('quantity'):
+    if quantity := int(request.POST.get('quantity')):
         response |= {
             'sale_total': str(price * quantity), 'margin_total': str(margin * quantity),
             'purchase_total': str(purchase_price * quantity)
         }
-    print('request', request.POST)
-    print('response', response)
+    # print('request', request.POST)
+    # print('response', response)
     return response
 
 

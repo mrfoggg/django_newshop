@@ -4,7 +4,8 @@
     Baton.Dispatcher.register('onReady', function () {
         setTimeout(function () {
             $('table.inline-related').on('change', 'tbody.djn-item .field-product select', function (){
-                ajaxUpdateSalePricesAndSupplierPriceVariants($(this));
+                let row = $(this).parents('.form-row');
+                ajaxUpdateSalePricesAndSupplierPriceVariants($(this), row.find('.field-supplier_order select').val());
             });
             $('table.inline-related').on('change', 'tbody.djn-item .field-supplier_price_variants select', function (){
                 ajaxUpdateByPrice($(this));
@@ -31,7 +32,9 @@ function ajaxUpdateByPrice(select) {
         data: {'price_item_id': select.val()},
         headers: {'X-CSRFToken': getCookie('csrftoken')},
         success: function (response) {
-            select.parents('.form-row').find('.field-purchase_price input').val(response['price']);
+            let purchasePrice = select.parents('.form-row').find('.field-purchase_price input');
+            purchasePrice.val(response['price']);
+            purchasePrice.trigger('change');
         }
     }, 200);
 }
