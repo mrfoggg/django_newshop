@@ -46,7 +46,7 @@ class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.Nested
     def formfield_for_dbfield(self, db_field, **kwargs):
         # This method will turn all TextFields into giant TextFields
         if db_field.name == 'quantity':
-            return forms.CharField(widget=forms.widgets.NumberInput(attrs={'size': 4, }))
+            return forms.CharField(widget=forms.widgets.NumberInput(attrs={'size': 4, }), initial=1)
         if db_field.name in ('sale_price', 'purchase_price'):
             return MoneyField(widget=money_widget_only_uah)
         return super().formfield_for_dbfield(db_field, **kwargs)
@@ -101,7 +101,7 @@ class ByOneclickAdmin(admin.ModelAdmin):
     class Media:
         js = ('admin/textarea-autoheight.js',)
         css = {
-            "all": ('admin/textarea-autoheight.css',)
+            "all": ('admin/admin-changeform.css',)
         }
 
 
@@ -110,10 +110,12 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     form = ClientOrderAdminForm
     fields = (
         ('id', 'is_active', 'mark_to_delete', 'status', 'extend_status'),
-        ('source', 'payment_type', 'created', 'updated'),
-        ('person', 'group_price_type'), 'address'
+        ('source', 'payment_type'), ('created', 'updated'),
+        ('person', 'group_price_type'), 'address', ('total_quantity', 'total_amount', 'total_purchase_amount',
+                                                    'total_margin')
     )
-    readonly_fields = ('id', 'created', 'updated')
+    readonly_fields = ('id', 'created', 'updated', 'total_quantity', 'total_amount', 'total_purchase_amount',
+                       'total_margin')
     list_display = ('id', 'is_active', 'mark_to_delete', 'status', 'payment_type', 'source', '__str__')
     list_display_links = ('__str__',)
     list_editable = ('status', 'is_active', 'mark_to_delete')
@@ -123,9 +125,10 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
 
     class Media:
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
-              'js_functions_for_admin.js', 'order/client_order_admin_form.js', )
+              'js_functions_for_admin.js', 'order/client_order_admin_form.js',)
         css = {'all': ('admin/price_field.css',)}
 
+    # вроде делал этот фильтр дл яотображения всписке select (autocomplete fields)
     def get_search_results(self, request, queryset, search_term):
         queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
         if 'model_name' in request.GET.keys():
@@ -135,7 +138,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         return queryset, may_have_duplicates
 
     baton_form_includes = [
-        ('order/admin_order_ajax_urls.html', 'id', 'top', ),
+        ('order/admin_order_ajax_urls.html', 'id', 'top',),
     ]
 
 
@@ -155,7 +158,7 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     class Media:
         js = ('admin/textarea-autoheight.js',)
         css = {
-            "all": ('admin/textarea-autoheight.css',)
+            "all": ('admin/admin-changeform.css',)
         }
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):

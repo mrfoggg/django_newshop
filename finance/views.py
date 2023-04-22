@@ -18,7 +18,8 @@ def update_prices_ajax_for_order_admin(request):
 @json_view
 def ajax_get_product_price_and_suppliers_prices_variants(request):
     product = Product.objects.get(id=request.POST.get('productId'))
-    response = {'current_price': product.full_current_price_info if product.current_price else '-'}
+    response = {'current_price': product.full_current_price_info if product.current_price else '-',
+                'current_price_amount': product.current_price.price.amount if product.current_price else None}
     if supplier_order_id := request.POST.get('supplierOrderId'):
 
         price_type = SupplierOrder.objects.get(id=supplier_order_id).price_type

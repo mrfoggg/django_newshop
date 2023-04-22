@@ -9,12 +9,12 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic.detail import DetailView
 
+from ROOTAPP.models import PersonAddress
 # from nova_poshta.forms import SettlementForm
 # from nova_poshta.models import Settlement
 from catalog.models import (Brand, Category, CategoryAddictProduct, Product,
                             ProductSeries, ShotAttribute)
 from nova_poshta.forms import SettlementForm
-from nova_poshta.models import Settlement
 
 # from django.views.decorators.csrf import csrf_exempt
 
@@ -345,11 +345,12 @@ class ProductView(DetailView):
         context = super().get_context_data(**kwargs)
         product = context['product']
         context['settlement_from'] = None
-        settlement = Settlement.objects.filter(personsettlement__person__productsupplier__product=product)
+        # settlement = Settlement.objects.filter(personsettlement__person__productsupplier__product=product)
+        person_addresses = PersonAddress.objects.filter(person=product.main_supplier)
 
-        if settlement.exists():
-            settlement = settlement.first()
-            context['settlement_from'] = settlement
+        if person_addresses.exists():
+            # print('person_addresses.first().settlement - ', person_addresses.first().settlement)
+            context['settlement_from'] = person_addresses.first().settlement
 
         categories = {}
         for placement in product.productplacement_set.filter(category__display_in_parent=True):

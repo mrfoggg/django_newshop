@@ -23,7 +23,8 @@
                 let supplierPriceId = row.find('.field-supplier_price_variants select').val();
                 let quantity = row.find('.field-quantity input').val();
                 let purchasePrice = row.find('.field-purchase_price input').val();
-                ajaxUpdateFinanceCalculated(row, price, supplierPriceId, quantity, purchasePrice);
+                if (price&&(supplierPriceId||purchasePrice))
+                    ajaxUpdateFinanceCalculated(row, price, supplierPriceId, quantity, purchasePrice);
             });
         }, 300)
 

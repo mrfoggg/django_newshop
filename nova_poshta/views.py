@@ -227,9 +227,9 @@ def get_delivery_cost(request):
             print('response_dict - ', response_dict)
             return {
                 'settlement_to_name': str(Settlement.objects.get(ref=request.POST.get("settlement"))),
-                'cost_redelivery': response_dict['data'][0]['CostRedeliveryWarehouseWarehouse'],
-                'CostWarehouseWarehouse': response_dict['data'][0]['CostWarehouseWarehouse'],
-                'CostWarehouseDoors': response_dict['data'][0]['CostWarehouseDoors'],
+                'cost_redelivery': response_dict.data[0]['CostRedeliveryWarehouseWarehouse'],
+                'CostWarehouseWarehouse': response_dict.data[0]['CostWarehouseWarehouse'],
+                'CostWarehouseDoors': response_dict.data[0]['CostWarehouseDoors'],
                 'Cost': request.POST.get("price"),
             }
             break

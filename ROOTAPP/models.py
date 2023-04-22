@@ -8,6 +8,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from phonenumbers import carrier, geocoder
 from phonenumbers.phonenumberutil import region_code_for_number
 
+from ROOTAPP.services.functions import get_full_name
 from nova_poshta.models import Settlement, SettlementArea, Warehouse, City, Street
 
 TYPES_OF_PHONE = (
@@ -92,14 +93,23 @@ class Person(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     middle_name = models.CharField('Отчество', max_length=128, blank=True, null=True, default=None, db_index=True)
     full_name = models.CharField('Полное имя', max_length=256, blank=True, null=True, default=None, db_index=True)
-    is_customer = models.BooleanField('Является покупателем', default=False)
+    is_buyer = models.BooleanField('Является покупателем', default=False)
     is_supplier = models.BooleanField('Является поставщиком', default=False)
     is_dropper = models.BooleanField('Является дропшипером', default=False)
+    is_group_buyer = models.BooleanField('Является оптовым покупателем', default=False)
     main_phone = models.OneToOneField(Phone, null=True, blank=True, on_delete=models.SET_NULL,
-                                   verbose_name='Телефон для авторизации', related_name='login_person')
+                                      verbose_name='Телефон для авторизации', related_name='login_person')
     delivery_phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.SET_NULL,
                                        verbose_name='Телефон для доставки', related_name='delivery_persons')
     comment = models.TextField('Коментарий', max_length=256, blank=True, null=True, default=None)
+    main_price_type = models.ForeignKey(
+        'PriceTypePersonBuyer', null=True, blank=True, default=None, on_delete=models.SET_NULL,
+        verbose_name='Основной тип цен оптовых продаж контрагенту', related_name='group_buyer'
+    )
+    main_supplier_price_type = models.ForeignKey(
+        'PriceTypePersonSupplier', null=True, blank=True, default=None, on_delete=models.SET_NULL,
+        verbose_name='Основной тип цен закупки у контрагента', related_name='supplier'
+    )
 
     class Meta:
         verbose_name = 'Контрагент'
@@ -108,16 +118,35 @@ class Person(AbstractUser):
     def __str__(self):
         main_phone = self.main_phone if self.main_phone and not self.is_supplier and not self.is_dropper else ""
         return f'{self.date_joined.strftime("%d-%m-%Y")}: ' \
-               f'{self.full_name if self.full_name else self.email} {main_phone}'\
-                f'{"(поставщик)" if self.is_supplier else ""}{"(дропер)" if self.is_dropper else ""}'
+               f'{self.full_name if self.full_name else self.email} {main_phone}' \
+               f'{"(поставщик)" if self.is_supplier else ""}{"(дропер)" if self.is_dropper else ""}'
 
     def save(self, *args, **kwargs):
-        last_name = self.last_name if self.last_name else ''
-        first_name = self.first_name if self.first_name else ''
-        middle_name = self.middle_name if self.middle_name else ''
-        self.full_name = last_name + ' ' + first_name + ' ' + middle_name
+        self.full_name = get_full_name(self)
         self.username = self.id
         super().save(*args, **kwargs)
+
+
+class ContactPerson(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    first_name = models.CharField('Имя', max_length=128, blank=True, null=True, default=None, db_index=True)
+    last_name = models.CharField('Фамилия', max_length=128, blank=True, null=True, default=None, db_index=True)
+    middle_name = models.CharField('Отчество', max_length=128, blank=True, null=True, default=None, db_index=True)
+    full_name = models.CharField('Полное имя', max_length=256, blank=True, null=True, default=None, db_index=True)
+    phone = models.ForeignKey(Phone, null=True, on_delete=models.SET_NULL, verbose_name='Телефон контактного лица')
+    person = models.ForeignKey(Person, null=True, on_delete=models.CASCADE, related_name='contacts',
+                               verbose_name='Контрагент')
+
+    def __str__(self):
+        return f'{self.full_name} (контактное лицо контрагента {self.person})'
+
+    def save(self, *args, **kwargs):
+        self.full_name = get_full_name(self)
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = 'Контактное лицо контрагента'
+        verbose_name_plural = 'Контактные лица контрагентов'
 
 
 class SupplierManager(models.Manager):
@@ -149,25 +178,6 @@ class PersonPhone(models.Model):
         return f'Телефон контрагента {self.person} - {self.phone}'
 
 
-# class Street(models.Model):
-#     ref = models.CharField('Ref улицы', max_length=36, primary_key=True)
-
-
-class PersonSettlement(models.Model):
-    settlement = models.ForeignKey(Settlement, on_delete=models.CASCADE, verbose_name='Населенный пункт')
-    person = models.ForeignKey(Person, on_delete=models.CASCADE, verbose_name='Контрагент')
-    priority = models.PositiveSmallIntegerField("Приоритет населенного пункта", blank=True, null=True)
-
-    class Meta:
-        verbose_name = "Населенный пункт контрагента"
-        verbose_name_plural = "Населенные пункты контрагента"
-        unique_together = ('settlement', 'person')
-        ordering = ('priority',)
-
-    def __str__(self):
-        return f'Населенный пункт {self.settlement}, контрагента - {self.person}'
-
-
 class PersonAddress(models.Model):
     ADDRESS_TYPE = (
         (1, "На отделение или почтомат"),
@@ -197,7 +207,8 @@ class PersonAddress(models.Model):
             address_type = self.get_address_type_display() + ' / ' if self.address_type else "нет доступных вариантов доставки"
             settlement = f'{self.settlement} / {address_type}'
             if self.address_type == 1:
-                return settlement + (self.warehouse.__str__() if self.warehouse else 'отделение или почтомат не указаны')
+                return settlement + (
+                    self.warehouse.__str__() if self.warehouse else 'отделение или почтомат не указаны')
             elif self.address_type == 2:
                 street = f'{self.street.__str__()}'
                 build = f', дом №{self.build}' if self.build else ''
@@ -206,3 +217,29 @@ class PersonAddress(models.Model):
                 return settlement
         else:
             return f'{self.area} обл.'
+
+
+class PersonPriceType(models.Model):
+    name = models.CharField('Название типа цен', max_length=128, blank=True, default='', db_index=True)
+    description = models.TextField('Описание типа цен', max_length=256, blank=True, null=True, default=None)
+    person = models.ForeignKey(
+        Person, verbose_name="Контрагент", default=None, blank=True, null=True, on_delete=models.SET_NULL)
+    position = models.PositiveSmallIntegerField("Позиция", blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.position}. {self.name}'
+
+    class Meta:
+        abstract = True
+
+
+class PriceTypePersonBuyer(PersonPriceType):
+    class Meta:
+        verbose_name = "Тип цен контрагента покупателя"
+        verbose_name_plural = "Типы цен контрагента покупателя"
+
+
+class PriceTypePersonSupplier(PersonPriceType):
+    class Meta:
+        verbose_name = "Тип цен контрагента поставщика"
+        verbose_name_plural = "Типы цен контрагента поставщика"

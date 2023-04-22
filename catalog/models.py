@@ -23,8 +23,9 @@ from site_settings.models import PhotoPlug
 
 
 def get_price_sq(outerref_field):
-    return Subquery(ProductPrice.objects.filter(
-        product=OuterRef(outerref_field)).order_by('price_changelist__created').values('price')[:1]), \
+    return Subquery(ProductPrice.objects.filter(price_changelist__is_active=True,
+                                                product=OuterRef(outerref_field)).order_by(
+        'price_changelist__created').values('price')[:1]), \
            Subquery(Discount.objects.filter(product=OuterRef(outerref_field)).values('amount')[:1]), \
            Subquery(Discount.objects.filter(product=OuterRef(outerref_field)).values('type_of_amount')[:1])
 
@@ -321,6 +322,8 @@ class Product(models.Model):
         'CombinationOfCategory', blank=True, null=True,
         verbose_name='Связанная комбинация категорий', on_delete=models.SET_NULL, db_index=True)
     seats_amount = SmallIntegerField("Количество мест", default=1)
+    main_supplier = models.ForeignKey(Supplier, blank=True, null=True, on_delete=models.SET_NULL,
+                                      verbose_name='Основной поставщик', default=None)
 
     def __str__(self):
         return self.name
@@ -483,12 +486,17 @@ class Product(models.Model):
         return ProductSupplierPriceInfo.objects.filter(id__in=price_items_list_id)
 
     @property
+    @admin.display(description='Цены поставщиков')
     def supplier_prices_str(self):
-        return format_html_join(',', '<p>{}</p>', ((sp,) for sp in self.supplier_prices_last_items))
+        if self.supplier_prices_last_items:
+            return format_html_join(',', '<p>{}</p>', ((sp,) for sp in self.supplier_prices_last_items))
+        else:
+            return 'Отсутствуют'
 
     @property
+    @admin.display(description='Текущий курс доллара')
     def rate(self):
-        return get_rate('EUR', 'UAH')
+        return f"{get_rate('EUR', 'UAH'):.2f}"
 
 
 class AddictProduct(models.Model):
@@ -532,21 +540,6 @@ class ProductPlacement(models.Model):
 
     def __str__(self):
         return f'{self.product} в категории {self.category}'
-
-
-class ProductSupplier(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Товар')
-    supplier = models.ForeignKey(Person, on_delete=models.CASCADE, verbose_name='Поставщик')
-    priority = models.PositiveSmallIntegerField("Приоритет поставщика", blank=True, null=True)
-
-    class Meta:
-        verbose_name = "Поставщик товара"
-        verbose_name_plural = "Поставщики товара"
-        unique_together = ('product', 'supplier')
-        ordering = ('priority',)
-
-    def __str__(self):
-        return f'Товар {self.product}, поставщик - {self.supplier}'
 
 
 class Group(models.Model):

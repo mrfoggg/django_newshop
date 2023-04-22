@@ -12,12 +12,15 @@ function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOr
                 priceVariantsSelect.children('option').last().after(`<option value="${spi['id']}">${spi['str_present']}</option>`);
             }
             row.find('.field-full_current_price_info p').text(response['current_price']);
+            row.find('.field-sale_price input').val(response['current_price_amount']);
             if (response['supplier_prices_last_items'].length==1){
                 priceVariantsSelect.children('option').last().prop('selected', true);
                 priceVariantsSelect.trigger('change');
-            }
-            else
+            } else {
                 row.find('.field-margin p, .field-margin_percent p, .field-profitability p, .field-sale_total p, .field-margin_total p').text('-');
+                row.find('.field-purchase_price input').val('0');
+            }
+
         }
     }, 200);
 }

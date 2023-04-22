@@ -226,7 +226,7 @@ def get_and_check_registration_phone(request):
     if Person.objects.filter(main_phone=phone).exists():
         user, is_created_user = Person.objects.get_or_create(main_phone=phone)
     else:
-        user, is_created_user = Person.objects.get_or_create(main_phone=phone, username=number, is_customer=True)
+        user, is_created_user = Person.objects.get_or_create(main_phone=phone, username=number, is_buyer=True)
         user_phone, is_create_phone = PersonPhone.objects.get_or_create(phone=phone, person=user)
         user.delivery_phone = phone
         user.save()

@@ -33,7 +33,7 @@ from .models import (Attribute, Brand, Category, CategoryAddictProduct,
                      GroupPositionInCombinationOfCategory, MainAttribute,
                      MainAttrPositionInCombinationOfCategory, OtherShop,
                      PricesOtherShop, Product, ProductImage, ProductPlacement,
-                     ProductSeries, ProductSupplier, ShotAttribute,
+                     ProductSeries, ShotAttribute,
                      ShotAttrPositionInCombinationOfCategory, UnitOfMeasure, ProductSupplierPrice)
 from .services import (DeleteQSMixin, clean_combination_of_category,
                        create_group_placement_at_end_combination,
@@ -85,17 +85,6 @@ class ProductPlacementInlineForProduct(nested_admin.SortableHiddenMixin, nested_
     @admin.display(description="Содержит группы атрибутов")
     def groups_list(self, obj):
         return obj.category.groups_list
-
-
-class ProductSupplierInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
-    model = ProductSupplier
-    extra = 0
-    sortable_field_name = 'priority'
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'supplier':
-            kwargs["queryset"] = Person.objects.filter(is_supplier=True)
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class GroupPlacementInline(SortableInlineAdminMixin, admin.TabularInline):
@@ -337,7 +326,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
     save_on_top = True
     inlines = (ProductPlacementInlineForProduct, PricesOtherShopInline, ProductImageInline, ProductPriceProductInline,
-               ProductSupplierInline, CategoryAddictProductInlineAdmin, DiscountInline)
+               CategoryAddictProductInlineAdmin, DiscountInline)
     # formfield_overrides = {
     #     models.JSONField: {'widget': JSONEditorWidget},
     # }
@@ -354,7 +343,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
         ("Основное", {
             'fields': (
                 ('name', 'sku', 'sku_manufacturer', 'rating', 'is_active'),
-                ('full_current_price_info',), ('supplier_prices_str',), ('rate', ),
+                ('full_current_price_info', 'rate',), ('supplier_prices_str', 'main_supplier'),
                 ('slug', 'admin_category'),
                 ('brand', 'country_of_manufacture',),
                 ('series', 'url'),
@@ -385,7 +374,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
 
     class Media:
         css = {
-            "all": ("test.css",)
+            "all": ("admin/admin-changeform.css",)
         }
 
     def save_related(self, request, form, formsets, change):

@@ -23,8 +23,12 @@ class ProductInClientOrderAdminInlineForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance.id:
             if self.instance.supplier_order:
-                self.fields['supplier_price_variants'].queryset = ProductSupplierPriceInfo.objects.filter(
-                    id=self.instance.supplier_order.price_type.id)
+                # self.fields['supplier_price_variants'].queryset = ProductSupplierPriceInfo.objects.filter(
+                #     id=self.instance.supplier_order.price_type.id)
+                self.fields['supplier_price_variants'].queryset = self.instance.product.supplier_prices_last_items.filter(
+                    id=self.instance.supplier_order.price_type.id
+                )
+
             else:
                 self.fields['supplier_price_variants'].queryset = self.instance.product.supplier_prices_last_items
         else:

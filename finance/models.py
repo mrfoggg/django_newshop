@@ -1,5 +1,5 @@
 from django.db import models
-from ROOTAPP.models import Person, Document, Supplier
+from ROOTAPP.models import Person, Document, Supplier, PriceTypePersonSupplier
 
 
 class Stock(models.Model):
@@ -28,32 +28,6 @@ class PriceChangelist(Document):
     @property
     def date(self):
         return self.created.strftime("%m/%d/%Y, (%H:%M)")
-
-
-class PersonPriceType(models.Model):
-    name = models.CharField('Название типа цен', max_length=128, blank=True, default='', db_index=True)
-    description = models.TextField('Описание типа цен', max_length=256, blank=True, null=True, default=None)
-    person = models.ForeignKey(
-        Person, verbose_name="Контрагент", default=None, blank=True, null=True, on_delete=models.SET_NULL)
-    position = models.PositiveSmallIntegerField("Позиция", blank=True, null=True)
-
-    def __str__(self):
-        return f'{self.position}. {self.name}'
-
-    class Meta:
-        abstract = True
-
-
-class PriceTypePersonBuyer(PersonPriceType):
-    class Meta:
-        verbose_name = "Тип цен контрагента покупателя"
-        verbose_name_plural = "Типы цен контрагента покупателя"
-
-
-class PriceTypePersonSupplier(PersonPriceType):
-    class Meta:
-        verbose_name = "Тип цен контрагента поставщика"
-        verbose_name_plural = "Типы цен контрагента поставщика"
 
 
 class SupplierPriceChangelist(Document):

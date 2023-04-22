@@ -7,13 +7,15 @@ from django.contrib import admin
 # from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Sum, F
 from django.urls import reverse
 from django.utils.html import format_html_join
 from djmoney.models.fields import MoneyField
+from djmoney.money import Money
 
 from catalog.models import Product, ProductSupplierPriceInfo
-from ROOTAPP.models import Person, Phone, PersonAddress, Supplier, Document
-from finance.models import PriceTypePersonBuyer, PriceTypePersonSupplier
+from ROOTAPP.models import Person, Phone, PersonAddress, Supplier, Document, PriceTypePersonBuyer
+from finance.models import PriceTypePersonSupplier
 from finance.services import get_margin, get_margin_percent, get_profitability
 from site_settings.models import APIkeyIpInfo
 
@@ -113,6 +115,30 @@ class ClientOrder(Document):
     def __str__(self):
         return f'{self.created.strftime("%d-%m-%Y %H:%M")} / {self.person}'
 
+    @property
+    @admin.display(description='Всего товаров, шт')
+    def total_quantity(self):
+        return self.products.aggregate(Sum('quantity'))['quantity__sum']
+
+    @property
+    @admin.display(description='Всего продано на сумму')
+    def total_amount(self):
+        return Money(self.products.aggregate(total_amount=Sum(F('sale_price') * F('quantity')))['total_amount'], 'UAH')
+
+    @property
+    @admin.display(description='Всего товаров к закупке на сумму')
+    def total_purchase_amount(self):
+        return Money(
+            self.products.aggregate(total_purchase_amount=Sum(F('purchase_price') * F('quantity')))[
+                'total_purchase_amount'], 'UAH')
+
+    @property
+    @admin.display(description='Итоговая маржа по заказу')
+    def total_margin(self):
+        return Money(
+            self.products.aggregate(total_margin=Sum((F('sale_price') - F('purchase_price')) * F('quantity')))[
+                'total_margin'], 'UAH')
+
 
 class SupplierOrder(Document):
     person = models.ForeignKey(
@@ -132,23 +158,22 @@ class SupplierOrder(Document):
 
 
 class ProductInOrder(models.Model):
-    product = models.ForeignKey(Product, verbose_name='Товар в заказе', on_delete=models.SET_NULL, null=True,
-                                blank=True)
+    product = models.ForeignKey(Product, verbose_name='Товар в заказе', on_delete=models.SET_NULL, null=True)
     quantity = models.PositiveSmallIntegerField('Кол-во', default=1)
     client_order = models.ForeignKey(ClientOrder, verbose_name='Заказ покупателя', on_delete=models.SET_NULL, null=True,
-                                     blank=True)
+                                     blank=True, related_name='products')
     client_order_position = models.PositiveSmallIntegerField("Позиция в заказе покупателя", blank=True, null=True,
                                                              db_index=True)
     supplier_order = models.ForeignKey(SupplierOrder, verbose_name='Заказ поставщику', on_delete=models.SET_NULL,
-                                       null=True, blank=True)
+                                       null=True, blank=True, related_name='products')
     supplier_order_position = models.PositiveSmallIntegerField("Позиция в заказе постащику", blank=True, null=True,
                                                                db_index=True)
-    sale_price = MoneyField('Цена продажи', max_digits=6, decimal_places=2, default_currency='UAH',
+    sale_price = MoneyField('Цена продажи', max_digits=10, decimal_places=2, default_currency='UAH',
                             default=0)
     supplier_price_variants = models.ForeignKey(ProductSupplierPriceInfo, blank=True, null=True,
                                                 on_delete=models.SET_NULL,
                                                 verbose_name='Цены поставщиков для расчета РЦ')
-    purchase_price = MoneyField('Закупочная цена', max_digits=6, decimal_places=2, default_currency='UAH',
+    purchase_price = MoneyField('Закупочная цена', max_digits=10, decimal_places=2, default_currency='UAH',
                                 default=0)
 
     class Meta:

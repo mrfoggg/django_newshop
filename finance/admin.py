@@ -3,20 +3,25 @@ from django.contrib import admin
 from djmoney.models.fields import MoneyField
 from dynamic_admin_forms.admin import DynamicModelAdminMixin
 
+from ROOTAPP.models import PriceTypePersonBuyer
 # Register your models here.
 from catalog.models import ProductPrice, ProductSupplierPrice, ProductSupplierPriceInfo
 from finance.admin_forms import money_widget_only_uah, ProductPriceChangelistInlineAdminForm
-from finance.models import PriceChangelist, PriceTypePersonBuyer, PriceTypePersonSupplier, Stock, \
+from finance.models import PriceChangelist, PriceTypePersonSupplier, Stock, \
     SupplierPriceChangelist
 
 
 class ProductPriceProductInline(nested_admin.NestedTabularInline):
-    fields = ('price_changelist', 'price')
+    fields = ('price_changelist', 'price', 'is_active')
     # autocomplete_fields = ('product',)
-    # readonly_fields = ('price',)
+    readonly_fields = ('is_active',)
     model = ProductPrice
     extra = 0
     # ordering = ('position',)
+
+    @admin.display(description='Проведено')
+    def is_active(self, obj):
+        return obj.price_changelist.is_active
 
 
 class ProductPricePriceChangelistInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
@@ -65,7 +70,7 @@ class PriceChangelistAdmin(nested_admin.NestedModelAdmin, ):
     inlines = (ProductPricePriceChangelistInline,)
 
     class Media:
-        css = {"all": ('admin/textarea-autoheight.css', )}
+        css = {"all": ('admin/admin-changeform.css', )}
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
               'js_functions_for_admin.js', 'finance/price_list_admin_form.js', 'admin/textarea-autoheight.js')
 
@@ -97,7 +102,7 @@ class SupplierPriceChangelistAdmin(DynamicModelAdminMixin, nested_admin.NestedMo
         return queryset, value, hidden
 
     class Media:
-        css = {"all": ('admin/textarea-autoheight.css',)}
+        css = {"all": ('admin/admin-changeform.css',)}
         js = ('admin/textarea-autoheight.js',)
 
 

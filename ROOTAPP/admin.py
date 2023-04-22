@@ -1,19 +1,14 @@
 from pprint import pprint
-
 import nested_admin
 from django import forms
 from django.contrib import admin
-from django.forms import TextInput
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
-
 from finance.admin import PriceTypePersonBuyerInline, PriceTypePersonSupplierInline
 # from .services.telegram_servises import get_tg_username
 # from asgiref.sync import sync_to_async
-from orders.models import ByOneclick
-from ROOTAPP.models import (Messenger, Person, PersonPhone, PersonSettlement,
-                            Phone, PersonAddress)
-
-from .admin_forms import PersonPhonesAdminFormset, FullAddressForm
+from orders.models import ByOneclick, SupplierOrder
+from ROOTAPP.models import Messenger, Person, PersonPhone, Phone, PersonAddress, ContactPerson, Supplier
+from .admin_forms import PersonPhonesAdminFormset, FullAddressForm, PersonAdminForm
 
 admin.site.register(Messenger)
 
@@ -25,20 +20,12 @@ class PersonPhoneInlineAdmin(nested_admin.NestedTabularInline):
     extra = 0
 
 
-class PersonSettlementInline(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
-    model = PersonSettlement
-    extra = 0
-    sortable_field_name = 'priority'
-    ordering = ('priority',)
-    autocomplete_fields = ('settlement',)
-
-
-class PersonOneClickInline(nested_admin.NestedTabularInline):
-    model = ByOneclick
-    readonly_fields = ('product', 'created', 'updated', 'status')
-    fields = ('product', 'created', 'updated', 'status')
-    extra = 0
-    max_num = 0
+# class PersonOneClickInline(nested_admin.NestedTabularInline):
+#     model = ByOneclick
+#     readonly_fields = ('product', 'created', 'updated', 'status')
+#     fields = ('product', 'created', 'updated', 'status')
+#     extra = 0
+#     max_num = 0
 
 
 class PersonAddressInlineAdmin(nested_admin.NestedTabularInline):
@@ -50,6 +37,12 @@ class PersonAddressInlineAdmin(nested_admin.NestedTabularInline):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+class PersonContactPersonInline(nested_admin.NestedTabularInline):
+    fields = ('last_name', 'first_name', 'middle_name', 'phone')
+    model = ContactPerson
+    extra = 0
 
 
 class PhoneAdminForm(forms.ModelForm):
@@ -86,23 +79,45 @@ class PhoneAdmin(admin.ModelAdmin):
 
 @admin.register(Person)
 class PersonAdmin(nested_admin.NestedModelAdmin):
+    form = PersonAdminForm
     fieldsets = (
-        ('Основные данные пользователя', {'fields': (('last_name', 'first_name', 'middle_name',),
-                                                     ('full_name', 'date_joined', 'last_login'), ('comment',))}),
-        ('Контактная информация', {'fields': (('email',), ('main_phone', 'delivery_phone'))}),
-        ('Роли пользователя', {'fields': (('is_customer', 'is_supplier', 'is_dropper'),)}),
-        ('Права пользователя', {'fields': (('is_staff', 'is_superuser'),)}),
+        ('Основные данные пользователя', {
+            'fields': (('last_name', 'first_name', 'middle_name',),
+                       ('full_name', 'date_joined', 'last_login'), ('comment',)),
+            'classes': ('tab-fs-none',),
+        }),
+        ('Роли пользователя', {
+            'fields': (('is_buyer', 'is_supplier', 'is_dropper', 'is_group_buyer'),),
+            'classes': ('tab-fs-none',),
+        }),
+        ('Права пользователя', {
+            'fields': (('is_staff', 'is_superuser'),),
+            'classes': ('tab-fs-none',),
+        }),
+        ('Типы цен контрагента', {
+            'fields': (('main_price_type', 'main_supplier_price_type'),),
+            'classes': ('tab-fs-prices', ),
+            'description': 'Типы цен по умолчанию для контрагента'
+        }),
+        ('Контактная информация', {
+            'fields': (('email', 'main_phone', 'delivery_phone'),),
+            'classes': (
+                'baton-tabs-init', 'baton-tab-group-fs-prices--inline-pricetypepersonsupplier--inline-pricetypepersonbuyer',
+                'baton-tab-inline-personaddress'
+            ),
+            # 'description': 'Контактная информация'
+        }),
     )
     search_fields = ('full_name', 'main_phone__number')
-    inlines = (PersonPhoneInlineAdmin, PersonOneClickInline, PersonSettlementInline, PersonAddressInlineAdmin,
+    inlines = (PersonPhoneInlineAdmin, PersonAddressInlineAdmin, PersonContactPersonInline,
                PriceTypePersonBuyerInline, PriceTypePersonSupplierInline)
-    list_display = ('__str__', 'email', 'main_phone', 'is_customer', 'is_supplier', 'is_dropper')
-    list_filter = ('is_customer', 'is_supplier', 'is_dropper')
+    list_display = ('__str__', 'email', 'main_phone', 'is_buyer', 'is_supplier', 'is_dropper')
+    list_filter = ('is_buyer', 'is_supplier', 'is_dropper')
     readonly_fields = ('full_name', 'date_joined', 'last_login')
 
     class Media:
-        css = {"all": ("root_app/person_form.css", 'admin/textarea-autoheight.css')}
-        js = ('admin/textarea-autoheight.js', )
+        css = {"all": ("root_app/person_form.css", 'admin/admin-changeform.css')}
+        js = ('admin/textarea-autoheight.js',)
 
     def get_form(self, request, obj=None, **kwargs):
         if obj:
@@ -125,7 +140,7 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
         queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
         if 'model_name' in request.GET.keys():
             if request.GET['model_name'] == 'clientorder':
-                queryset = queryset.filter(is_customer=True)
+                queryset = queryset.filter(is_buyer=True)
         return queryset, may_have_duplicates
 
 
@@ -137,6 +152,7 @@ class PersonAddressAdmin(admin.ModelAdmin):
     autocomplete_fields = ('person',)
     readonly_fields = ['city']
     radio_fields = {"address_type": admin.HORIZONTAL}
+
     # radio_fields = {"address_type": admin.VERTICAL}
 
     class Media:
@@ -145,7 +161,7 @@ class PersonAddressAdmin(admin.ModelAdmin):
         #   с этой строкй пишет что цсс дублируется
         # css = {"all": ("select2.min.css")}
 
-        css = {"all": ("notyf.min.css", )}
+        css = {"all": ("notyf.min.css",)}
 
     def get_readonly_fields(self, request, obj=None):
         new_rof = []
@@ -155,5 +171,8 @@ class PersonAddressAdmin(admin.ModelAdmin):
         return self.readonly_fields + new_rof
 
     baton_form_includes = [
-        ('root_app/admin_address_ajax_urls.html', 'area', 'top', ),
+        ('root_app/admin_address_ajax_urls.html', 'area', 'top',),
     ]
+
+
+admin.site.register(ContactPerson)
