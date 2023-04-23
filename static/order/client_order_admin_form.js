@@ -1,4 +1,3 @@
-// import {ajaxUpdateSalePricesAndSupplierPriceVariants} from '/js_functions_for_admin.js'
 (function ($, undefined) {
     // init listeners
     Baton.Dispatcher.register('onReady', function () {

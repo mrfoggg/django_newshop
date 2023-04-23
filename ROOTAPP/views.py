@@ -17,7 +17,8 @@ from sorl.thumbnail import get_thumbnail
 
 from catalog.models import Product
 from ROOTAPP.forms import PersonalInfoForm, PersonEmailForm, PersonForm
-from ROOTAPP.models import Person, PersonPhone, Phone, get_phone_full_str
+from ROOTAPP.models import Person, PersonPhone, Phone, get_phone_full_str, other_person_login_this_phone, \
+    other_person_not_main, ContactPerson, other_contacts
 from nova_poshta.models import Settlement, Warehouse, City
 from nova_poshta.services import get_settlement_addict_info
 from servises import get_products_annotated_prices
@@ -540,3 +541,20 @@ def get_settlement_info(request):
             response |= {'city': city_link, 'city_ref': city_ref}
 
     return response
+
+
+@json_view()
+def ajax_updates_person_phones_info(request):
+    person_id = request.POST.get('person_id')
+    phone_id = request.POST.get('phone_id')
+
+    other_person_login = other_person_login_this_phone(phone_id, person_id)
+    other_person = Person.objects.filter(phones__phone_id=phone_id)
+    other_person_not_this_main = other_person_not_main(phone_id, other_person)
+    contacts = other_contacts(phone_id, person_id)
+    print('other_person_login - ', other_person_login)
+
+    return {
+        'other_person_login': other_person_login, 'other_person_not_this_main': other_person_not_this_main,
+        'contacts': contacts
+    }

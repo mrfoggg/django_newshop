@@ -7,7 +7,8 @@ from finance.admin import PriceTypePersonBuyerInline, PriceTypePersonSupplierInl
 # from .services.telegram_servises import get_tg_username
 # from asgiref.sync import sync_to_async
 from orders.models import ByOneclick, SupplierOrder
-from ROOTAPP.models import Messenger, Person, PersonPhone, Phone, PersonAddress, ContactPerson, Supplier
+from ROOTAPP.models import Messenger, Person, PersonPhone, Phone, PersonAddress, ContactPerson, PriceTypePersonBuyer, \
+    PriceTypePersonSupplier
 from .admin_forms import PersonPhonesAdminFormset, FullAddressForm, PersonAdminForm
 
 admin.site.register(Messenger)
@@ -15,6 +16,8 @@ admin.site.register(Messenger)
 
 class PersonPhoneInlineAdmin(nested_admin.NestedTabularInline):
     formset = PersonPhonesAdminFormset
+    fields = ('phone', 'other_person_login_this_phone', 'other_person_not_main', 'is_nova_poshta', 'other_contacts')
+    readonly_fields = ('other_person_login_this_phone', 'other_person_not_main', 'other_contacts')
     model = PersonPhone
     autocomplete_fields = ('phone',)
     extra = 0
@@ -40,9 +43,13 @@ class PersonAddressInlineAdmin(nested_admin.NestedTabularInline):
 
 
 class PersonContactPersonInline(nested_admin.NestedTabularInline):
-    fields = ('last_name', 'first_name', 'middle_name', 'phone')
+    fields = (
+        'last_name', 'first_name', 'middle_name', 'phone', 'other_person_login_this_phone', 'other_person_not_main',
+        'other_contacts')
+    readonly_fields = ('other_person_login_this_phone', 'other_person_not_main', 'other_contacts')
     model = ContactPerson
     extra = 0
+    autocomplete_fields = ('phone',)
 
 
 class PhoneAdminForm(forms.ModelForm):
@@ -83,7 +90,7 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
     fieldsets = (
         ('Основные данные пользователя', {
             'fields': (('last_name', 'first_name', 'middle_name',),
-                       ('full_name', 'date_joined', 'last_login'), ('comment',)),
+                       ('full_name', 'date_joined', 'last_login'), ('comment', 'id')),
             'classes': ('tab-fs-none',),
         }),
         ('Роли пользователя', {
@@ -95,14 +102,15 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
             'classes': ('tab-fs-none',),
         }),
         ('Типы цен контрагента', {
-            'fields': (('main_price_type', 'main_supplier_price_type'),),
-            'classes': ('tab-fs-prices', ),
+            'fields': (('main_supplier_price_type', 'main_price_type',),),
+            'classes': ('tab-fs-prices',),
             'description': 'Типы цен по умолчанию для контрагента'
         }),
         ('Контактная информация', {
             'fields': (('email', 'main_phone', 'delivery_phone'),),
             'classes': (
-                'baton-tabs-init', 'baton-tab-group-fs-prices--inline-pricetypepersonsupplier--inline-pricetypepersonbuyer',
+                'baton-tabs-init',
+                'baton-tab-group-fs-prices--inline-pricetypepersonsupplier--inline-pricetypepersonbuyer',
                 'baton-tab-inline-personaddress'
             ),
             # 'description': 'Контактная информация'
@@ -113,28 +121,14 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
                PriceTypePersonBuyerInline, PriceTypePersonSupplierInline)
     list_display = ('__str__', 'email', 'main_phone', 'is_buyer', 'is_supplier', 'is_dropper')
     list_filter = ('is_buyer', 'is_supplier', 'is_dropper')
-    readonly_fields = ('full_name', 'date_joined', 'last_login')
+    readonly_fields = ('full_name', 'date_joined', 'last_login', 'id')
 
     class Media:
         css = {"all": ("root_app/person_form.css", 'admin/admin-changeform.css')}
-        js = ('admin/textarea-autoheight.js',)
+        js = (
+            'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
 
-    def get_form(self, request, obj=None, **kwargs):
-        if obj:
-            request._person_phones = Phone.objects.filter(personphone__person=obj)
-        else:
-            request._person_phones = Phone.objects.none()
-
-        # form = super().get_form(request, obj, **kwargs)
-        # form.base_fields['full_name'].widget.attrs['size'] = '80'
-        # form.base_fields['full_name'].widget.attrs['style'] = 'width: 50rem;'
-        # form.base_fields['full_name'].widget = TextInput(attrs={'size': '90'})
-        return super(PersonAdmin, self).get_form(request, obj, **kwargs)
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name in ('main_phone', 'delivery_phone'):
-            kwargs["queryset"] = request._person_phones
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+            'admin/textarea-autoheight.js', 'root_app/ajax_update_person_phones_info.js')
 
     def get_search_results(self, request, queryset, search_term):
         queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
@@ -142,6 +136,19 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
             if request.GET['model_name'] == 'clientorder':
                 queryset = queryset.filter(is_buyer=True)
         return queryset, may_have_duplicates
+
+    def changeform_view(self, request, obj_id, form_url, extra_context=None):
+        if obj_id:
+            this_person = Person.objects.get(id=obj_id)
+            extra_context = {'init_main_phone_id': this_person.main_phone_id,
+                             'init_delivery_phone_id': this_person.delivery_phone_id}
+        else:
+            extra_context = {'init_main_phone_id': '', 'init_delivery_phone_id': ''}
+        return super().changeform_view(request, obj_id, form_url, extra_context=extra_context)
+
+    baton_form_includes = [
+        ('root_app/ajax_adresses_for_person_forms.html', 'id', 'top',),
+    ]
 
 
 # без использования декоратора так как перопрелеляется __init__
@@ -157,7 +164,7 @@ class PersonAddressAdmin(admin.ModelAdmin):
 
     class Media:
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
-              'select2.min.js', 'notyf.min.js', 'root_app/person_address_admin_form.js')
+              'select2.min.js', 'notyf.min.js', 'root_app/person_address_admin_form.js',)
         #   с этой строкй пишет что цсс дублируется
         # css = {"all": ("select2.min.css")}
 

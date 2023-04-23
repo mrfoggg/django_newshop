@@ -3,7 +3,9 @@ import uuid
 from django.contrib import admin
 from django.contrib.auth.models import AbstractUser, User
 from django.db import models
-from django.utils.html import format_html
+from django.urls import reverse
+from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 from phonenumber_field.modelfields import PhoneNumberField
 from phonenumbers import carrier, geocoder
 from phonenumbers.phonenumberutil import region_code_for_number
@@ -16,6 +18,73 @@ TYPES_OF_PHONE = (
     (2, "Telegram"),
     (3, "WhatsUp"),
 )
+
+
+def other_person(phone_id, person_id):
+    if phone_id:
+        return Person.objects.filter(phones__phone_id=phone_id).exclude(phones__person_id=person_id)
+    else:
+        return Person.objects.none()
+
+
+def other_person_login_this_phone(phone_id, person_id):
+    if phone_id:
+        other_person_login_this_phone_qs = Person.objects.filter(
+            main_phone_id=phone_id).exclude(phones__person_id=person_id)
+        if other_person_login_this_phone_qs.exists():
+            op = other_person_login_this_phone_qs.first()
+            op_link = mark_safe(f'<a href={op.admin_url} target="_blank">'
+                                f'{op.date_joined.strftime("%d-%m-%Y")} {op.full_name}</a>')
+            return op_link
+        else:
+            return 'Отсутствуют'
+    else:
+        return 'Отсутствуют'
+
+
+def other_person_not_main(phone_id, other_person_qs):
+    other_person_not_main_qs = other_person_qs.exclude(main_phone_id=phone_id)
+    if other_person_not_main_qs.exists():
+        return format_html_join("", "<li><a href={} target='_blank'>{}</a></li>", ((op.admin_url, op.__str__())
+                                                                                     for op in
+                                                                                     other_person_not_main_qs))
+    else:
+        return 'Отсутствуют'
+
+
+def other_contacts(phone_id, person_id):
+    other_contacts_qs = ContactPerson.objects.filter(phone_id=phone_id).exclude(person_id=person_id)
+    if other_contacts_qs.exists():
+        return format_html_join("", "<li><a href={} target='_blank'>{}</a></li>", ((oc.admin_url, oc.__str__())
+                                                                                     for oc in other_contacts_qs))
+    else:
+        return 'Отсутствуют'
+
+
+class PhoneInfoFieldsMixin:
+    def __int__(self, phone_id, person_id, *args, **kwargs):
+        super().__init__(phone_id, person_id, *args, **kwargs)
+        self.phone_id = phone_id
+        self.person_id = person_id
+
+    @property
+    def other_person(self):
+        return other_person(self.phone_id, self.person_id)
+
+    @property
+    @admin.display(description='Контрагент использующий этот номер для входа')
+    def other_person_login_this_phone(self):
+        return other_person_login_this_phone(self.phone_id, self.person_id)
+
+    @property
+    @admin.display(description='Другие контрагенты указавшие этот номер')
+    def other_person_not_main(self):
+        return other_person_not_main(self.phone_id, self.other_person)
+
+    @property
+    @admin.display(description='Контактные лица других контргентов у которых указан этот же номер')
+    def other_contacts(self):
+        return other_contacts(self.phone_id, self.person_id)
 
 
 class Document(models.Model):
@@ -126,8 +195,12 @@ class Person(AbstractUser):
         self.username = self.id
         super().save(*args, **kwargs)
 
+    @property
+    def admin_url(self):
+        return reverse('admin:ROOTAPP_person_change', args=[self.id])
 
-class ContactPerson(models.Model):
+
+class ContactPerson(models.Model, PhoneInfoFieldsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     first_name = models.CharField('Имя', max_length=128, blank=True, null=True, default=None, db_index=True)
     last_name = models.CharField('Фамилия', max_length=128, blank=True, null=True, default=None, db_index=True)
@@ -148,6 +221,10 @@ class ContactPerson(models.Model):
         verbose_name = 'Контактное лицо контрагента'
         verbose_name_plural = 'Контактные лица контрагентов'
 
+    @property
+    def admin_url(self):
+        return reverse('admin:ROOTAPP_contactperson_change', args=[self.id])
+
 
 class SupplierManager(models.Manager):
     def get_queryset(self):
@@ -164,7 +241,7 @@ class Supplier(Person):
         return f'{self.last_name} {self.first_name}'
 
 
-class PersonPhone(models.Model):
+class PersonPhone(models.Model, PhoneInfoFieldsMixin):
     person = models.ForeignKey(Person, null=True, blank=True, on_delete=models.CASCADE, related_name='phones')
     phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.CASCADE)
     is_nova_poshta = models.BooleanField('Привязан к новой почте', default=False)
@@ -173,6 +250,9 @@ class PersonPhone(models.Model):
         verbose_name = 'Телефон контрагента'
         verbose_name_plural = 'Телефоны контрагента'
         unique_together = ('person', 'phone')
+
+    def __int__(self):
+        super().__init__(self.phone_id, self.person_id)
 
     def __str__(self):
         return f'Телефон контрагента {self.person} - {self.phone}'
