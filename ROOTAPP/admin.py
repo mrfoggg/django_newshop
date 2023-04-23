@@ -90,7 +90,7 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
     fieldsets = (
         ('Основные данные пользователя', {
             'fields': (('last_name', 'first_name', 'middle_name',),
-                       ('full_name', 'date_joined', 'last_login'), ('comment', 'id')),
+                       ('full_name', 'date_joined', 'last_login', 'source_type', 'source_person'), ('comment', 'id')),
             'classes': ('tab-fs-none',),
         }),
         ('Роли пользователя', {
@@ -121,7 +121,7 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
                PriceTypePersonBuyerInline, PriceTypePersonSupplierInline)
     list_display = ('__str__', 'email', 'main_phone', 'is_buyer', 'is_supplier', 'is_dropper')
     list_filter = ('is_buyer', 'is_supplier', 'is_dropper')
-    readonly_fields = ('full_name', 'date_joined', 'last_login', 'id')
+    readonly_fields = ('full_name', 'date_joined', 'last_login', 'id', 'source_type', 'source_person')
 
     class Media:
         css = {"all": ("root_app/person_form.css", 'admin/admin-changeform.css')}
@@ -155,7 +155,7 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
 @admin.register(PersonAddress)
 class PersonAddressAdmin(admin.ModelAdmin):
     form = FullAddressForm
-    fields = ('person', 'area', 'settlement', 'address_type', 'warehouse', 'city', 'street', 'build', 'comment')
+    fields = ('person', ('area', 'settlement'), 'address_type', 'warehouse', 'city', ('street', 'build'), 'comment')
     autocomplete_fields = ('person',)
     readonly_fields = ['city']
     radio_fields = {"address_type": admin.HORIZONTAL}
@@ -168,7 +168,7 @@ class PersonAddressAdmin(admin.ModelAdmin):
         #   с этой строкй пишет что цсс дублируется
         # css = {"all": ("select2.min.css")}
 
-        css = {"all": ("notyf.min.css",)}
+        css = {"all": ("notyf.min.css", 'admin/admin-changeform.css')}
 
     def get_readonly_fields(self, request, obj=None):
         new_rof = []

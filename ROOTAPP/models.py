@@ -19,6 +19,13 @@ TYPES_OF_PHONE = (
     (3, "WhatsUp"),
 )
 
+PERSON_SOURCE = (
+    (1, "Регистрация на сайте"),
+    (2, "Создан персоналом"),
+    (3, "Клиент оптовика"),
+    (4, "Имортированый контрагент"),
+)
+
 
 def other_person(phone_id, person_id):
     if phone_id:
@@ -179,6 +186,9 @@ class Person(AbstractUser):
         'PriceTypePersonSupplier', null=True, blank=True, default=None, on_delete=models.SET_NULL,
         verbose_name='Основной тип цен закупки у контрагента', related_name='supplier'
     )
+    source_type = models.SmallIntegerField('Источник контрагента', choices=PERSON_SOURCE, default=1, db_index=True)
+    source_person = models.ForeignKey('Person', blank=True, null=True, on_delete=models.SET_NULL, default=None,
+                                      verbose_name='Создатель контрагента')
 
     class Meta:
         verbose_name = 'Контрагент'
@@ -188,7 +198,8 @@ class Person(AbstractUser):
         main_phone = self.main_phone if self.main_phone and not self.is_supplier and not self.is_dropper else ""
         return f'{self.date_joined.strftime("%d-%m-%Y")}: ' \
                f'{self.full_name if self.full_name else self.email} {main_phone}' \
-               f'{"(поставщик)" if self.is_supplier else ""}{"(дропер)" if self.is_dropper else ""}'
+               f'{"(поставщик)" if self.is_supplier else ""}{"(дропер)" if self.is_dropper and not self.is_supplier and not self.is_group_buyer else ""}'\
+               f'{"(оптовый покупатель)" if self.is_group_buyer else ""}'
 
     def save(self, *args, **kwargs):
         self.full_name = get_full_name(self)
@@ -224,6 +235,13 @@ class ContactPerson(models.Model, PhoneInfoFieldsMixin):
     @property
     def admin_url(self):
         return reverse('admin:ROOTAPP_contactperson_change', args=[self.id])
+
+class ContactPersonShotStr(ContactPerson):
+    class Meta:
+        proxy = True
+
+    def __str__(self):
+        return f'{self.full_name} ({self.phone})'
 
 
 class SupplierManager(models.Manager):

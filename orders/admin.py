@@ -28,7 +28,7 @@ class OneClickUserSectionCommentInline(admin.TabularInline):
 
 class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     form = ProductInClientOrderAdminInlineForm
-    fields = ('product', 'full_current_price_info', 'sale_price', 'quantity', 'sale_total', 'margin', 'margin_total',
+    fields = ('product', 'full_current_price_info', 'sale_price', 'group_price', 'quantity', 'sale_total', 'margin', 'margin_total',
               'margin_percent', 'profitability',
               'supplier_order', 'supplier_price_variants',
               'purchase_price', 'client_order_position', 'purchase_total')
@@ -111,7 +111,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     fields = (
         ('id', 'is_active', 'mark_to_delete', 'status', 'extend_status'),
         ('source', 'payment_type'), ('created', 'updated'),
-        ('person', 'group_price_type'), 'address', ('total_quantity', 'total_amount', 'total_purchase_amount',
+        ('person', 'contact_person', 'group_price_type', 'dropper'), 'address', ('total_quantity', 'total_amount', 'total_purchase_amount',
                                                     'total_margin')
     )
     readonly_fields = ('id', 'created', 'updated', 'total_quantity', 'total_amount', 'total_purchase_amount',
@@ -126,7 +126,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     class Media:
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
               'js_functions_for_admin.js', 'order/client_order_admin_form.js',)
-        css = {'all': ('admin/price_field.css',)}
+        css = {'all': ('admin/price_field.css', 'admin/admin-changeform.css')}
 
     # вроде делал этот фильтр дл яотображения всписке select (autocomplete fields)
     def get_search_results(self, request, queryset, search_term):

@@ -8,6 +8,7 @@ class ClientOrderAdminForm(forms.ModelForm):
     address = forms.ModelChoiceField(
         queryset=PersonAddress.objects.all(),
         label="Адрес доставки",
+        required=False,
         widget=ModelSelect2Widget(
             model=PersonAddress,
             search_fields=('settlement__description_ua__icontains', 'settlement__description_ua__icontains'),

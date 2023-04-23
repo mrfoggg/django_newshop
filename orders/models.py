@@ -14,7 +14,8 @@ from djmoney.models.fields import MoneyField
 from djmoney.money import Money
 
 from catalog.models import Product, ProductSupplierPriceInfo
-from ROOTAPP.models import Person, Phone, PersonAddress, Supplier, Document, PriceTypePersonBuyer
+from ROOTAPP.models import Person, Phone, PersonAddress, Supplier, Document, PriceTypePersonBuyer, ContactPerson, \
+    ContactPersonShotStr
 from finance.models import PriceTypePersonSupplier
 from finance.services import get_margin, get_margin_percent, get_profitability
 from site_settings.models import APIkeyIpInfo
@@ -106,6 +107,12 @@ class ClientOrder(Document):
     user_ip_info = models.TextField('Информация по IP посетителя', blank=True, null=True, default=None)
     group_price_type = models.ForeignKey(PriceTypePersonBuyer, verbose_name='Тип оптовых цен контрагента',
                                          default=None, blank=True, null=True, on_delete=models.SET_NULL)
+    dropper = models.ForeignKey(
+        Person, limit_choices_to={"is_dropper": True}, blank=True, null=True, default=None, verbose_name='Дропер',
+        on_delete=models.SET_NULL, related_name='drop_orders'
+    )
+    contact_person = models.ForeignKey(ContactPersonShotStr, blank=True, null=True, default=None, verbose_name='Контактное лицо',
+                                       on_delete=models.SET_NULL)
 
     class Meta:
         ordering = ('created',)
@@ -118,26 +125,38 @@ class ClientOrder(Document):
     @property
     @admin.display(description='Всего товаров, шт')
     def total_quantity(self):
-        return self.products.aggregate(Sum('quantity'))['quantity__sum']
+        if self.products.exists():
+            return self.products.aggregate(Sum('quantity'))['quantity__sum']
+        else:
+            return 0
 
     @property
     @admin.display(description='Всего продано на сумму')
     def total_amount(self):
-        return Money(self.products.aggregate(total_amount=Sum(F('sale_price') * F('quantity')))['total_amount'], 'UAH')
+        if self.products.exists():
+            return Money(self.products.aggregate(total_amount=Sum(F('sale_price') * F('quantity')))['total_amount'],
+                         'UAH')
+        else:
+            return 0
 
     @property
     @admin.display(description='Всего товаров к закупке на сумму')
     def total_purchase_amount(self):
-        return Money(
-            self.products.aggregate(total_purchase_amount=Sum(F('purchase_price') * F('quantity')))[
-                'total_purchase_amount'], 'UAH')
+        if self.products.exists():
+            return Money(
+                self.products.aggregate(total_purchase_amount=Sum(F('purchase_price') * F('quantity')))[
+                    'total_purchase_amount'], 'UAH')
+        else:
+            return 0
 
     @property
     @admin.display(description='Итоговая маржа по заказу')
     def total_margin(self):
-        return Money(
-            self.products.aggregate(total_margin=Sum((F('sale_price') - F('purchase_price')) * F('quantity')))[
-                'total_margin'], 'UAH')
+        if self.products.exists():
+            return Money(
+                self.products.aggregate(total_margin=Sum((F('sale_price') - F('purchase_price')) * F('quantity')))[
+                    'total_margin'], 'UAH')
+        return 0
 
 
 class SupplierOrder(Document):
@@ -168,8 +187,8 @@ class ProductInOrder(models.Model):
                                        null=True, blank=True, related_name='products')
     supplier_order_position = models.PositiveSmallIntegerField("Позиция в заказе постащику", blank=True, null=True,
                                                                db_index=True)
-    sale_price = MoneyField('Цена продажи', max_digits=10, decimal_places=2, default_currency='UAH',
-                            default=0)
+    sale_price = MoneyField('Цена продажи', max_digits=10, decimal_places=2, default_currency='UAH', default=0)
+    group_price = MoneyField('Цена продажи опт', max_digits=10, decimal_places=2, default_currency='UAH', default=0)
     supplier_price_variants = models.ForeignKey(ProductSupplierPriceInfo, blank=True, null=True,
                                                 on_delete=models.SET_NULL,
                                                 verbose_name='Цены поставщиков для расчета РЦ')
@@ -184,7 +203,7 @@ class ProductInOrder(models.Model):
         return self.product.name
 
     @property
-    @admin.display(description='Текущая цена')
+    @admin.display(description='Текущая РЦ')
     def full_current_price_info(self):
         return self.product.full_current_price_info
 
