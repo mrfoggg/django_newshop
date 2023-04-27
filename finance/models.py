@@ -1,5 +1,5 @@
 from django.db import models
-from ROOTAPP.models import Person, Document, Supplier, PriceTypePersonSupplier
+from ROOTAPP.models import Person, Document, Supplier, PriceTypePersonSupplier, PriceTypePersonBuyer
 
 
 class Stock(models.Model):
@@ -32,8 +32,9 @@ class PriceChangelist(Document):
 
 class SupplierPriceChangelist(Document):
     person = models.ForeignKey(
-        Supplier, verbose_name="Поставщик", default=None, blank=True, null=True, on_delete=models.SET_NULL,)
-    price_type = models.ForeignKey(PriceTypePersonSupplier, null=True, on_delete=models.SET_NULL, verbose_name='Тип цен')
+        Supplier, verbose_name="Поставщик", default=None, blank=True, null=True, on_delete=models.SET_NULL, )
+    price_type = models.ForeignKey(PriceTypePersonSupplier, null=True, on_delete=models.SET_NULL,
+                                   verbose_name='Тип цен')
 
     def __str__(self):
         return f'Установка цен №{self.id} {self.created.strftime("%d.%m.%Y")} ' \
@@ -44,3 +45,20 @@ class SupplierPriceChangelist(Document):
         verbose_name_plural = "Установки цен номенклатуры поставщиков"
         ordering = ['created']
 
+
+class GroupPriceChangelist(Document):
+    person = models.ForeignKey(
+        Person, verbose_name="Оптовый покупатель", default=None, blank=True, null=True, on_delete=models.SET_NULL,
+        limit_choices_to={"is_group_buyer": True},
+    )
+    price_type = models.ForeignKey(PriceTypePersonBuyer, null=True, on_delete=models.SET_NULL,
+                                   verbose_name='Тип цен')
+
+    def __str__(self):
+        return f'Установка цен №{self.id} {self.created.strftime("%d.%m.%Y")} ' \
+               f'/ {self.person.full_name}  ("{self.price_type.name}")'
+
+    class Meta:
+        verbose_name = "Установка индивидуальных оптовых цен номенклатуры"
+        verbose_name_plural = "Установки индивидуальных оптовых цен номенклатуры"
+        ordering = ['created']

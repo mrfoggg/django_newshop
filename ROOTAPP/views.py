@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timezone
 
 import django
@@ -558,3 +559,22 @@ def ajax_updates_person_phones_info(request):
         'other_person_login': other_person_login, 'other_person_not_this_main': other_person_not_this_main,
         'contacts': contacts
     }
+
+
+@json_view()
+def ajax_phone_field(request, mode):
+    print('MODE - ', mode)
+    if mode == 'search':
+        term = request.GET.get('term')
+        cleaned_num = ''.join([str(i) for i in re.findall(r'\d+', term)]) if term else None
+        phones = Phone.objects.filter(number__contains=cleaned_num) if cleaned_num else Phone.objects.all()
+        phones_data = [{'id': f.id, 'text': f.__str__()} for f in phones]
+        print('AJAX_PHONE_FIELD -', phones_data)
+        return phones_data
+    elif mode == 'add':
+        number = PhoneNumber.from_string(request.POST.get('phone_id'), region='UA')
+        if not geocoder.description_for_number(number, "ru"):
+            return {'err': 'НЕВЕРНЫЙ НОМЕР'}
+        else:
+            created_number = Phone.objects.create(number=number)
+            return {'err': None, 'added_phone_id': created_number.id, 'added_phone_str': created_number.__str__()}

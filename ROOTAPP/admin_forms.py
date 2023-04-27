@@ -13,7 +13,8 @@ class FullAddressForm(forms.ModelForm):
         model = PersonAddress
         exclude = []
         widgets = {
-            'area': area_widget, 'settlement': settlement_widget,
+            'area': area_widget,
+            'settlement': settlement_widget,
             'warehouse': warehouse_widget, 'street': street_widget,
         }
 

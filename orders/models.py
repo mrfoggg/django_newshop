@@ -15,7 +15,7 @@ from djmoney.money import Money
 
 from catalog.models import Product, ProductSupplierPriceInfo
 from ROOTAPP.models import Person, Phone, PersonAddress, Supplier, Document, PriceTypePersonBuyer, ContactPerson, \
-    ContactPersonShotStr
+    ContactPersonShotStr, PersonPhone, PersonPhoneShotStr
 from finance.models import PriceTypePersonSupplier
 from finance.services import get_margin, get_margin_percent, get_profitability
 from site_settings.models import APIkeyIpInfo
@@ -105,14 +105,23 @@ class ClientOrder(Document):
         PersonAddress, verbose_name="Адрес доставки", default=None, blank=True, null=True, on_delete=models.SET_NULL)
     session_key = models.CharField('Ключ сессии', max_length=32, blank=True, null=True)
     user_ip_info = models.TextField('Информация по IP посетителя', blank=True, null=True, default=None)
-    group_price_type = models.ForeignKey(PriceTypePersonBuyer, verbose_name='Тип оптовых цен контрагента',
+    group_price_type = models.ForeignKey(PriceTypePersonBuyer, verbose_name='Тип оптовых цен контрагента или дропера',
                                          default=None, blank=True, null=True, on_delete=models.SET_NULL)
     dropper = models.ForeignKey(
-        Person, limit_choices_to={"is_dropper": True}, blank=True, null=True, default=None, verbose_name='Дропер',
-        on_delete=models.SET_NULL, related_name='drop_orders'
+        Person, limit_choices_to={"is_dropper": True}, blank=True, null=True, default=None,
+        verbose_name='Дропер которому будет начислена комисиия', on_delete=models.SET_NULL, related_name='drop_orders',
+        help_text='Задать дропера нельзя для если контрагент покупатель оптовик'
     )
-    contact_person = models.ForeignKey(ContactPersonShotStr, blank=True, null=True, default=None, verbose_name='Контактное лицо',
-                                       on_delete=models.SET_NULL)
+    contact_person = models.ForeignKey(
+        ContactPersonShotStr, blank=True, null=True, default=None, verbose_name='Контактное лицо получатель груза',
+        on_delete=models.SET_NULL
+    )
+    incoming_phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.CASCADE,
+                                       verbose_name='Номер указаный в заказе или с которого звонили')
+    delivery_phone = models.ForeignKey(
+        PersonPhoneShotStr, null=True, on_delete=models.CASCADE, verbose_name='Номер телефона доставки',
+        help_text='Оставить пустым если надо использовать номер телефона указаного контактного лица'
+    )
 
     class Meta:
         ordering = ('created',)
@@ -188,7 +197,7 @@ class ProductInOrder(models.Model):
     supplier_order_position = models.PositiveSmallIntegerField("Позиция в заказе постащику", blank=True, null=True,
                                                                db_index=True)
     sale_price = MoneyField('Цена продажи', max_digits=10, decimal_places=2, default_currency='UAH', default=0)
-    group_price = MoneyField('Цена продажи опт', max_digits=10, decimal_places=2, default_currency='UAH', default=0)
+    drop_price = MoneyField('Цена дроп', max_digits=10, decimal_places=2, default_currency='UAH', default=0)
     supplier_price_variants = models.ForeignKey(ProductSupplierPriceInfo, blank=True, null=True,
                                                 on_delete=models.SET_NULL,
                                                 verbose_name='Цены поставщиков для расчета РЦ')

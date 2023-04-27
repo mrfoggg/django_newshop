@@ -1,10 +1,10 @@
-function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOrderId=null) {
+function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOrderId=null, groupPriceType=null) {
     let priceVariantsSelect = row.find('.field-supplier_price_variants select');
     let initSelect = '<option value="" selected="">---------</option>'
     $.ajax({
         type: "POST",
         url: $('#ajaxUrls').data('getPriceAndProductSuppliersPricesUrl'),
-        data: {'productId': productId, 'supplierOrderId': supplierOrderId},
+        data: {'productId': productId, 'supplierOrderId': supplierOrderId, 'groupPriceType': groupPriceType},
         headers: {'X-CSRFToken': getCookie('csrftoken')},
         success: function (response) {
             priceVariantsSelect.html(initSelect);

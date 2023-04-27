@@ -3,7 +3,7 @@ from django import forms
 from django.contrib import admin
 from django.db import models
 from djmoney.forms import MoneyWidget, MoneyField
-from ROOTAPP.models import Person
+from ROOTAPP.models import Person, Phone
 from finance.admin_forms import money_widget_only_uah
 from .admin_form import ClientOrderAdminForm, ProductInClientOrderAdminInlineForm
 from .models import (BY_ONECLICK_STATUSES_CLIENT_DISPLAY, ByOneclick,
@@ -28,7 +28,9 @@ class OneClickUserSectionCommentInline(admin.TabularInline):
 
 class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     form = ProductInClientOrderAdminInlineForm
-    fields = ('product', 'full_current_price_info', 'sale_price', 'group_price', 'quantity', 'sale_total', 'margin', 'margin_total',
+    fields = ('product', 'full_current_price_info', 'sale_price',
+              'drop_price',
+              'quantity', 'sale_total', 'margin', 'margin_total',
               'margin_percent', 'profitability',
               'supplier_order', 'supplier_price_variants',
               'purchase_price', 'client_order_position', 'purchase_total')
@@ -108,25 +110,60 @@ class ByOneclickAdmin(admin.ModelAdmin):
 @admin.register(ClientOrder)
 class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     form = ClientOrderAdminForm
-    fields = (
-        ('id', 'is_active', 'mark_to_delete', 'status', 'extend_status'),
-        ('source', 'payment_type'), ('created', 'updated'),
-        ('person', 'contact_person', 'group_price_type', 'dropper'), 'address', ('total_quantity', 'total_amount', 'total_purchase_amount',
-                                                    'total_margin')
+    fieldsets = (
+        (
+            'Основное',
+            {'fields': (
+                ('id', 'created', 'updated', 'is_active', 'mark_to_delete', ),
+                ('status', 'extend_status'), ('source', 'payment_type'),
+            )},
+        ),
+        (
+            'Контактная информация',
+            {'fields': (
+                ('person', 'incoming_phone',),
+            )}
+        ),
+        (
+            'Опт',
+            {'fields': (
+                ('dropper', 'group_price_type',),
+            )}
+        ),
+        (
+            'Доставка',
+            {'fields': (
+                ('address',), ('contact_person', 'delivery_phone')
+            )}
+        ),
+        (
+            'Итого по заказу',
+            {'fields': (
+                ('total_quantity', 'total_amount', 'total_purchase_amount','total_margin'),
+            )}
+        ),
     )
     readonly_fields = ('id', 'created', 'updated', 'total_quantity', 'total_amount', 'total_purchase_amount',
                        'total_margin')
-    list_display = ('id', 'is_active', 'mark_to_delete', 'status', 'payment_type', 'source', '__str__')
+    list_display = ('id', 'is_active', 'mark_to_delete', 'status', 'payment_type', 'source', '__str__',
+                    'contact_person', 'dropper')
     list_display_links = ('__str__',)
     list_editable = ('status', 'is_active', 'mark_to_delete')
-    autocomplete_fields = ('person',)
-    search_fields = ('person__last_name',)
+    autocomplete_fields = (
+        # 'person',
+                           # 'incoming_phone'
+                           )
+    search_fields = ('person__full_name',)
     inlines = (ProductInClientOrder,)
 
     class Media:
-        js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
-              'js_functions_for_admin.js', 'order/client_order_admin_form.js',)
-        css = {'all': ('admin/price_field.css', 'admin/admin-changeform.css')}
+        js = (
+            'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
+            # "https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js",
+            #   'select2.min.js',
+            'notyf.min.js',
+            'js_functions_for_admin.js', 'order/client_order_admin_form.js', 'admin/phone_field_select2_customization.js')
+        css = {'all': ('admin/price_field.css', 'admin/admin-changeform.css', 'select2.min.css', 'notyf.min.css')}
 
     # вроде делал этот фильтр дл яотображения всписке select (autocomplete fields)
     def get_search_results(self, request, queryset, search_term):
@@ -137,8 +174,21 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
                 queryset = queryset.filter(is_active=True, mark_to_delete=False)
         return queryset, may_have_duplicates
 
+    def get_form(self, request, obj=None, **kwargs):
+        self._request_method = request.method
+        self._curent_phone_ = obj.incoming_phone
+        return super().get_form(request, obj, **kwargs)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if hasattr(self, '_request_method'):
+            phone = self._curent_phone_ if hasattr(self, '_curent_phone_') else None
+            if db_field.name == "incoming_phone" and self._request_method == 'GET':
+                kwargs["queryset"] = Phone.objects.filter(id=phone.id) if phone else Phone.objects.none()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     baton_form_includes = [
         ('order/admin_order_ajax_urls.html', 'id', 'top',),
+        ('admin/include_select2.html', 'id', 'top',),
     ]
 
 

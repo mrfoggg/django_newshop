@@ -68,12 +68,12 @@ def update_np_catalogs(request, obj_type):
                 objects_request_dict['methodProperties']['CityRef'] = (search_ref := data['city'])
                 search_name = City.objects.get(ref=search_ref)
                 message_text = f'Обновление справочника улиц по городу {search_name} <br>'
-        elif search_data:
+        elif search_data and search_data != 'None':
             objects_request_dict['methodProperties']['CityRef'] = search_data
             search_name = City.objects.get(ref=search_data)
             message_text += f'<h5>Обновление справочника улиц по городу {search_name}</h5>>'
             city = City.objects.get(ref=search_data)
-            print(f'Запрос списка улиц по городу: #{city_count} из {cities_list_len} -',  city)
+            print(f'Запрос списка улиц по городу: #{city_count} из {cities_list_len} -', city)
 
         while ln == objects_limit:
             objects_to_create, changed_objects, changed_fields = [], [], set()
@@ -90,7 +90,7 @@ def update_np_catalogs(request, obj_type):
             else:
                 ln = len(all_objects_data := objects_response_data)
 
-                print(elements_countown:=f'Получены данные {ln} элементов справочника, лимит: {objects_limit}')
+                print(elements_countown := f'Получены данные {ln} элементов справочника, лимит: {objects_limit}')
                 print()
                 message_text += f'<p>{elements_countown}</p>'
                 if not search_data:

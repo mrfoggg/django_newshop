@@ -16,7 +16,7 @@ from djmoney.money import Money
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
-from finance.models import PriceChangelist, SupplierPriceChangelist, PriceTypePersonSupplier
+from finance.models import PriceChangelist, SupplierPriceChangelist, PriceTypePersonSupplier, GroupPriceChangelist
 from ROOTAPP.models import Person, Supplier
 from finance.services import get_margin, get_margin_percent, get_profitability
 from site_settings.models import PhotoPlug
@@ -247,6 +247,22 @@ class ProductSupplierPrice(models.Model):
     @property
     def converted_price(self):
         return self.price if str(self.price.currency) == 'UAH' else convert_money(self.price, 'UAH')
+
+
+class ProductGroupPrice(models.Model):
+    price_changelist = models.ForeignKey(GroupPriceChangelist, on_delete=models.CASCADE,
+                                         verbose_name='Установка оптовых цен', related_name='products')
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name="Товар")
+    price = MoneyField(max_digits=14, decimal_places=2, default_currency='UAH', default=0)
+    position = models.PositiveIntegerField("Положение", null=True)
+
+    def __str__(self):
+        return self.product.name
+
+    class Meta:
+        verbose_name = "Оптовая цена на товар"
+        verbose_name_plural = "Оптовые цены на товары"
+        ordering = ['position']
 
 
 class ProductSupplierPriceInfo(ProductSupplierPrice):

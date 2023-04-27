@@ -21,13 +21,14 @@
                 }
             ]
         });
+        // console.log('notification', notification);
+
         actionsWhenSettlementSet($('#id_settlement').val(), true);
 
         $('#id_settlement').on('change', function (){
             $('#delivery_not_allowed_msg').remove();
             actionsWhenSettlementSet($(this).val(), false);
         });
-        // $('#id_settlement').prop('disabled', 'disabled');
 
         $('input[name="address_type"]').on('change', function (){
             showOrHideAddressFields($(this).val());
@@ -49,7 +50,6 @@
                 addressDeliveryFields.hide();
             }
         }
-        console.log('SettlementInfoUrl', $('#SettlementInfoUrl').data('url'));
         $('#id_address_type_0').parent().hide();
         function actionsWhenSettlementSet(settlement, onLoad){
             const addressDeliveryFields = $('.field-city, .field-street, .field-build, .field-comment');

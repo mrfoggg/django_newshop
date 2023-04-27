@@ -53,8 +53,8 @@ def other_person_not_main(phone_id, other_person_qs):
     other_person_not_main_qs = other_person_qs.exclude(main_phone_id=phone_id)
     if other_person_not_main_qs.exists():
         return format_html_join("", "<li><a href={} target='_blank'>{}</a></li>", ((op.admin_url, op.__str__())
-                                                                                     for op in
-                                                                                     other_person_not_main_qs))
+                                                                                   for op in
+                                                                                   other_person_not_main_qs))
     else:
         return 'Отсутствуют'
 
@@ -63,7 +63,7 @@ def other_contacts(phone_id, person_id):
     other_contacts_qs = ContactPerson.objects.filter(phone_id=phone_id).exclude(person_id=person_id)
     if other_contacts_qs.exists():
         return format_html_join("", "<li><a href={} target='_blank'>{}</a></li>", ((oc.admin_url, oc.__str__())
-                                                                                     for oc in other_contacts_qs))
+                                                                                   for oc in other_contacts_qs))
     else:
         return 'Отсутствуют'
 
@@ -198,7 +198,7 @@ class Person(AbstractUser):
         main_phone = self.main_phone if self.main_phone and not self.is_supplier and not self.is_dropper else ""
         return f'{self.date_joined.strftime("%d-%m-%Y")}: ' \
                f'{self.full_name if self.full_name else self.email} {main_phone}' \
-               f'{"(поставщик)" if self.is_supplier else ""}{"(дропер)" if self.is_dropper and not self.is_supplier and not self.is_group_buyer else ""}'\
+               f'{"(поставщик)" if self.is_supplier else ""}{"(дропер)" if self.is_dropper and not self.is_supplier and not self.is_group_buyer else ""}' \
                f'{"(оптовый покупатель)" if self.is_group_buyer else ""}'
 
     def save(self, *args, **kwargs):
@@ -235,6 +235,7 @@ class ContactPerson(models.Model, PhoneInfoFieldsMixin):
     @property
     def admin_url(self):
         return reverse('admin:ROOTAPP_contactperson_change', args=[self.id])
+
 
 class ContactPersonShotStr(ContactPerson):
     class Meta:
@@ -274,6 +275,14 @@ class PersonPhone(models.Model, PhoneInfoFieldsMixin):
 
     def __str__(self):
         return f'Телефон контрагента {self.person} - {self.phone}'
+
+
+class PersonPhoneShotStr(PersonPhone):
+    class Meta:
+        proxy = True
+
+    def __str__(self):
+        return self.phone.__str__()
 
 
 class PersonAddress(models.Model):

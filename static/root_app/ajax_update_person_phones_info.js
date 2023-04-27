@@ -42,7 +42,7 @@ function ajaxUpdatePhoneInfo(phoneSelect) {
             row.find('.field-other_contacts').html(response['contacts']);
             let mainPhone = $('#id_main_phone');
             let deliveryPhone = $('#id_delivery_phone');
-            let notSelectedOption = '<option value="" selected="">---------</option>'
+            let notSelectedOption = '<option value="" selected="">---------</option>';
             mainPhone.html(notSelectedOption);
             deliveryPhone.html(notSelectedOption);
             let allPhonesFields = $('#phones-group table.inline-related tbody.djn-item .field-phone select')
