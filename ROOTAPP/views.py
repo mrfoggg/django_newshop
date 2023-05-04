@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timezone
 
 import django
-import google_auth_oauthlib.flow
+# import google_auth_oauthlib.flow
 import pytz
 from django.contrib.auth import login, logout
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -164,30 +164,30 @@ class ByNowView(View):
         return HttpResponseRedirect(reverse('root_app:checkout'))
 
 
-def request_google_auth(request):
-    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-        OAuthGoogle.get_solo().json_auth_data_file.path,
-        scopes=['https://www.googleapis.com/auth/contacts'])
+# def request_google_auth(request):
+#     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+#         OAuthGoogle.get_solo().json_auth_data_file.path,
+#         scopes=['https://www.googleapis.com/auth/contacts'])
+#
+#     flow.redirect_uri = reverse('root_app:google_response')
+#     authorization_url, state = flow.authorization_url(
+#         access_type='offline',
+#         include_granted_scopes='true')
+#     return HttpResponseRedirect(authorization_url)
 
-    flow.redirect_uri = reverse('root_app:google_response')
-    authorization_url, state = flow.authorization_url(
-        access_type='offline',
-        include_granted_scopes='true')
-    return HttpResponseRedirect(authorization_url)
-
-
-def google_response(request):
-    state = request.GET.get('state')
-    code = request.GET.get('code')
-    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-        OAuthGoogle.get_solo().json_auth_data_file.path,
-        scopes=['https://www.googleapis.com/auth/contacts'],
-        state=state)
-    flow.redirect_uri = reverse('root_app:oauth2callback')
-    authorization_response = request.build_absolute_uri()
-    flow.fetch_token(authorization_response=authorization_response)
-    credentials = flow.credentials
-    return HttpResponse(request)
+#
+# def google_response(request):
+#     state = request.GET.get('state')
+#     code = request.GET.get('code')
+#     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+#         OAuthGoogle.get_solo().json_auth_data_file.path,
+#         scopes=['https://www.googleapis.com/auth/contacts'],
+#         state=state)
+#     flow.redirect_uri = reverse('root_app:oauth2callback')
+#     authorization_response = request.build_absolute_uri()
+#     flow.fetch_token(authorization_response=authorization_response)
+#     credentials = flow.credentials
+#     return HttpResponse(request)
 
 
 def oauth2callback(request):
@@ -544,33 +544,33 @@ def get_settlement_info(request):
     return response
 
 
+# для формы редактирования кнтрагента и формы заказа
 @json_view()
-def ajax_updates_person_phones_info(request):
+def ajax_updates_person_phones_info(request, mode):
     person_id = request.POST.get('person_id')
-    phone_id = request.POST.get('phone_id')
-
-    other_person_login = other_person_login_this_phone(phone_id, person_id)
-    other_person = Person.objects.filter(phones__phone_id=phone_id)
-    other_person_not_this_main = other_person_not_main(phone_id, other_person)
-    contacts = other_contacts(phone_id, person_id)
-    print('other_person_login - ', other_person_login)
-
-    return {
-        'other_person_login': other_person_login, 'other_person_not_this_main': other_person_not_this_main,
-        'contacts': contacts
-    }
+    print('MODE - ', mode)
+    if mode == 'other_persons':
+        phone_id = request.POST.get('phone_id')
+        other_person_login = other_person_login_this_phone(phone_id, person_id)
+        other_person = Person.objects.filter(phones__phone_id=phone_id).exclude(id=person_id)
+        other_person_not_this_main = other_person_not_main(phone_id, other_person)
+        return {
+            'other_person_login': other_person_login, 'other_person_not_this_main': other_person_not_this_main,
+            'contacts': other_contacts(phone_id, person_id)
+        }
+    elif mode == 'person_phones':
+        person = Person.objects.get(id=person_id)
+        print('PHONES: ', [pp.phone.get_chat_links for pp in person.phones.all()])
+        return {'person_phones': [(pp.phone.admin_link, pp.phone.get_all_chat_links) for pp in person.phones.all()]}
 
 
 @json_view()
 def ajax_phone_field(request, mode):
-    print('MODE - ', mode)
     if mode == 'search':
         term = request.GET.get('term')
         cleaned_num = ''.join([str(i) for i in re.findall(r'\d+', term)]) if term else None
         phones = Phone.objects.filter(number__contains=cleaned_num) if cleaned_num else Phone.objects.all()
-        phones_data = [{'id': f.id, 'text': f.__str__()} for f in phones]
-        print('AJAX_PHONE_FIELD -', phones_data)
-        return phones_data
+        return [{'id': f.id, 'text': f.__str__()} for f in phones]
     elif mode == 'add':
         number = PhoneNumber.from_string(request.POST.get('phone_id'), region='UA')
         if not geocoder.description_for_number(number, "ru"):
@@ -578,3 +578,19 @@ def ajax_phone_field(request, mode):
         else:
             created_number = Phone.objects.create(number=number)
             return {'err': None, 'added_phone_id': created_number.id, 'added_phone_str': created_number.__str__()}
+
+
+@json_view()
+def ajax_person_field(request, mode):
+    # print('mode- ', mode)
+    if mode == 'search':
+        term = request.GET.get('term')
+        persons = Person.objects.filter(full_name__icontains=term) if term else Person.objects.all()
+    elif mode == 'add':
+        full_name = request.POST.get('full_name').split()
+        last_name, first_name, = full_name[0].title(), full_name[1].title(),
+        middle_name = full_name[2].title() if len(full_name) > 2 else None
+        created_person = Person.objects.create(last_name=last_name, first_name=first_name, middle_name=middle_name)
+        return {'added_person_id': created_person.id, 'added_person_str': created_person.__str__()}
+        # return {'err': 'err'}
+    return [{'id': p.id, 'text': p.__str__()} for p in persons]

@@ -2,8 +2,12 @@
      data-supplier-price-by-price-item-id-url="{% url 'finance:ajax_get_supplier_price_by_price_item_id' %}"
      data-ajax-get-calculated-finance-for-price-list-url="{% url 'finance:ajax_get_calculated_finance_for_price_list' %}"
      data-get-person-info-ajax-url="{% url 'orders:get_person_info_ajax' %}"
+     data-ajax-person-field-search-url="{% url 'root_app:ajax_person_field' mode='search' %}"
      data-ajax-phone-field-search-url="{% url 'root_app:ajax_phone_field' mode='search' %}"
+     data-ajax-person-field-add-url="{% url 'root_app:ajax_person_field' mode='add' %}"
      data-ajax-phone-field-add-url="{% url 'root_app:ajax_phone_field' mode='add' %}"
+     data-get-persons="{% url 'orders:get_persons_and_contacts_by_phone_ajax' %}"
+     data-person-phones="{% url 'root_app:ajax_updates_person_phones_info' mode='person_phones' %}"
      style="display: none">
 
 </div>

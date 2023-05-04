@@ -30,23 +30,69 @@
                     ajaxUpdateFinanceCalculated(row, price, supplierPriceId, quantity, purchasePrice);
             });
             $('#id_person').change(function (){
-                console.log('id_person - ');
                 $('select#id_contact_person, select#id_address').empty();
             });
         }, 300)
-        console.log('$(\'select#id_person\')', $('select#id_person'));
+
         $('select#id_person').on('change', function (){
             getPersonInfoAjax($(this).val(), true);
-            console.log('id_person - ');
+            getPersonPhones($(this).val());
         });
 
         $('#id_dropper').change(function (){
             getPersonInfoAjax($(this).val());
-            console.log('id_dropper - ');
+        });
+
+        $('#id_incoming_phone').change(function () {
+            $('#foundedPersonsAndContacts').hide(100);
+            getPersonsByPhone($(this).val());
+        });
+
+        $('#foundedPersons').on('click', 'button.select_person', function () {
+            $('#id_person').val($(this).data('personId')).trigger('change');
+            $('#foundedPersonsAndContacts').hide(100);
         });
 
     });
 })(jQuery, undefined)
+
+function getPersonsByPhone(ph_id){
+    console.log('PHONE SELECT -', ph_id);
+    $.ajax({
+        type: "POST",
+        url: $('#ajaxUrls').data('getPersons'),
+        data: {'phone_id': ph_id},
+        headers: {'X-CSRFToken': getCookie('csrftoken')},
+        success: function (response) {
+            $('#foundedPersons').text('');
+            for (let person of response['persons']){
+                console.log(person);
+                $('#foundedPersons').append(person);
+            }
+            $('#foundedPersonsAndContacts').show(400);
+        }
+    }, 200);
+}
+
+// 'root_app:ajax_updates_person_phones_info' mode='person_phones'
+function getPersonPhones(p_id){
+    console.log('PHONE getPersonPhones -', p_id);
+    $.ajax({
+        type: "POST",
+        url: $('#ajaxUrls').data('personPhones'),
+        data: {'person_id': p_id},
+        headers: {'X-CSRFToken': getCookie('csrftoken')},
+        success: function (response) {
+            $('#personPhones').text('');
+            for (let pp of response['person_phones']) {
+                $('#personPhones').append(
+                    `<li>${pp[0]}</br>${pp[1]}</li>`
+                );
+            }
+            console.log('person_phones -', response['person_phones']);
+        }
+    }, 200);
+}
 
 
 function getPersonInfoAjax(person_id, buyerMode=false) {
@@ -68,7 +114,6 @@ function getPersonInfoAjax(person_id, buyerMode=false) {
                     $('#id_dropper').val('').prop('disabled', true);
                 }
             }
-
             for (let priceOption of response['group_price_types']) {
                 $('#id_group_price_type').children('option').last().after(`<option value="${priceOption['id']}">${priceOption['name']}</option>`);
             }

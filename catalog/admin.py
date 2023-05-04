@@ -388,7 +388,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
         formsets[3].save()
         formsets[4].save()
         formsets[5].save()
-        formsets[6].save()
+        # formsets[6].save()
 
         if added_categories_id_list:
             set_prod_pos_to_end(category_fs, added_categories_id_list)

@@ -1,7 +1,9 @@
 from pprint import pprint
 import nested_admin
+from ai_django_core.admin.model_admins.mixins import AdminNoInlinesForCreateMixin
 from django import forms
 from django.contrib import admin
+from django.db.models import OuterRef
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
 from finance.admin import PriceTypePersonBuyerInline, PriceTypePersonSupplierInline
 # from .services.telegram_servises import get_tg_username
@@ -85,7 +87,9 @@ class PhoneAdmin(admin.ModelAdmin):
 
 
 @admin.register(Person)
-class PersonAdmin(nested_admin.NestedModelAdmin):
+class PersonAdmin(
+    # AdminNoInlinesForCreateMixin,
+                  nested_admin.NestedModelAdmin):
     form = PersonAdminForm
     fieldsets = (
         ('Основные данные пользователя', {
@@ -145,6 +149,28 @@ class PersonAdmin(nested_admin.NestedModelAdmin):
         else:
             extra_context = {'init_main_phone_id': '', 'init_delivery_phone_id': ''}
         return super().changeform_view(request, obj_id, form_url, extra_context=extra_context)
+
+    def get_readonly_fields(self, request, obj=None):
+        if not obj:
+            return self.readonly_fields + ('main_phone', 'delivery_phone')
+        else:
+            return self.readonly_fields
+
+    def get_form(self, request, obj=None, **kwargs):
+        self._request_method = request.method
+        self._obj = obj
+        return super().get_form(request, obj, **kwargs)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if hasattr(self, '_request_method'):
+            if db_field.name == "delivery_phone" and self._request_method == 'GET':
+                kwargs["queryset"] = Phone.objects.filter(personphone__person=self._obj)
+            if db_field.name == "main_phone" and self._request_method == 'GET':
+                person_this_phone = Person.objects.filter(main_phone_id=OuterRef('id')).exclude(
+                    id=self._obj.id).values('id')[:1]
+                kwargs["queryset"] = Phone.objects.annotate(ptp=person_this_phone).filter(personphone__person=self._obj,
+                                                                                          ptp__isnull=True)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     baton_form_includes = [
         ('root_app/ajax_adresses_for_person_forms.html', 'id', 'top',),

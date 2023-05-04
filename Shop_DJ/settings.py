@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'django_extensions',
+    # 'django_extensions',
     'django.contrib.sites',  # новый
 
     'allauth',  # новый
@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     'phonenumber_field',
     'babel',
     'baton.autodiscover',
+    'ai_django_core',
 ]
 SITE_ID = 1
 
@@ -128,7 +129,7 @@ WSGI_APPLICATION = 'Shop_DJ.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'shop_dj_db_4',
+        'NAME': 'shop_dj_db',
         'USER': 'shop_dj_admin',
         'PASSWORD': '7898',
         'HOST': '127.0.0.1',

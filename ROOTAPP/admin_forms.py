@@ -38,10 +38,10 @@ class PersonPhonesAdminFormset(forms.models.BaseInlineFormSet):
                 if form.cleaned_data['phone'] == self.instance.delivery_phone:
                     raise ValidationError('Нельзя отвязать номер указаный как номер для доставки')
 
+
 class PersonAdminForm(forms.ModelForm):
     def clean(self):
         self.cleaned_data['first_name'] = self.cleaned_data['first_name'].title()
         self.cleaned_data['last_name'] = self.cleaned_data['last_name'].title()
         if self.cleaned_data['middle_name']:
             self.cleaned_data['middle_name'] = self.cleaned_data['middle_name'].title()
-

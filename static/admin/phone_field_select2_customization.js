@@ -8,7 +8,7 @@ $(document).ready(function (){
                 if (searchNumber.length===9){
                     setTimeout(function (){
                         $('#createNumber').html(
-                            `<button style="width: 100%" type="button" className="btn btn-primary" onClick='ajaxAddNumber(${searchNumber})'>
+                            `<button style="width: 100%" type="button" class="btn btn-primary" onClick='ajaxAddNumber(${searchNumber})'>
                                    Сохранить новый номер
                             </button>`
                         ).find('button').focus();
@@ -17,7 +17,7 @@ $(document).ready(function (){
                 return {results: data}
             }
         },
-        placeholder: "Put some text...",
+        placeholder: "номер для поиска или создания",
         allowClear: true,
         language: {
             noResults: function() {
@@ -32,7 +32,7 @@ $(document).ready(function (){
         }
     }).on('select2:open', function (){
         $('.select2-search__field').mask("99  999-99-99",);
-    }).next().css({width: '18rem',});
+    }).next().css({width: '24rem',});
 });
 
 function ajaxAddNumber(number) {

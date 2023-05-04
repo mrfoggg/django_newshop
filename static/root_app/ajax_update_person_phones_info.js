@@ -61,16 +61,20 @@ function ajaxUpdatePhoneInfo(phoneSelect) {
             }
             if (newMainPhoneId){
                 mainPhone.val(newMainPhoneId);
-            } else {
+            } else if ($('#personAjaxUrls').data('initMainPhoneId')!='None') {
                 mainPhone.val($('#personAjaxUrls').data('initMainPhoneId'));
+            } else {
+                mainPhone.val('');
             }
             if (newDeliveryPhoneId){
                 deliveryPhone.val(newDeliveryPhoneId);
-            } else {
+            } else if ($('#personAjaxUrls').data('initDeliveryPhoneId')!='None') {
                 deliveryPhone.val($('#personAjaxUrls').data('initDeliveryPhoneId'));
+            } else {
+                deliveryPhone.val('');
             }
 
-            console.log('DATA - ', $('#personAjaxUrls').data());
+            // console.log('DATA - ', $('#personAjaxUrls').data());
 
             console.log('=================');
         }

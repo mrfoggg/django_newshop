@@ -105,21 +105,21 @@ class ClientOrder(Document):
         PersonAddress, verbose_name="Адрес доставки", default=None, blank=True, null=True, on_delete=models.SET_NULL)
     session_key = models.CharField('Ключ сессии', max_length=32, blank=True, null=True)
     user_ip_info = models.TextField('Информация по IP посетителя', blank=True, null=True, default=None)
-    group_price_type = models.ForeignKey(PriceTypePersonBuyer, verbose_name='Тип оптовых цен контрагента или дропера',
+    group_price_type = models.ForeignKey(PriceTypePersonBuyer, verbose_name='Тип оптовых цен',
                                          default=None, blank=True, null=True, on_delete=models.SET_NULL)
     dropper = models.ForeignKey(
         Person, limit_choices_to={"is_dropper": True}, blank=True, null=True, default=None,
-        verbose_name='Дропер которому будет начислена комисиия', on_delete=models.SET_NULL, related_name='drop_orders',
+        verbose_name='Дропер', on_delete=models.SET_NULL, related_name='drop_orders',
         help_text='Задать дропера нельзя для если контрагент покупатель оптовик'
     )
     contact_person = models.ForeignKey(
-        ContactPersonShotStr, blank=True, null=True, default=None, verbose_name='Контактное лицо получатель груза',
+        ContactPersonShotStr, blank=True, null=True, default=None, verbose_name='Получатель груза',
         on_delete=models.SET_NULL
     )
     incoming_phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.CASCADE,
-                                       verbose_name='Номер указаный в заказе или с которого звонили')
+                                       verbose_name='Входящий номер')
     delivery_phone = models.ForeignKey(
-        PersonPhoneShotStr, null=True, on_delete=models.CASCADE, verbose_name='Номер телефона доставки',
+        PersonPhoneShotStr, null=True, blank=True, on_delete=models.CASCADE, verbose_name='Номер телефона доставки',
         help_text='Оставить пустым если надо использовать номер телефона указаного контактного лица'
     )
 

@@ -5,11 +5,10 @@ import ipinfo
 import jsonview
 import requests
 from django.http import JsonResponse
-from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.urls import reverse
+from django.utils.safestring import mark_safe
 from jsonview.decorators import json_view
-from oauth2client.client import AccessTokenCredentials, Credentials
+# from oauth2client.client import AccessTokenCredentials, Credentials
 from phonenumber_field.phonenumber import PhoneNumber
 from phonenumbers import geocoder
 
@@ -98,3 +97,21 @@ def get_person_info_ajax(request):
     return {
         'dropper_available': dropper_available, 'group_price_types': group_price_types
     }
+
+
+@json_view
+def get_persons_and_contacts_by_phone_ajax(request):
+    phone_id = request.POST.get('phone_id')
+    p_items = []
+    for p in Person.objects.filter(phones__phone_id=phone_id):
+        mark_list = []
+        if str(p.main_phone_id) == phone_id:
+            mark_list.append('Номер входа')
+        if str(p.delivery_phone_id) == phone_id:
+            mark_list.append('Номер доставки')
+        mark_text = ', '.join(mark_list)
+        total_mark_text = f' - ({mark_text})' if mark_text else ''
+        item = f'<li><button type="button" data-person-id={p.id} ' \
+               f'class="select_person btn btn-secondary">выбрать контрагента</button> - {p.__str__()}{total_mark_text}</li>'
+        p_items.append(mark_safe(item))
+    return {'persons': p_items}

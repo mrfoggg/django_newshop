@@ -5,6 +5,13 @@ from catalog.models import ProductSupplierPrice, ProductSupplierPriceInfo
 
 
 class ClientOrderAdminForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['person'].widget.can_view_related = False
+        self.fields['person'].widget.can_add_related = False
+        self.fields['incoming_phone'].widget.can_add_related = False
+        self.fields['incoming_phone'].widget.can_view_related = False
+
     address = forms.ModelChoiceField(
         queryset=PersonAddress.objects.all(),
         label="Адрес доставки",

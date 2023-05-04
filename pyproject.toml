@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "shop-dj"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "shop_dj"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+django-baton = "^2.7.1"
+django = "^4.2"
+django-allauth = "^0.54.0"
+django-otp-twilio = "^1.0.3"
+django-otp = "^1.1.6"
+django-mptt = "^0.14.0"
+django-select2 = "^8.1.1"
+django-summernote = "^0.8.20.0"
+django-nested-admin = "^4.0.2"
+django-admin-sortable2 = "^2.1.8"
+django-money = "^3.1.0"
+sorl-thumbnail = "^12.9.0"
+django-svg-image-form-field = "^1.0.1"
+django-solo = "^2.0.0"
+django-phonenumber-field = "^7.1.0"
+psycopg2-binary = "^2.9.6"
+django-phonenumbers = "^1.0.1"
+django-redis = "^5.2.0"
+django-jsonview = "^2.0.0"
+deepdiff = "^6.3.0"
+ipinfo = "^4.4.2"
+setuptools = "^67.7.2"
+ai-django-core = "^7.0.0"
+
+
+[tool.poetry.group.dev.dependencies]
+django-stubs-ext = "^4.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

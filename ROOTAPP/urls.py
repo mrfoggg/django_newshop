@@ -3,10 +3,14 @@ from django.urls import path
 from ROOTAPP.views import (ByNowView, CheckoutView, ProductActionsView,
                            add_email, del_user_phone,
                            get_and_check_registration_phone,
-                           get_registration_name, google_response, logout_view,
-                           regenerate_sms_token, request_google_auth,
+                           get_registration_name,
+    # google_response,
+                           logout_view,
+                           regenerate_sms_token,
+    # request_google_auth,
                            update_user_personal, update_user_phones,
-                           verify_sms_token, get_settlement_info, ajax_updates_person_phones_info, ajax_phone_field)
+                           verify_sms_token, get_settlement_info, ajax_updates_person_phones_info, ajax_phone_field,
+                           ajax_person_field)
 
 app_name = 'root_app'
 urlpatterns = [
@@ -23,8 +27,9 @@ urlpatterns = [
     path('update_user_phones/', update_user_phones, name='update_user_phones'),
     path('del_user_phone/', del_user_phone, name='del_user_phone'),
     path('get_settlement_info/', get_settlement_info, name='get_settlement_info'),
-    path('ajax_updates_person_phones_info/', ajax_updates_person_phones_info, name='ajax_updates_person_phones_info'),
+    path('ajax_updates_person_phones_info/<str:mode>', ajax_updates_person_phones_info, name='ajax_updates_person_phones_info'),
     path('ajax_phone_field/<str:mode>', ajax_phone_field, name='ajax_phone_field'),
+    path('ajax_person_field/<str:mode>', ajax_person_field, name='ajax_person_field'),
     # path('request_google_auth/', request_google_auth, name='request_google_auth'),
     # path('google_response/', google_response, name='google_response'),
 ]

@@ -27,9 +27,32 @@ PERSON_SOURCE = (
 )
 
 
+def get_chat_links_func(self, only_exist=True):
+    def getlink(messenger):
+        # ('' if only_exist else '</br>')
+        return {
+            1: '<a href = "viber://chat?number=%(number)s" > %(messenger)s</a> ',
+            2: '<a href="tg://resolve?domain=%(telegram_username)s" target="_blank">%(messenger)s</a>'
+            if self.telegram_username else '<a href="https://t.me/+%(number)s" target="_blank">%(messenger)s</a>',
+            3: '<a href="https://wa.me/%(number)s" >%(messenger)s</a>'
+        }[messenger.type] % {
+            'number': str(self.number)[1:],
+            'full_number': self.number,
+            'messenger': messenger.__str__(),
+            'telegram_username': self.telegram_username
+        }
+
+    return format_html(
+        ', '.join([getlink(m) for m in (self.messengers.all() if only_exist else Messenger.objects.all())]) +
+        ('' if only_exist else f'<a href="tel:+{self.number}" > - позвонить</a')
+    )
+
+
+
 def other_person(phone_id, person_id):
     if phone_id:
-        return Person.objects.filter(phones__phone_id=phone_id).exclude(phones__person_id=person_id)
+        # return Person.objects.filter(phones__phone_id=phone_id).exclude(phones__person_id=person_id)
+        return Person.objects.filter(phones__phone_id=phone_id).exclude(id=person_id)
     else:
         return Person.objects.none()
 
@@ -140,25 +163,26 @@ class Phone(models.Model):
                                          verbose_name='Имя пользователя в телеграмм')
 
     def __str__(self):
-        return get_phone_full_str(self.number)
+        mess_list = [m.__str__() for m in self.messengers.all()]
+        mess_str = f' / {", ".join(mess_list)}' if mess_list else ''
+        return get_phone_full_str(self.number) + mess_str
 
     @property
-    @admin.display(description="Ссылки на мессенжеры")
+    @admin.display(description="Ссылки на cуществующие мессенжеры")
     def get_chat_links(self):
-        def getlink(messenger):
-            return {
-                       1: '<a href = "viber://chat?number=%(number)s" > %(messenger)s</a> ',
-                       2: '<a href="tg://resolve?domain=%(telegram_username)s">%(messenger)s</a>'
-                       if self.telegram_username else "Telegram: не указан логин",
-                       3: '<a href="https://wa.me/%(number)s" target="_blank">%(messenger)s</a>'
-                   }[messenger.type] % {
-                       'number': str(self.number)[1:],
-                       'full_number': self.number,
-                       'messenger': messenger.__str__(),
-                       'telegram_username': self.telegram_username
-                   }
+        return get_chat_links_func(self)
 
-        return format_html(', '.join([getlink(m) for m in self.messengers.all()]))
+    @property
+    @admin.display(description="Все ссылки на мессенжеры")
+    def get_all_chat_links(self):
+        return get_chat_links_func(self, False)
+
+    @property
+    def admin_link(self):
+        return format_html(
+            f'<a href="{reverse("admin:ROOTAPP_phone_change", args=[self.id])}" target="_blank"'
+            f'style="font-weight:600">{self.__str__()}</a>'
+        )
 
     class Meta:
         verbose_name = "Номер телефона"
@@ -203,7 +227,8 @@ class Person(AbstractUser):
 
     def save(self, *args, **kwargs):
         self.full_name = get_full_name(self)
-        self.username = self.id
+        if not self.username:
+            self.username = uuid.uuid4()
         super().save(*args, **kwargs)
 
     @property

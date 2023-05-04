@@ -162,7 +162,8 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
             # "https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js",
             #   'select2.min.js',
             'notyf.min.js',
-            'js_functions_for_admin.js', 'order/client_order_admin_form.js', 'admin/phone_field_select2_customization.js')
+            'js_functions_for_admin.js', 'order/client_order_admin_form.js',
+            'admin/phone_field_select2_customization.js', 'admin/person_field_select2_customization.js')
         css = {'all': ('admin/price_field.css', 'admin/admin-changeform.css', 'select2.min.css', 'notyf.min.css')}
 
     # вроде делал этот фильтр дл яотображения всписке select (autocomplete fields)
@@ -176,19 +177,25 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         self._request_method = request.method
-        self._curent_phone_ = obj.incoming_phone
+        self._curent_phone_ = obj.incoming_phone if obj else None
+        self._curent_person_ = obj.person if obj else None
         return super().get_form(request, obj, **kwargs)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if hasattr(self, '_request_method'):
             phone = self._curent_phone_ if hasattr(self, '_curent_phone_') else None
+            person = self._curent_person_ if hasattr(self, '_curent_person_') else None
             if db_field.name == "incoming_phone" and self._request_method == 'GET':
                 kwargs["queryset"] = Phone.objects.filter(id=phone.id) if phone else Phone.objects.none()
+            if db_field.name == "person" and self._request_method == 'GET':
+                kwargs["queryset"] = Person.objects.filter(id=person.id) if person else Person.objects.none()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     baton_form_includes = [
         ('order/admin_order_ajax_urls.html', 'id', 'top',),
         ('admin/include_select2.html', 'id', 'top',),
+        ('order/person_phones.html', 'person', 'bottom',),
+        ('order/founded_persons.html', 'incoming_phone', 'bottom',),
     ]
 
 
