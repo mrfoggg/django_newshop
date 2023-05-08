@@ -111,7 +111,22 @@ def get_persons_and_contacts_by_phone_ajax(request):
             mark_list.append('Номер доставки')
         mark_text = ', '.join(mark_list)
         total_mark_text = f' - ({mark_text})' if mark_text else ''
-        item = f'<li><button type="button" data-person-id={p.id} ' \
-               f'class="select_person btn btn-secondary">выбрать контрагента</button> - {p.__str__()}{total_mark_text}</li>'
+        item = f'<li><button type="button" data-person-id={p.id} data-person-name="{p.__str__()}"' \
+               f'class="select_person my_admin_btn">выбрать контрагента</button> - <span>{p.__str__()}{total_mark_text}</span></li>'
         p_items.append(mark_safe(item))
     return {'persons': p_items}
+
+
+# для buttonAddNumberToPersonAjax в client_order_admin_form
+@json_view
+def button_add_number_to_person_ajax(request):
+    data = request.POST
+    mode = data.get('mode')
+    person_id, phone_id = data.get('person_id'), data.get('phone_id')
+    if mode == 'check':
+        show_button = not PersonPhone.objects.filter(person_id=person_id, phone_id=phone_id).exists()
+        return {'show_button': show_button}
+    if mode == 'add':
+        PersonPhone.objects.create(person_id=person_id, phone_id=phone_id)
+        return {}
+

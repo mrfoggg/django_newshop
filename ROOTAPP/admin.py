@@ -128,7 +128,7 @@ class PersonAdmin(
     readonly_fields = ('full_name', 'date_joined', 'last_login', 'id', 'source_type', 'source_person')
 
     class Media:
-        css = {"all": ("root_app/person_form.css", 'admin/admin-changeform.css')}
+        css = {"all": ("root_app/person_form.css", 'admin/order-admin-changeform.css')}
         js = (
             'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
 
@@ -194,7 +194,7 @@ class PersonAddressAdmin(admin.ModelAdmin):
         #   с этой строкй пишет что цсс дублируется
         # css = {"all": ("select2.min.css")}
 
-        css = {"all": ("notyf.min.css", 'admin/admin-changeform.css')}
+        css = {"all": ("notyf.min.css", 'admin/order-admin-changeform.css')}
 
     def get_readonly_fields(self, request, obj=None):
         new_rof = []

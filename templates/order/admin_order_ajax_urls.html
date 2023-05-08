@@ -8,6 +8,9 @@
      data-ajax-phone-field-add-url="{% url 'root_app:ajax_phone_field' mode='add' %}"
      data-get-persons="{% url 'orders:get_persons_and_contacts_by_phone_ajax' %}"
      data-person-phones="{% url 'root_app:ajax_updates_person_phones_info' mode='person_phones' %}"
+{#     buttonAddNumberToPersonAjax#}
+     data-add-phone-to-person="{% url 'orders:button_add_number_to_person_ajax' %}"
+     data-change-phone-parameters="{% url 'root_app:ajax_change_phone_parameters' %}"
      style="display: none">
 
 </div>

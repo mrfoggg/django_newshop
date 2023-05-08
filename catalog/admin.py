@@ -374,7 +374,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
 
     class Media:
         css = {
-            "all": ("admin/admin-changeform.css",)
+            "all": ("admin/order-admin-changeform.css",)
         }
 
     def save_related(self, request, form, formsets, change):

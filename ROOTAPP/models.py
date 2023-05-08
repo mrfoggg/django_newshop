@@ -43,10 +43,10 @@ def get_chat_links_func(self, only_exist=True):
         }
 
     return format_html(
+        ('' if only_exist else 'СВЯЗАТЬСЯ: ') +
         ', '.join([getlink(m) for m in (self.messengers.all() if only_exist else Messenger.objects.all())]) +
-        ('' if only_exist else f'<a href="tel:+{self.number}" > - позвонить</a')
+        ('' if only_exist else f' - <a href="tel:{self.number}">позвонить</a>')
     )
-
 
 
 def other_person(phone_id, person_id):
@@ -155,6 +155,14 @@ def get_phone_full_str(number):
     return str(f'{phone} ({region_code}, {phone_info})')
 
 
+def get_phone_str(number):
+    region_code = region_code_for_number(number)
+    phone_str = str(number)
+    formatted_phone = f"{phone_str[0:3]} ({phone_str[3:6]}) {phone_str[6:9]} {phone_str[9:11]} {phone_str[11:]}"
+    phone = formatted_phone if region_code == 'UA' else phone_str
+    return phone
+
+
 class Phone(models.Model):
     number = PhoneNumberField(blank=True, help_text='Номер телефона', unique=True)
     messengers = models.ManyToManyField(
@@ -166,6 +174,10 @@ class Phone(models.Model):
         mess_list = [m.__str__() for m in self.messengers.all()]
         mess_str = f' / {", ".join(mess_list)}' if mess_list else ''
         return get_phone_full_str(self.number) + mess_str
+
+    @property
+    def phone_shot_str(self):
+        return get_phone_str(self.number)
 
     @property
     @admin.display(description="Ссылки на cуществующие мессенжеры")
@@ -181,7 +193,7 @@ class Phone(models.Model):
     def admin_link(self):
         return format_html(
             f'<a href="{reverse("admin:ROOTAPP_phone_change", args=[self.id])}" target="_blank"'
-            f'style="font-weight:600">{self.__str__()}</a>'
+            f'style="font-weight:600">{self.phone_shot_str}</a>'
         )
 
     class Meta:
@@ -219,7 +231,7 @@ class Person(AbstractUser):
         verbose_name_plural = 'Контрагенты'
 
     def __str__(self):
-        main_phone = self.main_phone if self.main_phone and not self.is_supplier and not self.is_dropper else ""
+        main_phone = self.main_phone.phone_shot_str if self.main_phone and not self.is_supplier and not self.is_dropper else ""
         return f'{self.date_joined.strftime("%d-%m-%Y")}: ' \
                f'{self.full_name if self.full_name else self.email} {main_phone}' \
                f'{"(поставщик)" if self.is_supplier else ""}{"(дропер)" if self.is_dropper and not self.is_supplier and not self.is_group_buyer else ""}' \

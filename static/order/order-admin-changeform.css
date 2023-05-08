@@ -1,0 +1,20 @@
+.person_phone_ajax {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4rem;
+    padding: .5rem 1rem;
+}
+.person_phone_ajax:nth-child(odd) {
+    background: rgb(255, 238, 184);
+}
+.person_phone_ajax:nth-child(even) {
+    background: rgb(195, 245, 228);
+}
+.person_phone_ajax__info span {
+    display: block;
+}
+
+.person_phone_ajax__buttons {
+    display: flex;
+}

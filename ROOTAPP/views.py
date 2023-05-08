@@ -1,4 +1,5 @@
 import re
+from collections import namedtuple
 from datetime import datetime, timezone
 
 import django
@@ -19,7 +20,7 @@ from sorl.thumbnail import get_thumbnail
 from catalog.models import Product
 from ROOTAPP.forms import PersonalInfoForm, PersonEmailForm, PersonForm
 from ROOTAPP.models import Person, PersonPhone, Phone, get_phone_full_str, other_person_login_this_phone, \
-    other_person_not_main, ContactPerson, other_contacts
+    other_person_not_main, ContactPerson, other_contacts, Messenger
 from nova_poshta.models import Settlement, Warehouse, City
 from nova_poshta.services import get_settlement_addict_info
 from servises import get_products_annotated_prices
@@ -549,8 +550,8 @@ def get_settlement_info(request):
 def ajax_updates_person_phones_info(request, mode):
     person_id = request.POST.get('person_id')
     print('MODE - ', mode)
+    phone_id = request.POST.get('phone_id')
     if mode == 'other_persons':
-        phone_id = request.POST.get('phone_id')
         other_person_login = other_person_login_this_phone(phone_id, person_id)
         other_person = Person.objects.filter(phones__phone_id=phone_id).exclude(id=person_id)
         other_person_not_this_main = other_person_not_main(phone_id, other_person)
@@ -560,8 +561,31 @@ def ajax_updates_person_phones_info(request, mode):
         }
     elif mode == 'person_phones':
         person = Person.objects.get(id=person_id)
-        print('PHONES: ', [pp.phone.get_chat_links for pp in person.phones.all()])
-        return {'person_phones': [(pp.phone.admin_link, pp.phone.get_all_chat_links) for pp in person.phones.all()]}
+        PersonPhoneInfo = namedtuple(
+            'PersonPhoneInfo', [
+                'phone_id',
+                'link', 'chats_links', 'main_number_av', 'is_main_number', 'is_delivery_number', 'viber', 'telegram',
+                'whats_up'
+            ], defaults=['', '', None, None, None, None, None, None]
+        )
+        person_phones = []
+        for pp in Person.objects.get(id=person_id).phones.all():
+            person_phones.append(PersonPhoneInfo(
+                pp.phone_id,
+                pp.phone.admin_link,  # link
+                pp.phone.get_all_chat_links,  # chats_links
+                not Person.objects.filter(main_phone_id=pp.phone_id).exclude(id=person_id).exists(),  # main_number_av
+                person.main_phone_id == pp.phone_id,  # is_main_number
+                person.delivery_phone_id == pp.phone_id,  # is_delivery_number
+                1 in pp.phone.messengers.values_list('type', flat=True),  # viber
+                2 in pp.phone.messengers.values_list('type', flat=True),  # telegram
+                3 in pp.phone.messengers.values_list('type', flat=True),  # whats_up
+
+            ))
+
+        return {
+            'person_phones': [pp._asdict() for pp in person_phones]
+        }
 
 
 @json_view()
@@ -594,3 +618,44 @@ def ajax_person_field(request, mode):
         return {'added_person_id': created_person.id, 'added_person_str': created_person.__str__()}
         # return {'err': 'err'}
     return [{'id': p.id, 'text': p.__str__()} for p in persons]
+
+
+@json_view()
+def ajax_change_phone_parameters(request):
+    data = request.POST
+    action = data.get('action')
+    person = Person.objects.get(id=data.get('person_id'))
+    phone = Phone.objects.get(id=(phone_id := data.get('phone_id')))
+    match data.get('mode'):
+        case 'main_phone':
+            if action == 'add':
+                person.main_phone_id = phone_id
+            elif action == 'remove':
+                person.main_phone_id = None
+            person.save()
+        case 'delivery_phone':
+            if action == 'add':
+                person.delivery_phone_id = phone_id
+            elif action == 'remove':
+                person.delivery_phone_id = None
+            person.save()
+        case 'viber':
+            if action == 'add':
+                phone.messengers.add(Messenger.objects.get(type=1))
+            elif action == 'remove':
+                phone.messengers.remove(Messenger.objects.get(type=1))
+            person.save()
+        case 'telegram':
+            if action == 'add':
+                phone.messengers.add(Messenger.objects.get(type=2))
+            elif action == 'remove':
+                phone.messengers.remove(Messenger.objects.get(type=2))
+            person.save()
+        case 'whatsapp':
+            if action == 'add':
+                phone.messengers.add(Messenger.objects.get(type=3))
+            elif action == 'remove':
+                phone.messengers.remove(Messenger.objects.get(type=3))
+            person.save()
+
+    return {'person_str': person.__str__()}

@@ -82,7 +82,7 @@ class PriceChangelistAdmin(nested_admin.NestedModelAdmin, ):
     inlines = (ProductPricePriceChangelistInline,)
 
     class Media:
-        css = {"all": ('admin/admin-changeform.css',)}
+        css = {"all": ('admin/order-admin-changeform.css',)}
         js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js', 'notyf.min.js',
               'js_functions_for_admin.js', 'finance/price_list_admin_form.js', 'admin/textarea-autoheight.js')
 
@@ -138,7 +138,7 @@ class GroupPriceChangelistAdmin(DynamicModelAdminMixin, nested_admin.NestedModel
         return queryset, value, hidden
 
     class Media:
-        css = {"all": ('admin/admin-changeform.css',)}
+        css = {"all": ('admin/order-admin-changeform.css',)}
         js = ('admin/textarea-autoheight.js',)
 
 

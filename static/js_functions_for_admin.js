@@ -1,3 +1,14 @@
+(function ($, undefined) {
+    // init listeners
+    Baton.Dispatcher.register('onReady', function () {
+        $('.collapse_section').click(function (){
+            $(this).parents('.admin_ajax_section').toggleClass('visible');
+            $(this).parent().next().slideToggle();
+        });
+    });
+})(jQuery, undefined)
+
+
 function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOrderId=null, groupPriceType=null) {
     let priceVariantsSelect = row.find('.field-supplier_price_variants select');
     let initSelect = '<option value="" selected="">---------</option>'

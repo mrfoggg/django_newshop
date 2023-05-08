@@ -103,7 +103,7 @@ class ByOneclickAdmin(admin.ModelAdmin):
     class Media:
         js = ('admin/textarea-autoheight.js',)
         css = {
-            "all": ('admin/admin-changeform.css',)
+            "all": ('admin/order-admin-changeform.css',)
         }
 
 
@@ -164,7 +164,8 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
             'notyf.min.js',
             'js_functions_for_admin.js', 'order/client_order_admin_form.js',
             'admin/phone_field_select2_customization.js', 'admin/person_field_select2_customization.js')
-        css = {'all': ('admin/price_field.css', 'admin/admin-changeform.css', 'select2.min.css', 'notyf.min.css')}
+        css = {'all': ('admin/price_field.css', 'admin/admin-changeform.css', 'select2.min.css', 'notyf.min.css',
+                       'order/order-admin-changeform.css')}
 
     # вроде делал этот фильтр дл яотображения всписке select (autocomplete fields)
     def get_search_results(self, request, queryset, search_term):
@@ -195,7 +196,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         ('order/admin_order_ajax_urls.html', 'id', 'top',),
         ('admin/include_select2.html', 'id', 'top',),
         ('order/person_phones.html', 'person', 'bottom',),
-        ('order/founded_persons.html', 'incoming_phone', 'bottom',),
+        # ('order/founded_persons.html', 'incoming_phone', 'bottom',),
     ]
 
 
@@ -215,7 +216,7 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     class Media:
         js = ('admin/textarea-autoheight.js',)
         css = {
-            "all": ('admin/admin-changeform.css',)
+            "all": ('admin/order-admin-changeform.css',)
         }
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):

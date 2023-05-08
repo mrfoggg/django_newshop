@@ -10,6 +10,117 @@ textarea{
     resize: none!important;
 }
 
-.field-person .select2-container--admin-autocomplete  {
-    width: 50rem!important;
+.field-person .select2-container--admin-autocomplete, .flex-container.field-person .select2-container  {
+    width: 35rem!important;
+}
+
+.admin_ajax_section {
+    margin-top: 2rem;
+    max-width: 75rem;
+    border-top: 1px solid #3FB8AF;
+    transition: all .1s ease-in-out;
+    position: relative;
+    /*padding: 3rem;*/
+}
+
+.admin_ajax_section.visible {
+
+    padding: 2rem;
+    border: 1px solid #3FB8AF;
+    border-radius: 2rem;
+}
+
+.admin_ajax_section_title {
+    display: inline-flex;
+    align-items: center;
+    position: absolute;
+    top: -1.2rem;
+    left: 1rem;
+    background: #c3f5e4;
+    padding: .5rem  1rem;
+    border-radius: 2rem;
+}
+
+.collapse_section {
+    margin-left: .8rem;
+    display: inline-block;
+    width: 1.5rem;
+    height: 1rem;
+    background-image: url("/media/icons/chevron-down.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+.collapse_section:hover {
+    cursor: pointer;
+}
+
+.admin_ajax_section__content {
+    padding: 0;
+    margin: 0;
+    display: none;
+}
+
+button.my_admin_btn {
+    border: none;
+    background: #e0ce92;
+    padding: .5em 1rem;
+    border-radius: .5rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 2px 1px 2px #888;
+    transition: all .1s ease-in-out;
+    margin-right: 1rem;
+}
+
+button.btn_yes {
+    background: #bfffb7;
+}
+button.btn_no {
+    background: #fdb3b3;
+}
+
+button.my_admin_btn:active {
+    box-shadow: none;
+    transform: scale(0.95);
+    box-shadow: 1px 1px 2px #888;
+}
+button.my_admin_btn:hover {
+    background: #d3c9ab;
+}
+
+.admin_icon {
+    display: inline-block;
+    background-repeat: no-repeat;
+    height: 1.4rem;
+    width: 1.4rem;
+}
+
+.admin_icon:nth-child(2) {
+    height: 2rem;
+    width: 2rem;
+}
+.admin_icon:not(:last-child){
+    margin-right: .5rem;
+}
+
+.icon_plus {
+    background-image: url("/media/admin/plus.svg");
+}
+.icon_cross {
+    background-image: url("/media/admin/cross.svg");
+}
+.icon_home {
+    background-image: url("/media/admin/home.svg");
+}
+.icon_delivery {
+    background-image: url("/media/admin/delivery.svg");
+}
+.icon_viber {
+    background-image: url("/media/icons/viber.svg");
+}
+.icon_telegram {
+    background-image: url("/media/icons/telegram.svg");
+}
+.icon_whatsapp {
+    background-image: url("/media/icons/whatsapp.svg");
 }
