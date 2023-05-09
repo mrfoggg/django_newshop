@@ -563,7 +563,7 @@ def ajax_updates_person_phones_info(request, mode):
         person = Person.objects.get(id=person_id)
         PersonPhoneInfo = namedtuple(
             'PersonPhoneInfo', [
-                'phone_id',
+                'phone_id', 'number',
                 'link', 'chats_links', 'main_number_av', 'is_main_number', 'is_delivery_number', 'viber', 'telegram',
                 'whats_up'
             ], defaults=['', '', None, None, None, None, None, None]
@@ -571,7 +571,7 @@ def ajax_updates_person_phones_info(request, mode):
         person_phones = []
         for pp in Person.objects.get(id=person_id).phones.all():
             person_phones.append(PersonPhoneInfo(
-                pp.phone_id,
+                pp.phone_id, str(pp.phone.number)[4:],
                 pp.phone.admin_link,  # link
                 pp.phone.get_all_chat_links,  # chats_links
                 not Person.objects.filter(main_phone_id=pp.phone_id).exclude(id=person_id).exists(),  # main_number_av
@@ -580,7 +580,6 @@ def ajax_updates_person_phones_info(request, mode):
                 1 in pp.phone.messengers.values_list('type', flat=True),  # viber
                 2 in pp.phone.messengers.values_list('type', flat=True),  # telegram
                 3 in pp.phone.messengers.values_list('type', flat=True),  # whats_up
-
             ))
 
         return {

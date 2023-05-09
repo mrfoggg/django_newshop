@@ -11,7 +11,7 @@ textarea{
 }
 
 .field-person .select2-container--admin-autocomplete, .flex-container.field-person .select2-container  {
-    width: 35rem!important;
+    width: 30rem!important;
 }
 
 .admin_ajax_section {
@@ -24,7 +24,6 @@ textarea{
 }
 
 .admin_ajax_section.visible {
-
     padding: 2rem;
     border: 1px solid #3FB8AF;
     border-radius: 2rem;
@@ -50,8 +49,17 @@ textarea{
     background-repeat: no-repeat;
     background-size: contain;
 }
+
+.collapse_section {
+    transition: transform .2s ease-in-out;
+}
+
 .collapse_section:hover {
     cursor: pointer;
+}
+.collapse_section.visible {
+    /*transform: scaleX(-1);*/
+    transform: scaleY(-1);
 }
 
 .admin_ajax_section__content {
@@ -63,13 +71,13 @@ textarea{
 button.my_admin_btn {
     border: none;
     background: #e0ce92;
-    padding: .5em 1rem;
+    padding: .3em .8rem;
     border-radius: .5rem;
     display: flex;
     align-items: center;
     box-shadow: 2px 1px 2px #888;
     transition: all .1s ease-in-out;
-    margin-right: 1rem;
+    margin-right: .8rem;
 }
 
 button.btn_yes {
@@ -95,9 +103,9 @@ button.my_admin_btn:hover {
     width: 1.4rem;
 }
 
-.admin_icon:nth-child(2) {
-    height: 2rem;
-    width: 2rem;
+.admin_icon.icon_small {
+    height: 1rem;
+    width: 1rem;
 }
 .admin_icon:not(:last-child){
     margin-right: .5rem;
@@ -123,4 +131,7 @@ button.my_admin_btn:hover {
 }
 .icon_whatsapp {
     background-image: url("/media/icons/whatsapp.svg");
+}
+.copy_text_btn span {
+    background-image: url("/media/admin/copy.svg");
 }

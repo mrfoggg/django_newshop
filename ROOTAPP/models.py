@@ -171,13 +171,11 @@ class Phone(models.Model):
                                          verbose_name='Имя пользователя в телеграмм')
 
     def __str__(self):
-        mess_list = [m.__str__() for m in self.messengers.all()]
-        mess_str = f' / {", ".join(mess_list)}' if mess_list else ''
-        return get_phone_full_str(self.number) + mess_str
+        return get_phone_full_str(self.number)
 
     @property
     def phone_shot_str(self):
-        return get_phone_str(self.number)
+        return get_phone_full_str(self.number)
 
     @property
     @admin.display(description="Ссылки на cуществующие мессенжеры")

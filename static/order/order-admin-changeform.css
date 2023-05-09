@@ -18,3 +18,28 @@
 .person_phone_ajax__buttons {
     display: flex;
 }
+
+.field-incoming_phone .related-widget-wrapper{
+    flex-grow: 0!important;
+}
+
+#addNumberButton {
+    border: 1px solid black;
+    display: flex;
+    align-items: center;
+}
+
+span.added {
+    background-image: url('/media/admin/ok.svg');
+}
+span.person {
+    background-image: url('/media/admin/person.svg');
+}
+
+.field-incoming_phone .select2-container {
+    width: 16rem!important;
+}
+
+.form-row.field-person.field-incoming_phone .flex-container.form-multiline {
+    margin-left: 0!important;
+}

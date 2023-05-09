@@ -3,10 +3,11 @@
     Baton.Dispatcher.register('onReady', function () {
         $('.collapse_section').click(function (){
             $(this).parents('.admin_ajax_section').toggleClass('visible');
-            $(this).parent().next().slideToggle();
+            $(this).toggleClass('visible').parent().next().slideToggle();
         });
     });
 })(jQuery, undefined)
+
 
 
 function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOrderId=null, groupPriceType=null) {
