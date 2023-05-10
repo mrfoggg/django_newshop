@@ -625,6 +625,8 @@ def ajax_change_phone_parameters(request):
     person = Person.objects.get(id=data.get('person_id'))
     phone = Phone.objects.get(id=(phone_id := data.get('phone_id')))
     match data.get('mode'):
+        case 'remove':
+            PersonPhone.objects.get(person_id=person.id, phone_id=phone_id).delete()
         case 'main_phone':
             if action == 'add':
                 person.main_phone_id = phone_id

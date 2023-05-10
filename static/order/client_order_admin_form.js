@@ -66,6 +66,7 @@
         buttonAddNumberShowOreHide();
         $('.flex-container.field-incoming_phone').on('click', 'button.ajax', buttonAddNumberShowOreHide);
         $('.person_phones_area').on('click', 'button.ajax', changePhoneParameters);
+        // $('#personPhones').on('click', '.person_phone_ajax .main_phone', changePhoneParameters);
     });
 })(jQuery, undefined)
 
@@ -93,14 +94,22 @@ function changePhoneParameters(){
             setTimeout(function (){
                 this_button.toggleClass('btn_yes').toggleClass('btn_no').children().first().toggleClass('icon_cross').toggleClass('icon_plus');
                 this_button.css('opacity', '1');
-                if (this_button.data('mode') == 'main_phone')
+                if (this_button.data('mode') == 'remove')
+                    this_button.parents('li').remove();
+                if (this_button.data('mode') == 'main_phone'){
                     $('.flex-container.field-person .select2-container').css('opacity', '1');
+                    this_button.siblings('.remove_person_phone').toggle();
+                }
+
                 $('#select2-id_person-container').text(response.person_str);
                 if (phoneId==$('#id_incoming_phone').val())
                     $('#id_incoming_phone').trigger('change');
                 let otherPhoneButtons = $(`.person_phone_ajax:not([data-phone-id=${phoneId}])`).children('span.person_phone_ajax__buttons');
-                if (mode=='main_phone' && action=='add')
+                if (mode=='main_phone' && action=='add') {
                     otherPhoneButtons.children('.main_phone').removeClass('btn_yes').addClass('btn_no').children().first().removeClass('icon_cross').addClass('icon_plus');
+                    otherPhoneButtons.children('.remove_person_phone').show();
+                }
+
                 if (mode=='delivery_phone' && action=='add')
                     otherPhoneButtons.children('.delivery_phone').removeClass('btn_yes').addClass('btn_no').children().first().removeClass('icon_cross').addClass('icon_plus');
             },  (new Date() - start) > 400 ? new Date() - start : 400)
@@ -162,7 +171,7 @@ function buttonAddNumberShowOreHide(){
                             <button type='button' data-mode='viber' class='ajax my_admin_btn viber'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_viber'></span></button>
                             <button type='button' data-mode='telegram' class='ajax my_admin_btn telegram'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_telegram'></span></button>
                             <button type='button' data-mode='whatsapp' class='ajax my_admin_btn whatsapp'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_whatsapp'></span></button>
-                            <button type='button' class='ajax my_admin_btn copy_text_btn' onclick="copyTextButton(${response.number})"> <span class='admin_icon'></span></button>
+                            <button type='button' class='my_admin_btn copy_text_btn' onclick="copyTextButton(${response.number})"> <span class='admin_icon'></span></button>
                         </div>`));
                         $('#incomingPhoneButtons').children('.add_to_person').addClass(response.added ? 'btn_yes' : 'btn_no').children().first().addClass(response.added ? 'icon_cross' : 'icon_plus');
                         $('#incomingPhoneButtons').children('.viber').addClass(response.viber ? 'btn_yes' : 'btn_no').children().first().addClass(response.viber ? 'icon_cross' : 'icon_plus');
@@ -221,6 +230,7 @@ function getPersonPhones(){
                         <span class="person_phone_ajax__buttons">
                              ${pp.main_number_av ? "<button type='button' data-mode='main_phone' class='ajax my_admin_btn main_phone'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_home'></span></button>" : ""}
                             <button type='button' data-mode='delivery_phone' class='ajax my_admin_btn delivery_phone'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_delivery'></span></button>
+                            <button type='button' data-mode='remove' class='ajax my_admin_btn remove_person_phone'> <span class='admin_icon icon_small icon_cross'></span><span class='admin_icon icon_person'></span></button>
                             <button type='button' data-mode='viber' class='ajax my_admin_btn viber'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_viber'></span></button>
                             <button type='button' data-mode='telegram' class='ajax my_admin_btn telegram'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_telegram'></span></button>
                             <button type='button' data-mode='whatsapp' class='ajax my_admin_btn whatsapp'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_whatsapp'></span></button>
@@ -233,6 +243,11 @@ function getPersonPhones(){
                 buttons.children('.viber').addClass(pp.viber ? 'btn_yes' : 'btn_no').children().first().addClass(pp.viber ? 'icon_cross' : 'icon_plus');
                 buttons.children('.telegram').addClass(pp.telegram ? 'btn_yes' : 'btn_no').children().first().addClass(pp.telegram ? 'icon_cross' : 'icon_plus');
                 buttons.children('.whatsapp').addClass(pp.whats_up ? 'btn_yes' : 'btn_no').children().first().addClass(pp.whats_up ? 'icon_cross' : 'icon_plus');
+                if (pp.is_main_number) {
+                    buttons.children('.remove_person_phone').hide();
+                } else {
+                    buttons.children('.remove_person_phone').show();
+                }
                 $('#personPhones').append(personPhoneRow);
             }
             setTimeout(function (){
