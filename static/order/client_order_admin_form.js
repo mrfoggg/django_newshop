@@ -118,7 +118,6 @@ function changePhoneParameters(){
 }
 
 function getPersonsByPhone(){
-
     let ph_id = $(this).val();
     if (ph_id) {
         $('#change_id_incoming_phone').show().prop('href', $('#change_id_incoming_phone').data('hrefTemplate').replace('__fk__', $(this).val()));
@@ -178,6 +177,7 @@ function buttonAddNumberShowOreHide(){
                         $('#incomingPhoneButtons').children('.telegram').addClass(response.telegram ? 'btn_yes' : 'btn_no').children().first().addClass(response.telegram ? 'icon_cross' : 'icon_plus');
                         $('#incomingPhoneButtons').children('.whatsapp').addClass(response.whats_up ? 'btn_yes' : 'btn_no').children().first().addClass(response.whats_up ? 'icon_cross' : 'icon_plus');
                         $('#incomingPhoneButton').css('opacity', '1');
+                        $('.field-incoming_phone .selection').append(`<p>${response.chats_links}</p>`);
                     }
 
                 },(new Date() - start) > 400 ? new Date() - start : 400);
