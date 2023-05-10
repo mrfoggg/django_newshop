@@ -38,15 +38,16 @@
             if ($(this).val()) {
                 $('.field-dropper, .field-address').parent().show();
                 getPersonInfoAjax($('select#id_person').val(), true);
-                $('#change_id_person').show().prop('href', $('#change_id_person').data('hrefTemplate').replace('__fk__', $(this).val()));
-                $('#delete_id_person').show().prop('href', $('#delete_id_person').data('hrefTemplate').replace('__fk__', $(this).val()));
             } else {
-                // $('.person_phones_area, #change_id_person, #delete_id_person').hide();
                 $('.field-dropper, .field-address').parent().hide();
             }
 
         });
-        $('select#id_person').change(getPersonPhones);
+        $('select#id_person').change(function () {
+            getPersonPhones();
+            $('#change_id_person').show().prop('href', $('#change_id_person').data('hrefTemplate').replace('__fk__', $(this).val()));
+            $('#delete_id_person').show().prop('href', $('#delete_id_person').data('hrefTemplate').replace('__fk__', $(this).val()));
+        });
         getPersonPhones();
         $('#id_dropper').change(function (){
             getPersonInfoAjax($(this).val());
@@ -108,9 +109,10 @@ function changePhoneParameters(){
 }
 
 function getPersonsByPhone(){
-    $('#change_id_incoming_phone').show().prop('href', $('#change_id_incoming_phone').data('hrefTemplate').replace('__fk__', $(this).val()));
+
     let ph_id = $(this).val();
     if (ph_id) {
+        $('#change_id_incoming_phone').show().prop('href', $('#change_id_incoming_phone').data('hrefTemplate').replace('__fk__', $(this).val()));
         $.ajax({
             type: "POST",
             url: $('#ajaxUrls').data('getPersons'),
@@ -123,6 +125,8 @@ function getPersonsByPhone(){
                 }
             }
         }, 200);
+    } else {
+        $('#change_id_incoming_phone').hide();
     }
 
 }
