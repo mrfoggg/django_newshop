@@ -137,7 +137,7 @@ def button_add_number_to_person_ajax(request):
     if mode == 'check':
         return PersonPhoneInfo(
             str(phone.number)[4:], phone.get_all_chat_links,
-            PersonPhone.objects.filter(person_id=person_id, phone_id=phone_id).exists(),
+            PersonPhone.objects.filter(person_id=person_id, phone_id=phone_id).exists() if person_id else None,
             1 in phone.messengers.values_list('type', flat=True),  # viber
             2 in phone.messengers.values_list('type', flat=True),  # telegram
             3 in phone.messengers.values_list('type', flat=True),  # whats_up

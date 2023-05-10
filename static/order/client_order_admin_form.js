@@ -33,21 +33,20 @@
                 $('select#id_contact_person, select#id_address').empty();
             });
         }, 300)
-
+        // в работе, проверить
         $('select#id_person, select#id_incoming_phone').on('change', function (){
             if ($(this).val()) {
-                $('.person_phones_area').show();
                 $('.field-dropper, .field-address').parent().show();
-                getPersonPhones();
                 getPersonInfoAjax($('select#id_person').val(), true);
                 $('#change_id_person').show().prop('href', $('#change_id_person').data('hrefTemplate').replace('__fk__', $(this).val()));
                 $('#delete_id_person').show().prop('href', $('#delete_id_person').data('hrefTemplate').replace('__fk__', $(this).val()));
             } else {
-                $('.person_phones_area, #change_id_person, #delete_id_person').hide();
+                // $('.person_phones_area, #change_id_person, #delete_id_person').hide();
                 $('.field-dropper, .field-address').parent().hide();
             }
 
         });
+        $('select#id_person').change(getPersonPhones);
         getPersonPhones();
         $('#id_dropper').change(function (){
             getPersonInfoAjax($(this).val());
@@ -111,18 +110,21 @@ function changePhoneParameters(){
 function getPersonsByPhone(){
     $('#change_id_incoming_phone').show().prop('href', $('#change_id_incoming_phone').data('hrefTemplate').replace('__fk__', $(this).val()));
     let ph_id = $(this).val();
-    $.ajax({
-        type: "POST",
-        url: $('#ajaxUrls').data('getPersons'),
-        data: {'phone_id': ph_id},
-        headers: {'X-CSRFToken': getCookie('csrftoken')},
-        success: function (response) {
-            $('#foundedPersons').text('');
-            for (let person of response['persons']){
-                $('#foundedPersons').append(person);
+    if (ph_id) {
+        $.ajax({
+            type: "POST",
+            url: $('#ajaxUrls').data('getPersons'),
+            data: {'phone_id': ph_id},
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function (response) {
+                $('#foundedPersons').text('');
+                for (let person of response['persons']){
+                    $('#foundedPersons').append(person);
+                }
             }
-        }
-    }, 200);
+        }, 200);
+    }
+
 }
 
 // обрабатывается вьюхой button_add_number_to_person_ajax в order.view
@@ -147,12 +149,12 @@ function buttonAddNumberShowOreHide(){
             headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function (response) {
                 if (mode!='check')
-                    $('#id_incoming_phone').trigger('change');
+                    $('#id_incoming_phone, #id_person').trigger('change');
                 setTimeout(function (){
                     if (mode == 'check') {
                         $('#incomingPhoneButtons').remove();
                         $('.flex-container.field-incoming_phone').append($.parseHTML(`<div id="incomingPhoneButtons" class="admin_ajax_section admin_ajax_section__inline">
-                            <button type='button' data-mode='add_to_person' class='ajax my_admin_btn add_to_person'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_person'></span></button>
+                            ${$('#id_person').val() ? "<button type='button' data-mode='add_to_person' class='ajax my_admin_btn add_to_person'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_person'></span></button>" : ''}
                             <button type='button' data-mode='viber' class='ajax my_admin_btn viber'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_viber'></span></button>
                             <button type='button' data-mode='telegram' class='ajax my_admin_btn telegram'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_telegram'></span></button>
                             <button type='button' data-mode='whatsapp' class='ajax my_admin_btn whatsapp'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_whatsapp'></span></button>
@@ -191,6 +193,11 @@ function buttonAddNumberShowOreHide(){
 // 'root_app:ajax_updates_person_phones_info' mode='person_phones'
 function getPersonPhones(){
     let p_id = $('select#id_person').val();
+    if (p_id) {
+        $('.person_phones_area, #change_id_person, #delete_id_person').show();
+    } else {
+        $('.person_phones_area, #change_id_person, #delete_id_person').hide();
+    }
     $('.person_phones_area').css('opacity', '.2');
     let start = +new Date();
     $.ajax({
