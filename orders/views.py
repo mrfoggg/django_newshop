@@ -1,4 +1,5 @@
 import json
+from collections import namedtuple
 
 import django
 import ipinfo
@@ -14,7 +15,7 @@ from phonenumbers import geocoder
 
 # from nova_poshta.services.google_services import create_contact
 from orders.models import ByOneclick, OneClickUserSectionComment
-from ROOTAPP.models import Person, PersonPhone, Phone
+from ROOTAPP.models import Person, PersonPhone, Phone, Messenger
 from site_settings.models import APIkeyIpInfo, OAuthGoogle
 
 
@@ -123,10 +124,47 @@ def button_add_number_to_person_ajax(request):
     data = request.POST
     mode = data.get('mode')
     person_id, phone_id = data.get('person_id'), data.get('phone_id')
+    # person = Person.objects.get(id=person_id)
+    phone = Phone.objects.get(id=phone_id)
+    action = data.get('action')
+    PersonPhoneInfo = namedtuple(
+        'PersonPhoneInfo', [
+            'number', 'chats_links', 'added', 'viber', 'telegram', 'whats_up'
+        ], defaults=['', '', None, None, None, None]
+    )
+    print('MODE - ', mode)
+    print('action - ', action)
     if mode == 'check':
-        show_button = not PersonPhone.objects.filter(person_id=person_id, phone_id=phone_id).exists()
-        return {'show_button': show_button}
-    if mode == 'add':
-        PersonPhone.objects.create(person_id=person_id, phone_id=phone_id)
+        return PersonPhoneInfo(
+            str(phone.number)[4:], phone.get_all_chat_links,
+            PersonPhone.objects.filter(person_id=person_id, phone_id=phone_id).exists(),
+            1 in phone.messengers.values_list('type', flat=True),  # viber
+            2 in phone.messengers.values_list('type', flat=True),  # telegram
+            3 in phone.messengers.values_list('type', flat=True),  # whats_up
+        )._asdict()
+        # show_button = not PersonPhone.objects.filter(person_id=person_id, phone_id=phone_id).exists()
+        # return {'show_button': show_button}
+    else:
+        match data.get('mode'):
+            case 'add_to_person':
+                if action == 'add':
+                    PersonPhone.objects.create(person_id=person_id, phone_id=phone_id)
+                elif action == 'remove':
+                    removed_pp = PersonPhone.objects.get(person_id=person_id, phone_id=phone_id).delete()
+            case 'viber':
+                if action == 'add':
+                    phone.messengers.add(Messenger.objects.get(type=1))
+                elif action == 'remove':
+                    phone.messengers.remove(Messenger.objects.get(type=1))
+            case 'telegram':
+                if action == 'add':
+                    phone.messengers.add(Messenger.objects.get(type=2))
+                elif action == 'remove':
+                    phone.messengers.remove(Messenger.objects.get(type=2))
+            case 'whatsapp':
+                if action == 'add':
+                    phone.messengers.add(Messenger.objects.get(type=3))
+                elif action == 'remove':
+                    phone.messengers.remove(Messenger.objects.get(type=3))
         return {}
 

@@ -549,7 +549,6 @@ def get_settlement_info(request):
 @json_view()
 def ajax_updates_person_phones_info(request, mode):
     person_id = request.POST.get('person_id')
-    print('MODE - ', mode)
     phone_id = request.POST.get('phone_id')
     if mode == 'other_persons':
         other_person_login = other_person_login_this_phone(phone_id, person_id)

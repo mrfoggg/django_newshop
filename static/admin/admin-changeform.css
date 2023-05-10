@@ -10,6 +10,10 @@ textarea{
     resize: none!important;
 }
 
+.flex-container.fieldBox.field-person {
+    margin-right: 2rem;
+}
+
 .field-person .select2-container--admin-autocomplete, .flex-container.field-person .select2-container  {
     width: 30rem!important;
 }
@@ -21,6 +25,15 @@ textarea{
     transition: all .1s ease-in-out;
     position: relative;
     /*padding: 3rem;*/
+}
+
+.admin_ajax_section__inline {
+    display: flex;
+    margin-top: 0;
+    border: 1px solid #3FB8AF;
+    padding: .5rem .8rem;
+    padding-right: 0;
+    border-radius: .5rem;
 }
 
 .admin_ajax_section.visible {
@@ -71,7 +84,7 @@ textarea{
 button.my_admin_btn {
     border: none;
     background: #e0ce92;
-    padding: .3em .8rem;
+    padding: .3em .5rem;
     border-radius: .5rem;
     display: flex;
     align-items: center;
@@ -119,6 +132,9 @@ button.my_admin_btn:hover {
 }
 .icon_home {
     background-image: url("/media/admin/home.svg");
+}
+.icon_person {
+    background-image: url("/media/admin/person.svg");
 }
 .icon_delivery {
     background-image: url("/media/admin/delivery.svg");

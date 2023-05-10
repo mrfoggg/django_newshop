@@ -34,19 +34,21 @@
             });
         }, 300)
 
-        $('select#id_person').on('change', function (){
+        $('select#id_person, select#id_incoming_phone').on('change', function (){
             if ($(this).val()) {
                 $('.person_phones_area').show();
                 $('.field-dropper, .field-address').parent().show();
-                getPersonPhones($(this).val());
-                getPersonInfoAjax($(this).val(), true);
+                getPersonPhones();
+                getPersonInfoAjax($('select#id_person').val(), true);
+                $('#change_id_person').show().prop('href', $('#change_id_person').data('hrefTemplate').replace('__fk__', $(this).val()));
+                $('#delete_id_person').show().prop('href', $('#delete_id_person').data('hrefTemplate').replace('__fk__', $(this).val()));
             } else {
-                $('.person_phones_area').hide();
+                $('.person_phones_area, #change_id_person, #delete_id_person').hide();
                 $('.field-dropper, .field-address').parent().hide();
             }
 
         });
-        getPersonPhones($('select#id_person').val());
+        getPersonPhones();
         $('#id_dropper').change(function (){
             getPersonInfoAjax($(this).val());
         });
@@ -59,9 +61,10 @@
             $('#id_person').val($(this).data('personId'));
         });
 
+
         $('#id_incoming_phone, #id_person').change(buttonAddNumberShowOreHide);
         buttonAddNumberShowOreHide();
-        $('.flex-container.field-incoming_phone').on('click', '#addNumberButton', addNumberToPerson);
+        $('.flex-container.field-incoming_phone').on('click', 'button.ajax', buttonAddNumberShowOreHide);
         $('.person_phones_area').on('click', 'button.ajax', changePhoneParameters);
     });
 })(jQuery, undefined)
@@ -79,7 +82,7 @@ function changePhoneParameters(){
     let start = +new Date();
     let personId = $('#id_person').val();
     let phoneId = $(this).parents('li').data('phoneId');
-    let mode = $(this).data('mode')
+    let mode = $(this).data('mode');
     let action = $(this).hasClass('btn_yes') ? 'remove' : 'add';
     $.ajax({
         type: "POST",
@@ -106,6 +109,7 @@ function changePhoneParameters(){
 }
 
 function getPersonsByPhone(){
+    $('#change_id_incoming_phone').show().prop('href', $('#change_id_incoming_phone').data('hrefTemplate').replace('__fk__', $(this).val()));
     let ph_id = $(this).val();
     $.ajax({
         type: "POST",
@@ -123,43 +127,70 @@ function getPersonsByPhone(){
 
 // обрабатывается вьюхой button_add_number_to_person_ajax в order.view
 function buttonAddNumberShowOreHide(){
-    $.ajax({
-        type: "POST",
-        url: $('#ajaxUrls').data('addPhoneToPerson'),
-        data: {mode: 'check',person_id: $('#id_person').val(), phone_id: $('#id_incoming_phone').val()},
-        headers: {'X-CSRFToken': getCookie('csrftoken')},
-        success: function (response) {
-            $('#addNumberButton').remove();
-            if (response['show_button']){
-                $('.flex-container.field-incoming_phone').append(
-                    `<button type="button" id="addNumberButton" class="btn btn-secondary">Добавить к выбраному контрагенту</button>`
-                );
-            } else {
-                $('.flex-container.field-incoming_phone').append(
-                    `<span id="addNumberButton"><span class="admin_icon added"></span><span class="admin_icon person"></span></span>`
-                );
+    console.log('THIS - ', $(this));
+    let phone_id = $('#id_incoming_phone').val();
+    if (phone_id) {
+        $('#incomingPhoneButtons').show();
+        let mode = $(this).data('mode') ? $(this).data('mode') : 'check'
+        // $('#id_person').trigger('change');
+        if (mode === 'check') {
+            $('#incomingPhoneButtons').css('opacity', '.2');
+        }
+
+        let start = +new Date();
+        let action = $(this).hasClass('btn_yes') ? 'remove' : 'add';
+
+        $.ajax({
+            type: "POST",
+            url: $('#ajaxUrls').data('addPhoneToPerson'),
+            data: {mode: mode ? mode : 'check', person_id: $('#id_person').val(), phone_id: phone_id, action: action},
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function (response) {
+                if (mode!='check')
+                    $('#id_incoming_phone').trigger('change');
+                setTimeout(function (){
+                    if (mode == 'check') {
+                        $('#incomingPhoneButtons').remove();
+                        $('.flex-container.field-incoming_phone').append($.parseHTML(`<div id="incomingPhoneButtons" class="admin_ajax_section admin_ajax_section__inline">
+                            <button type='button' data-mode='add_to_person' class='ajax my_admin_btn add_to_person'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_person'></span></button>
+                            <button type='button' data-mode='viber' class='ajax my_admin_btn viber'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_viber'></span></button>
+                            <button type='button' data-mode='telegram' class='ajax my_admin_btn telegram'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_telegram'></span></button>
+                            <button type='button' data-mode='whatsapp' class='ajax my_admin_btn whatsapp'> <span class='admin_icon icon_small'></span><span class='admin_icon icon_whatsapp'></span></button>
+                            <button type='button' class='ajax my_admin_btn copy_text_btn' onclick="copyTextButton(${response.number})"> <span class='admin_icon'></span></button>
+                        </div>`));
+                        $('#incomingPhoneButtons').children('.add_to_person').addClass(response.added ? 'btn_yes' : 'btn_no').children().first().addClass(response.added ? 'icon_cross' : 'icon_plus');
+                        $('#incomingPhoneButtons').children('.viber').addClass(response.viber ? 'btn_yes' : 'btn_no').children().first().addClass(response.viber ? 'icon_cross' : 'icon_plus');
+                        $('#incomingPhoneButtons').children('.telegram').addClass(response.telegram ? 'btn_yes' : 'btn_no').children().first().addClass(response.telegram ? 'icon_cross' : 'icon_plus');
+                        $('#incomingPhoneButtons').children('.whatsapp').addClass(response.whats_up ? 'btn_yes' : 'btn_no').children().first().addClass(response.whats_up ? 'icon_cross' : 'icon_plus');
+                        $('#incomingPhoneButton').css('opacity', '1');
+                    }
+
+                },(new Date() - start) > 400 ? new Date() - start : 400);
+
             }
-
-        }
-    }, 200);
+        }, 200);
+    } else {
+        $('#incomingPhoneButtons').hide();
+    }
 }
 
-function addNumberToPerson(){
-    console.log('addNumberToPerson');
-
-    $.ajax({
-        type: "POST",
-        url: $('#ajaxUrls').data('addPhoneToPerson'),
-        data: {mode: 'add',person_id: $('#id_person').val(), phone_id: $('#id_incoming_phone').val()},
-        headers: {'X-CSRFToken': getCookie('csrftoken')},
-        success: function (response) {
-            $('#id_person').trigger('change');
-        }
-    }, 200);
-}
+// function addNumberToPerson(){
+//     console.log('addNumberToPerson');
+//
+//     $.ajax({
+//         type: "POST",
+//         url: $('#ajaxUrls').data('addPhoneToPerson'),
+//         data: {mode: 'add',person_id: $('#id_person').val(), phone_id: $('#id_incoming_phone').val()},
+//         headers: {'X-CSRFToken': getCookie('csrftoken')},
+//         success: function (response) {
+//             $('#id_person').trigger('change');
+//         }
+//     }, 200);
+// }
 
 // 'root_app:ajax_updates_person_phones_info' mode='person_phones'
-function getPersonPhones(p_id){
+function getPersonPhones(){
+    let p_id = $('select#id_person').val();
     $('.person_phones_area').css('opacity', '.2');
     let start = +new Date();
     $.ajax({
@@ -204,6 +235,7 @@ function getPersonPhones(p_id){
 // провериь и установить доступность выбора дропера для заказов с этим контрагентом, обнвоить доступне оптовые цены
 // для контрагента или указаного дропера
 function getPersonInfoAjax(person_id, buyerMode=false) {
+    console.log('person_id', person_id);
     $.ajax({
         type: "POST",
         url: $('#ajaxUrls').data('getPersonInfoAjaxUrl'),
