@@ -63,7 +63,7 @@
 
 
         $('#id_incoming_phone, #id_person').change(buttonAddNumberShowOreHide);
-        buttonAddNumberShowOreHide();
+        // $('#id_incoming_phone').change(buttonAddNumberShowOreHide);
         $('.flex-container.field-incoming_phone').on('click', 'button.ajax', buttonAddNumberShowOreHide);
         $('.person_phones_area').on('click', 'button.ajax', changePhoneParameters);
         // $('#personPhones').on('click', '.person_phone_ajax .main_phone', changePhoneParameters);
@@ -141,12 +141,13 @@ function getPersonsByPhone(){
 
 // обрабатывается вьюхой button_add_number_to_person_ajax в order.view
 function buttonAddNumberShowOreHide(){
-    console.log('THIS - ', $(this));
+        // $('#id_person').trigger('change');
+    console.log('THIS - ', this);
     let phone_id = $('#id_incoming_phone').val();
+    $('.callContactPhone').remove();
     if (phone_id) {
         $('#incomingPhoneButtons').show();
         let mode = $(this).data('mode') ? $(this).data('mode') : 'check'
-        // $('#id_person').trigger('change');
         if (mode === 'check') {
             $('#incomingPhoneButtons').css('opacity', '.2');
         }
@@ -161,7 +162,8 @@ function buttonAddNumberShowOreHide(){
             headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function (response) {
                 if (mode!='check')
-                    $('#id_incoming_phone, #id_person').trigger('change');
+                    $('#id_incoming_phone').trigger('change');
+                    getPersonPhones();
                 setTimeout(function (){
                     if (mode == 'check') {
                         $('#incomingPhoneButtons').remove();
@@ -177,7 +179,7 @@ function buttonAddNumberShowOreHide(){
                         $('#incomingPhoneButtons').children('.telegram').addClass(response.telegram ? 'btn_yes' : 'btn_no').children().first().addClass(response.telegram ? 'icon_cross' : 'icon_plus');
                         $('#incomingPhoneButtons').children('.whatsapp').addClass(response.whats_up ? 'btn_yes' : 'btn_no').children().first().addClass(response.whats_up ? 'icon_cross' : 'icon_plus');
                         $('#incomingPhoneButton').css('opacity', '1');
-                        $('.field-incoming_phone .selection').append(`<p>${response.chats_links}</p>`);
+                        $('.flex-container.fieldBox.field-incoming_phone .selection').append(`<p class="callContactPhone">${response.chats_links}</p>`);
                     }
 
                 },(new Date() - start) > 400 ? new Date() - start : 400);
@@ -189,22 +191,10 @@ function buttonAddNumberShowOreHide(){
     }
 }
 
-// function addNumberToPerson(){
-//     console.log('addNumberToPerson');
-//
-//     $.ajax({
-//         type: "POST",
-//         url: $('#ajaxUrls').data('addPhoneToPerson'),
-//         data: {mode: 'add',person_id: $('#id_person').val(), phone_id: $('#id_incoming_phone').val()},
-//         headers: {'X-CSRFToken': getCookie('csrftoken')},
-//         success: function (response) {
-//             $('#id_person').trigger('change');
-//         }
-//     }, 200);
-// }
 
 // 'root_app:ajax_updates_person_phones_info' mode='person_phones'
 function getPersonPhones(){
+    // buttonAddNumberShowOreHide();
     let p_id = $('select#id_person').val();
     if (p_id) {
         $('.person_phones_area, #change_id_person, #delete_id_person').show();
