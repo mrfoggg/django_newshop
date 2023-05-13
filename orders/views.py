@@ -104,17 +104,11 @@ def get_person_info_ajax(request):
 def get_persons_and_contacts_by_phone_ajax(request):
     phone_id = request.POST.get('phone_id')
     p_items = []
+    PersonObj = namedtuple('PersonObj', 'id name link is_main_phone is_delivery_phone')
     for p in Person.objects.filter(phones__phone_id=phone_id):
-        mark_list = []
-        if str(p.main_phone_id) == phone_id:
-            mark_list.append('Номер входа')
-        if str(p.delivery_phone_id) == phone_id:
-            mark_list.append('Номер доставки')
-        mark_text = ', '.join(mark_list)
-        total_mark_text = f' - ({mark_text})' if mark_text else ''
-        item = f'<li><button type="button" data-person-id={p.id} data-person-name="{p.__str__()}"' \
-               f'class="select_person my_admin_btn">выбрать контрагента</button> - <span>{p.__str__()}{total_mark_text}</span></li>'
-        p_items.append(mark_safe(item))
+        p_items.append(PersonObj(
+            p.id, p.__str__(), p.admin_url, str(p.main_phone_id) == phone_id, str(p.delivery_phone_id) == phone_id
+        )._asdict())
     return {'persons': p_items}
 
 

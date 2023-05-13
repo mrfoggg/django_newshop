@@ -43,7 +43,7 @@ def get_chat_links_func(self, only_exist=True):
         }
 
     return format_html(
-        ('' if only_exist else 'СВЯЗАТЬСЯ: ') +
+        # ('' if only_exist else 'СВЯЗАТЬСЯ: ') +
         ', '.join([getlink(m) for m in (self.messengers.all() if only_exist else Messenger.objects.all())]) +
         ('' if only_exist else f' - <a href="tel:{self.number}">позвонить</a>')
     )

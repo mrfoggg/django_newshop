@@ -1,6 +1,3 @@
-// if (!$) {
-//     $ = django.jQuery;
-// }
 (function ($, undefined) {
     // init listeners
     Baton.Dispatcher.register('onReady', function () {
@@ -41,7 +38,6 @@
             } else {
                 $('.field-dropper, .field-address').parent().hide();
             }
-
         });
         $('select#id_person').change(function () {
             getPersonPhones();
@@ -52,23 +48,51 @@
         $('#id_dropper').change(function (){
             getPersonInfoAjax($(this).val());
         });
-
         $('#id_incoming_phone').change(getPersonsByPhone);
-
+        $('#id_incoming_phone').trigger('change');
         $('#foundedPersons').on('click', 'button.select_person', function () {
             if (!$('#id_person').children(`option[value=${$(this).data('personId')}]`).length)
                 $('#id_person').append(`<option value=${$(this).data('personId')}>${$(this).data('personName')}</option>`);
-            $('#id_person').val($(this).data('personId'));
+            $('#id_person').val($(this).data('personId')).trigger('change');
         });
-
-
         $('#id_incoming_phone, #id_person').change(buttonAddNumberShowOreHide);
-        // $('#id_incoming_phone').change(buttonAddNumberShowOreHide);
         $('.flex-container.field-incoming_phone').on('click', 'button.ajax', buttonAddNumberShowOreHide);
         $('.person_phones_area').on('click', 'button.ajax', changePhoneParameters);
-        // $('#personPhones').on('click', '.person_phone_ajax .main_phone', changePhoneParameters);
+        buttonAddNumberShowOreHide();
+
+        setTimeout(() => {
+            console.log('field-incoming_phone', $('.flex-container.fieldBox.field-incoming_phone .selection'));
+            $('.flex-container.fieldBox.field-incoming_phone .selection').append(`<p class="callContactPhone"></p>`);
+        },200)
+
+        // function hello(){
+        //     console.log('hello');
+        // }
+        //
+        // function executeFunctionFromData(){
+        //     var d = 'hello' // Save `data-myattr` to d; (Obviously, this is just a hardcoded value as an example)
+        //     window[d](); // Execute the function.
+        // }
+
+
     });
 })(jQuery, undefined)
+
+// $('#id_contact_person').djangoSelect2({
+//     placeholder: '159654',
+// });
+// $('#id_delivery_phone').select2({
+//     placeholder: '159654',
+// });
+
+// function hello(){
+//     console.log('hello');
+// }
+//
+// function executeFunctionFromData(){
+//     var d = 'hello' // Save `data-myattr` to d; (Obviously, this is just a hardcoded value as an example)
+//     window[d](); // Execute the function.
+// }
 
 function copyTextButton(text){
     console.log(text);
@@ -91,6 +115,7 @@ function changePhoneParameters(){
         data: {mode: mode, action: action, person_id: personId, phone_id: phoneId},
         headers: {'X-CSRFToken': getCookie('csrftoken')},
         success: function (response) {
+            getPersonsByPhone();
             setTimeout(function (){
                 this_button.toggleClass('btn_yes').toggleClass('btn_no').children().first().toggleClass('icon_cross').toggleClass('icon_plus');
                 this_button.css('opacity', '1');
@@ -104,7 +129,7 @@ function changePhoneParameters(){
                 $('#select2-id_person-container').text(response.person_str);
                 if (phoneId==$('#id_incoming_phone').val())
                     $('#id_incoming_phone').trigger('change');
-                let otherPhoneButtons = $(`.person_phone_ajax:not([data-phone-id=${phoneId}])`).children('span.person_phone_ajax__buttons');
+                let otherPhoneButtons = $(`#personPhones .li_ajax:not([data-phone-id=${phoneId}])`).children('span.person_phone_ajax__buttons');
                 if (mode=='main_phone' && action=='add') {
                     otherPhoneButtons.children('.main_phone').removeClass('btn_yes').addClass('btn_no').children().first().removeClass('icon_cross').addClass('icon_plus');
                     otherPhoneButtons.children('.remove_person_phone').show();
@@ -112,24 +137,39 @@ function changePhoneParameters(){
 
                 if (mode=='delivery_phone' && action=='add')
                     otherPhoneButtons.children('.delivery_phone').removeClass('btn_yes').addClass('btn_no').children().first().removeClass('icon_cross').addClass('icon_plus');
-            },  (new Date() - start) > 400 ? new Date() - start : 400)
+            },  (new Date() - start) > 200 ? 0 : 200 - (new Date() - start))
         }
     }, 200);
 }
 
+
 function getPersonsByPhone(){
-    let ph_id = $(this).val();
+    let ph_id = $('#id_incoming_phone').val();
+    let start = +new Date();
+    $('.founded_person_area').css('opacity', '.2');
+    $('#foundedPersons').text('');
     if (ph_id) {
-        $('#change_id_incoming_phone').show().prop('href', $('#change_id_incoming_phone').data('hrefTemplate').replace('__fk__', $(this).val()));
+        // $('#change_id_incoming_phone').show().prop('href', $('#change_id_incoming_phone').data('hrefTemplate').replace('__fk__', $(this).val()));
         $.ajax({
             type: "POST",
             url: $('#ajaxUrls').data('getPersons'),
             data: {'phone_id': ph_id},
             headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function (response) {
-                $('#foundedPersons').text('');
                 for (let person of response['persons']){
-                    $('#foundedPersons').append(person);
+
+                    let person_row = $.parseHTML(`<li class="li_ajax" >
+                        <span class="person_ajax__info">
+                            <span> <a href="${person.link}" target="_blank">${person.name}</a></span> 
+                        </span>
+                        <span class="person_ajax__buttons">
+                            ${person.is_main_phone ? "<span class='admin_icon icon_home'></span>" : "" }
+                            ${person.is_delivery_phone ? "<span class='admin_icon icon_delivery'></span>" : "" }
+                            <button type='button' class='ajax my_admin_btn select_person' data-person-id="${person.id}" data-person-name="${person.name}">Выбрать контрагента</button>
+                        </span>
+                    </li>`);
+                    $('#foundedPersons').append(person_row);
+                    setTimeout(() => {$('.founded_person_area').css('opacity', '1');}, (new Date() - start) > 200 ? 0 : 200 - (new Date() - start));
                 }
             }
         }, 200);
@@ -144,7 +184,7 @@ function buttonAddNumberShowOreHide(){
         // $('#id_person').trigger('change');
     console.log('THIS - ', this);
     let phone_id = $('#id_incoming_phone').val();
-    $('.callContactPhone').remove();
+    $('.callContactPhone').text('');
     if (phone_id) {
         $('#incomingPhoneButtons').show();
         let mode = $(this).data('mode') ? $(this).data('mode') : 'check'
@@ -179,10 +219,11 @@ function buttonAddNumberShowOreHide(){
                         $('#incomingPhoneButtons').children('.telegram').addClass(response.telegram ? 'btn_yes' : 'btn_no').children().first().addClass(response.telegram ? 'icon_cross' : 'icon_plus');
                         $('#incomingPhoneButtons').children('.whatsapp').addClass(response.whats_up ? 'btn_yes' : 'btn_no').children().first().addClass(response.whats_up ? 'icon_cross' : 'icon_plus');
                         $('#incomingPhoneButton').css('opacity', '1');
-                        $('.flex-container.fieldBox.field-incoming_phone .selection').append(`<p class="callContactPhone">${response.chats_links}</p>`);
+                        // $('.flex-container.fieldBox.field-incoming_phone .selection').append(`<p class="callContactPhone">${response.chats_links}</p>`);
+                        $('.callContactPhone').html(response.chats_links);
                     }
 
-                },(new Date() - start) > 400 ? new Date() - start : 400);
+                },(new Date() - start) > 200 ? 0 : 200 - (new Date() - start));
 
             }
         }, 200);
@@ -212,7 +253,7 @@ function getPersonPhones(){
             $('#personPhones').text('');
             for (let pp of response['person_phones']) {
                 let personPhoneRow =
-                    $.parseHTML(`<li class="person_phone_ajax" data-phone-id=${pp.phone_id}>
+                    $.parseHTML(`<li class="li_ajax" data-phone-id=${pp.phone_id}>
                         <span class="person_phone_ajax__info">
                             <span>${pp.link}</span> 
                             <span>${pp.chats_links}</span>
@@ -242,7 +283,7 @@ function getPersonPhones(){
             }
             setTimeout(function (){
                 $('.person_phones_area').css('opacity', '1');
-            }, (new Date() - start) > 400 ? new Date() - start : 400)
+            }, (new Date() - start) > 200 ? 0 : 200 - (new Date() - start))
         }
     }, 200);
 }

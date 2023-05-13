@@ -33,6 +33,7 @@ $(document).ready(function (){
     }).on('select2:open', function (){
         $('.select2-search__field').mask("99  999-99-99",);
     }).next().css({width: '24rem',});
+
 });
 
 function ajaxAddNumber(number) {
@@ -67,5 +68,6 @@ function ajaxAddNumber(number) {
         }
     }, 200);
 }
+
 
 

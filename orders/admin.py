@@ -196,7 +196,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         ('order/admin_order_ajax_urls.html', 'id', 'top',),
         ('admin/include_select2.html', 'id', 'top',),
         ('order/person_phones.html', 'person', 'bottom',),
-        # ('order/founded_persons.html', 'incoming_phone', 'bottom',),
+        ('order/founded_persons.html', 'incoming_phone', 'bottom',),
     ]
 
 

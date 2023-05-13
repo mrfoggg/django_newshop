@@ -19,7 +19,7 @@ textarea{
 }
 
 .admin_ajax_section {
-    margin-top: 2rem;
+    margin-top: 3rem;
     max-width: 75rem;
     border-top: 1px solid #3FB8AF;
     transition: all .1s ease-in-out;
@@ -79,6 +79,21 @@ textarea{
     padding: 0;
     margin: 0;
     display: none;
+}
+
+.li_ajax {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4rem;
+    padding: .5rem 1rem;
+}
+
+.li_ajax:nth-child(odd) {
+    background: rgb(255, 238, 184);
+}
+.li_ajax:nth-child(even) {
+    background: rgb(195, 245, 228);
 }
 
 button.my_admin_btn {

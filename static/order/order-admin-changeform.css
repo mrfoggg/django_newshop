@@ -1,22 +1,13 @@
-.person_phone_ajax {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 4rem;
-    padding: .5rem 1rem;
-}
-.person_phone_ajax:nth-child(odd) {
-    background: rgb(255, 238, 184);
-}
-.person_phone_ajax:nth-child(even) {
-    background: rgb(195, 245, 228);
-}
 .person_phone_ajax__info span {
     display: block;
 }
 
-.person_phone_ajax__buttons {
+.person_phone_ajax__buttons, .person_ajax__buttons {
     display: flex;
+}
+
+.person_phones_area {
+    margin-top: 1rem;
 }
 
 .field-incoming_phone .related-widget-wrapper{
@@ -42,4 +33,9 @@ span.person {
 
 .form-row.field-person.field-incoming_phone .flex-container.form-multiline {
     margin-left: 0!important;
+}
+
+.callContactPhone {
+    height: 2rem;
+    /*border: 1px solid #3FB8AF;*/
 }
