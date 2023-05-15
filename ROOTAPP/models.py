@@ -257,7 +257,7 @@ class ContactPerson(models.Model, PhoneInfoFieldsMixin):
                                verbose_name='Контрагент')
 
     def __str__(self):
-        return f'{self.full_name} (контактное лицо контрагента {self.person})'
+        return f'{self.full_name} ({self.phone})'
 
     def save(self, *args, **kwargs):
         self.full_name = get_full_name(self)
@@ -272,12 +272,12 @@ class ContactPerson(models.Model, PhoneInfoFieldsMixin):
         return reverse('admin:ROOTAPP_contactperson_change', args=[self.id])
 
 
-class ContactPersonShotStr(ContactPerson):
-    class Meta:
-        proxy = True
-
-    def __str__(self):
-        return f'{self.full_name} ({self.phone})'
+# class ContactPersonShotStr(ContactPerson):
+#     class Meta:
+#         proxy = True
+#
+#     def __str__(self):
+#         return f'{self.full_name} ({self.phone})'
 
 
 class SupplierManager(models.Manager):
@@ -309,15 +309,15 @@ class PersonPhone(models.Model, PhoneInfoFieldsMixin):
         super().__init__(self.phone_id, self.person_id)
 
     def __str__(self):
-        return f'Телефон контрагента {self.person} - {self.phone}'
-
-
-class PersonPhoneShotStr(PersonPhone):
-    class Meta:
-        proxy = True
-
-    def __str__(self):
         return self.phone.__str__()
+
+#
+# class PersonPhoneShotStr(PersonPhone):
+#     class Meta:
+#         proxy = True
+#
+#     def __str__(self):
+#         return self.phone.__str__()
 
 
 class PersonAddress(models.Model):
@@ -327,8 +327,8 @@ class PersonAddress(models.Model):
         (2, "На адрес"),
     )
     address_type = models.SmallIntegerField('Тип доставки', choices=ADDRESS_TYPE, default=None, null=True, blank=True)
-    area = models.ForeignKey(SettlementArea, on_delete=models.CASCADE, verbose_name="Область")
-    settlement = models.ForeignKey(Settlement, on_delete=models.CASCADE, null=True, verbose_name="Населенный пункт")
+    area = models.ForeignKey(SettlementArea, blank=True, null=True, on_delete=models.CASCADE, verbose_name="Область")
+    settlement = models.ForeignKey(Settlement, blank=True, null=True, on_delete=models.CASCADE, verbose_name="Населенный пункт")
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, blank=True, null=True, verbose_name="Отделение")
     person = models.ForeignKey(Person, on_delete=models.CASCADE, verbose_name="Контрагент")
     city = models.ForeignKey(City, on_delete=models.CASCADE, blank=True, null=True,

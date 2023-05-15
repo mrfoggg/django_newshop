@@ -58,7 +58,7 @@ INSTALLED_APPS = [
 
     'mptt',
     # 'django_json_widget',
-    'django_select2',
+    # 'django_select2',
     'django_summernote',
     'nested_admin',
     'adminsortable2',
@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     'phonenumber_field',
     'babel',
     'baton.autodiscover',
+    'django_select2',
     'ai_django_core',
 ]
 SITE_ID = 1

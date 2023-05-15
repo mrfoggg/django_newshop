@@ -53,6 +53,17 @@ class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.Nested
             return MoneyField(widget=money_widget_only_uah)
         return super().formfield_for_dbfield(db_field, **kwargs)
 
+    # для отображения только активных товаров
+    # def get_search_results(self, request, queryset, search_term):
+    #     print('GET_SEARCH_RESULTS')
+    #     queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
+    #     print('search_term -', search_term)
+    #     if 'model_name' in request.GET.keys():
+    #         print('MODEL_NAME - ', request.GET['model_name'])
+    #         if request.GET['model_name'] == 'productinorder':
+    #             queryset = queryset.filter(is_active=True, mark_to_delete=False)
+    #     return queryset, may_have_duplicates
+
 
 class ProductInSupplierOrder(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     # adminsortable2 требует fields именно списком
@@ -167,9 +178,11 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         css = {'all': ('admin/price_field.css', 'admin/admin-changeform.css', 'select2.min.css', 'notyf.min.css',
                        'order/order-admin-changeform.css')}
 
-    # вроде делал этот фильтр дл яотображения всписке select (autocomplete fields)
+    # для отображения только активных товаров
     def get_search_results(self, request, queryset, search_term):
+        print('GET_SEARCH_RESULTS')
         queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
+        print('search_term -', search_term)
         if 'model_name' in request.GET.keys():
             print('MODEL_NAME - ', request.GET['model_name'])
             if request.GET['model_name'] == 'productinorder':
@@ -225,6 +238,7 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_search_results(self, request, queryset, search_term):
+        print('GET_SEARCH_RESULTS')
         queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
         if 'model_name' in request.GET.keys():
             if request.GET['model_name'] == 'productinorder':

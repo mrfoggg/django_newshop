@@ -9,6 +9,38 @@
 })(jQuery, undefined)
 
 
+function autoUpdateSelectActionButtons(selector, initFieldName=null, outerFieldSelector=null) {
+    $(selector).change(function (){
+        let element_id = $(this).prop('id');
+        let editButton = $(`#change_${element_id}`);
+        let delButton = $(`#delete_${element_id}`);
+        let viewButton = $(`#view_${element_id}`);
+        let value = $(this).val();
+        console.log('ALL ', editButton.add([delButton, viewButton]));
+        if (value) {
+            editButton.add(delButton).add(viewButton).show();
+            if (editButton.length)
+                editButton.prop('href', editButton.data('hrefTemplate').replace('__fk__', value));
+            if (delButton.length)
+                delButton.prop('href', delButton.data('hrefTemplate').replace('__fk__', value));
+            if (viewButton.length)
+                viewButton.prop('href', viewButton.data('hrefTemplate').replace('__fk__', value));
+        } else {
+            editButton.add(delButton).add(viewButton).hide();
+        }
+    });
+    if (initFieldName){
+        $(outerFieldSelector).change(function (){
+            $(selector).each(function (){
+                let element_id = $(this).prop('id');
+                let addButton = $(`#add_${element_id}`);
+                addButton.prop('href', addButton.prop('href') + `&${initFieldName}=${$(outerFieldSelector).val()}`);
+            });
+        });
+    }
+}
+
+
 
 function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOrderId=null, groupPriceType=null) {
     let priceVariantsSelect = row.find('.field-supplier_price_variants select');

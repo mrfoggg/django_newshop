@@ -182,15 +182,19 @@ class PersonAdmin(
 class PersonAddressAdmin(admin.ModelAdmin):
     form = FullAddressForm
     fields = ('person', ('area', 'settlement'), 'address_type', 'warehouse', 'city', ('street', 'build'), 'comment')
-    autocomplete_fields = ('person',)
+    # autocomplete_fields = ('person',)
     readonly_fields = ['city']
     radio_fields = {"address_type": admin.HORIZONTAL}
 
     # radio_fields = {"address_type": admin.VERTICAL}
 
     class Media:
-        js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
-              'select2.min.js', 'notyf.min.js', 'root_app/person_address_admin_form.js',)
+        js = (
+            'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
+              'select2.min.js',
+              'notyf.min.js',
+              'root_app/person_address_admin_form.js',
+              )
         #   с этой строкй пишет что цсс дублируется
         # css = {"all": ("select2.min.css")}
 
@@ -208,4 +212,9 @@ class PersonAddressAdmin(admin.ModelAdmin):
     ]
 
 
-admin.site.register(ContactPerson)
+@admin.register(ContactPerson)
+class ContactPersonAdmin(admin.ModelAdmin):
+    pass
+
+
+admin.site.register(PersonPhone)

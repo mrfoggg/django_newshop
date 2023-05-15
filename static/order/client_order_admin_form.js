@@ -26,28 +26,32 @@
                 if (price&&(supplierPriceId||purchasePrice))
                     ajaxUpdateFinanceCalculated(row, price, supplierPriceId, quantity, purchasePrice);
             });
+
             $('#id_person').change(function (){
                 $('select#id_contact_person, select#id_address').empty();
             });
-        }, 300)
+        }, 300);
+
         // в работе, проверить
         $('select#id_person, select#id_incoming_phone').on('change', function (){
             if ($(this).val()) {
-                $('.field-dropper, .field-address').parent().show();
+                $('.field-dropper, .field-address').parent().slideDown();
                 getPersonInfoAjax($('select#id_person').val(), true);
             } else {
-                $('.field-dropper, .field-address').parent().hide();
+                $('.field-dropper, .field-address').parent().slideUp();
             }
         });
         $('select#id_person').change(function () {
             getPersonPhones();
-            $('#change_id_person').show().prop('href', $('#change_id_person').data('hrefTemplate').replace('__fk__', $(this).val()));
-            $('#delete_id_person').show().prop('href', $('#delete_id_person').data('hrefTemplate').replace('__fk__', $(this).val()));
         });
+
+        autoUpdateSelectActionButtons('#id_person, #id_incoming_phone, #id_address, #id_contact_person', 'person', '#id_person');
+
         getPersonPhones();
         $('#id_dropper').change(function (){
             getPersonInfoAjax($(this).val());
         });
+
         $('#id_incoming_phone').change(getPersonsByPhone);
         $('#id_incoming_phone').trigger('change');
         $('#foundedPersons').on('click', 'button.select_person', function () {
@@ -55,44 +59,17 @@
                 $('#id_person').append(`<option value=${$(this).data('personId')}>${$(this).data('personName')}</option>`);
             $('#id_person').val($(this).data('personId')).trigger('change');
         });
+
         $('#id_incoming_phone, #id_person').change(buttonAddNumberShowOreHide);
         $('.flex-container.field-incoming_phone').on('click', 'button.ajax', buttonAddNumberShowOreHide);
         $('.person_phones_area').on('click', 'button.ajax', changePhoneParameters);
         buttonAddNumberShowOreHide();
 
         setTimeout(() => {
-            console.log('field-incoming_phone', $('.flex-container.fieldBox.field-incoming_phone .selection'));
-            $('.flex-container.fieldBox.field-incoming_phone .selection').append(`<p class="callContactPhone"></p>`);
-        },200)
-
-        // function hello(){
-        //     console.log('hello');
-        // }
-        //
-        // function executeFunctionFromData(){
-        //     var d = 'hello' // Save `data-myattr` to d; (Obviously, this is just a hardcoded value as an example)
-        //     window[d](); // Execute the function.
-        // }
-
-
+            $('.flex-container.fieldBox.field-incoming_phone .selection').append(`<p class="callContactPhone"><p id="foundContact">контакт: Сидоров Сергей</p></p>`);
+        },100);
     });
 })(jQuery, undefined)
-
-// $('#id_contact_person').djangoSelect2({
-//     placeholder: '159654',
-// });
-// $('#id_delivery_phone').select2({
-//     placeholder: '159654',
-// });
-
-// function hello(){
-//     console.log('hello');
-// }
-//
-// function executeFunctionFromData(){
-//     var d = 'hello' // Save `data-myattr` to d; (Obviously, this is just a hardcoded value as an example)
-//     window[d](); // Execute the function.
-// }
 
 function copyTextButton(text){
     console.log(text);
@@ -182,7 +159,6 @@ function getPersonsByPhone(){
 // обрабатывается вьюхой button_add_number_to_person_ajax в order.view
 function buttonAddNumberShowOreHide(){
         // $('#id_person').trigger('change');
-    console.log('THIS - ', this);
     let phone_id = $('#id_incoming_phone').val();
     $('.callContactPhone').text('');
     if (phone_id) {
@@ -235,12 +211,13 @@ function buttonAddNumberShowOreHide(){
 
 // 'root_app:ajax_updates_person_phones_info' mode='person_phones'
 function getPersonPhones(){
-    // buttonAddNumberShowOreHide();
     let p_id = $('select#id_person').val();
     if (p_id) {
-        $('.person_phones_area, #change_id_person, #delete_id_person').show();
+        // $('.person_phones_area, #change_id_person, #delete_id_person').show();
+        $('.person_phones_area').show();
     } else {
-        $('.person_phones_area, #change_id_person, #delete_id_person').hide();
+        // $('.person_phones_area, #change_id_person, #delete_id_person').hide();
+        $('.person_phones_area').hide();
     }
     $('.person_phones_area').css('opacity', '.2');
     let start = +new Date();
@@ -292,7 +269,6 @@ function getPersonPhones(){
 // провериь и установить доступность выбора дропера для заказов с этим контрагентом, обнвоить доступне оптовые цены
 // для контрагента или указаного дропера
 function getPersonInfoAjax(person_id, buyerMode=false) {
-    console.log('person_id', person_id);
     $.ajax({
         type: "POST",
         url: $('#ajaxUrls').data('getPersonInfoAjaxUrl'),
@@ -301,7 +277,6 @@ function getPersonInfoAjax(person_id, buyerMode=false) {
         success: function (response) {
             let notSelectedOption = '<option value="" selected="">---------</option>';
             $('#id_group_price_type').html(notSelectedOption);
-            console.log('buyerMode - ', buyerMode);
             if (buyerMode) {
                 $('#id_dropper').val('');
                 if (response['dropper_available']) {

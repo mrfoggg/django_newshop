@@ -38,4 +38,9 @@ span.person {
 .callContactPhone {
     height: 2rem;
     /*border: 1px solid #3FB8AF;*/
+    margin-bottom: 0;
+}
+
+#foundContact {
+    font-size: .8rem;
 }

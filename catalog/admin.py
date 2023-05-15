@@ -437,6 +437,14 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     def view_on_site(self, obj):
         return reverse('main_page:category_and_product', args=(obj.slug,))
 
+    def get_search_results(self, request, queryset, search_term):
+        queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
+        # if 'model_name' in request.GET.keys():
+        #     if request.GET['model_name'] == 'productinorder':
+        #         queryset = queryset.filter(is_active=True, mark_to_delete=False)
+        queryset = queryset.filter(is_active=True)
+        return queryset, may_have_duplicates
+
 
 @admin.register(Group)
 # class GroupAdmin(DeleteQSMixin, nested_admin.NestedModelAdmin, ):

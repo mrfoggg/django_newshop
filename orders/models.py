@@ -15,7 +15,7 @@ from djmoney.money import Money
 
 from catalog.models import Product, ProductSupplierPriceInfo
 from ROOTAPP.models import Person, Phone, PersonAddress, Supplier, Document, PriceTypePersonBuyer, ContactPerson, \
-    ContactPersonShotStr, PersonPhone, PersonPhoneShotStr
+    PersonPhone
 from finance.models import PriceTypePersonSupplier
 from finance.services import get_margin, get_margin_percent, get_profitability
 from site_settings.models import APIkeyIpInfo
@@ -113,13 +113,13 @@ class ClientOrder(Document):
         help_text='Задать дропера нельзя для если контрагент покупатель оптовик'
     )
     contact_person = models.ForeignKey(
-        ContactPersonShotStr, blank=True, null=True, default=None, verbose_name='Получатель груза',
+        ContactPerson, blank=True, null=True, default=None, verbose_name='Получатель груза',
         on_delete=models.SET_NULL
     )
     incoming_phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.CASCADE,
                                        verbose_name='Входящий номер')
     delivery_phone = models.ForeignKey(
-        PersonPhoneShotStr, null=True, blank=True, on_delete=models.CASCADE, verbose_name='Номер телефона доставки',
+        PersonPhone, null=True, blank=True, on_delete=models.CASCADE, verbose_name='Номер телефона доставки',
         help_text='Оставить пустым если надо использовать номер телефона указаного контактного лица'
     )
 
