@@ -4,6 +4,7 @@ from ai_django_core.admin.model_admins.mixins import AdminNoInlinesForCreateMixi
 from django import forms
 from django.contrib import admin
 from django.db.models import OuterRef
+from django_select2.forms import ModelSelect2Widget
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
 from finance.admin import PriceTypePersonBuyerInline, PriceTypePersonSupplierInline
 # from .services.telegram_servises import get_tg_username
@@ -89,7 +90,7 @@ class PhoneAdmin(admin.ModelAdmin):
 @admin.register(Person)
 class PersonAdmin(
     # AdminNoInlinesForCreateMixin,
-                  nested_admin.NestedModelAdmin):
+    nested_admin.NestedModelAdmin):
     form = PersonAdminForm
     fieldsets = (
         ('Основные данные пользователя', {
@@ -182,7 +183,7 @@ class PersonAdmin(
 class PersonAddressAdmin(admin.ModelAdmin):
     form = FullAddressForm
     fields = ('person', ('area', 'settlement'), 'address_type', 'warehouse', 'city', ('street', 'build'), 'comment')
-    # autocomplete_fields = ('person',)
+    autocomplete_fields = ('person',)
     readonly_fields = ['city']
     radio_fields = {"address_type": admin.HORIZONTAL}
 
@@ -191,10 +192,10 @@ class PersonAddressAdmin(admin.ModelAdmin):
     class Media:
         js = (
             'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
-              'select2.min.js',
-              'notyf.min.js',
-              'root_app/person_address_admin_form.js',
-              )
+            'select2.min.js',
+            'notyf.min.js',
+            'root_app/person_address_admin_form.js',
+        )
         #   с этой строкй пишет что цсс дублируется
         # css = {"all": ("select2.min.css")}
 
@@ -217,4 +218,38 @@ class ContactPersonAdmin(admin.ModelAdmin):
     pass
 
 
-admin.site.register(PersonPhone)
+class PersonPhoneAdminForm(forms.ModelForm):
+    class Meta:
+        model = Phone
+        fields = '__all__'
+        widgets = {
+            'person': ModelSelect2Widget(
+                model=Phone,
+                search_fields=('phone__number__contains',),
+                dependent_fields={'person': 'person'},
+                attrs={'data-placeholder': 'выберите телефон', 'style': 'width: 80%;',
+                       'data-minimum-input-length': '0'}
+            )
+        }
+
+
+@admin.register(PersonPhone)
+class PersonPhoneAdmin(admin.ModelAdmin):
+    # autocomplete_fields = ('person',)
+    # readonly_fields = ('person',)
+    form = PersonPhoneAdminForm
+
+    class Media:
+        js = (
+            'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
+            'select2.min.js',
+            'jquery.maskedinput.min.js',
+            'notyf.min.js',
+            'js_functions_for_admin.js',
+            'admin/phone_field_select2_customization.js'
+        )
+        css = {'all': ('select2.min.css', 'notyf.min.css')}
+
+    baton_form_includes = [
+        ('root_app/phone_field_ajax_urls.html', 'phone', 'top',),
+    ]

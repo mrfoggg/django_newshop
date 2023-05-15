@@ -45,7 +45,7 @@
             getPersonPhones();
         });
 
-        autoUpdateSelectActionButtons('#id_person, #id_incoming_phone, #id_address, #id_contact_person', 'person', '#id_person');
+        autoUpdateSelectActionButtons('#id_person, #id_incoming_phone, #id_address, #id_contact_person, #id_delivery_phone', 'person', '#id_person');
 
         getPersonPhones();
         $('#id_dropper').change(function (){
@@ -66,7 +66,7 @@
         buttonAddNumberShowOreHide();
 
         setTimeout(() => {
-            $('.flex-container.fieldBox.field-incoming_phone .selection').append(`<p class="callContactPhone"><p id="foundContact">контакт: Сидоров Сергей</p></p>`);
+            $('.flex-container.fieldBox.field-incoming_phone .selection').append(`<p class="callContactPhone"><p id="foundContact"></p></p>`);
         },100);
     });
 })(jQuery, undefined)
@@ -197,6 +197,7 @@ function buttonAddNumberShowOreHide(){
                         $('#incomingPhoneButton').css('opacity', '1');
                         // $('.flex-container.fieldBox.field-incoming_phone .selection').append(`<p class="callContactPhone">${response.chats_links}</p>`);
                         $('.callContactPhone').html(response.chats_links);
+                        $('#foundContact').html(response.contact_person);
                     }
 
                 },(new Date() - start) > 200 ? 0 : 200 - (new Date() - start));

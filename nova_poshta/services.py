@@ -289,14 +289,18 @@ warehouse_parameters = main_parameters + coordinates_parameters + (
 )
 
 
-def get_np_api_response(request_dict, max_attempts_count=5):
+def get_np_api_response(request_dict, session=None, max_attempts_count=5):
     result = False
     attempts_count = 0
     error_massage = None
     while not result:
         try:
             request_json = json.dumps(request_dict, indent=4)
-            response = requests.post(url_np, data=request_json, timeout=timeout_limit)
+            if session:
+                print('USE SESSION')
+                response = session.post(url_np, data=request_json, timeout=timeout_limit)
+            else:
+                response = requests.post(url_np, data=request_json, timeout=timeout_limit)
             try:
                 result = json.loads(response.text)
             except ValueError:

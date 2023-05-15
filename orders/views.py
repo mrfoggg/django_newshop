@@ -15,7 +15,7 @@ from phonenumbers import geocoder
 
 # from nova_poshta.services.google_services import create_contact
 from orders.models import ByOneclick, OneClickUserSectionComment
-from ROOTAPP.models import Person, PersonPhone, Phone, Messenger
+from ROOTAPP.models import Person, PersonPhone, Phone, Messenger, ContactPerson
 from site_settings.models import APIkeyIpInfo, OAuthGoogle
 
 
@@ -118,23 +118,24 @@ def button_add_number_to_person_ajax(request):
     data = request.POST
     mode = data.get('mode')
     person_id, phone_id = data.get('person_id'), data.get('phone_id')
-    # person = Person.objects.get(id=person_id)
     phone = Phone.objects.get(id=phone_id)
     action = data.get('action')
     PersonPhoneInfo = namedtuple(
         'PersonPhoneInfo', [
-            'number', 'chats_links', 'added', 'viber', 'telegram', 'whats_up'
-        ], defaults=['', '', None, None, None, None]
+            'number', 'chats_links', 'added', 'viber', 'telegram', 'whats_up', 'contact_person'
+        ], defaults=['', '', None, None, None, None, None]
     )
     print('MODE - ', mode)
     print('action - ', action)
     if mode == 'check':
+        contact_persone = ContactPerson.objects.filter(person_id=person_id, phone_id=phone_id)
         return PersonPhoneInfo(
             str(phone.number)[4:], phone.get_all_chat_links,
             PersonPhone.objects.filter(person_id=person_id, phone_id=phone_id).exists() if person_id else None,
             1 in phone.messengers.values_list('type', flat=True),  # viber
             2 in phone.messengers.values_list('type', flat=True),  # telegram
             3 in phone.messengers.values_list('type', flat=True),  # whats_up
+            contact_persone.last().full_name if contact_persone.exists() else 'не является контактом контрагента'
         )._asdict()
         # show_button = not PersonPhone.objects.filter(person_id=person_id, phone_id=phone_id).exists()
         # return {'show_button': show_button}

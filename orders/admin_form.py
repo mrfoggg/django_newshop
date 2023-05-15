@@ -3,7 +3,7 @@ import json
 from django import forms
 from django.utils.html import format_html
 from django_select2.forms import ModelSelect2Widget, Select2AdminMixin
-from ROOTAPP.models import PersonAddress, ContactPerson
+from ROOTAPP.models import PersonAddress, ContactPerson, PersonPhone
 from catalog.models import ProductSupplierPrice, ProductSupplierPriceInfo
 from orders.models import ClientOrder
 
@@ -34,6 +34,14 @@ address_widget = ModelSelect2Widget(
            'data-minimum-input-length': '0'}
 )
 
+delivery_phone_widget = ModelSelect2Widget(
+    model=PersonPhone,
+    search_fields=('phone__number__contains',),
+    dependent_fields={'person': 'person'},
+    attrs={'data-placeholder': 'выберите телефон контрагента', 'style': 'width: 80%;',
+           'data-minimum-input-length': '0'}
+)
+
 
 class ClientOrderAdminForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -43,23 +51,11 @@ class ClientOrderAdminForm(forms.ModelForm):
         self.fields['incoming_phone'].widget.can_add_related = False
         self.fields['incoming_phone'].widget.can_view_related = False
 
-    # address = forms.ModelChoiceField(
-    #     queryset=PersonAddress.objects.all(),
-    #     label="Адрес доставки",
-    #     required=False,
-    #     widget=ModelSelect2Widget(
-    #         model=PersonAddress,
-    #         search_fields=('settlement__description_ua__icontains',),
-    #         dependent_fields={'person': 'person'},
-    #         attrs={'data-placeholder': 'выберите адрес доставки контрагента', 'style': 'width: 80%;',
-    #                'data-minimum-input-length': '0'}
-    #     )
-    # )
-
     class Meta:
         model = ClientOrder
         fields = '__all__'
-        widgets = {'contact_person': contact_person_widget, 'address': address_widget}
+        widgets = {'contact_person': contact_person_widget, 'address': address_widget,
+                   'delivery_phone': delivery_phone_widget}
 
 
 class ProductInClientOrderAdminInlineForm(forms.ModelForm):

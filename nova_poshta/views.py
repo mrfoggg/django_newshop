@@ -34,6 +34,7 @@ def update_np_catalogs(request, obj_type):
             "Limit": '500' if obj_type == Warehouse or obj_type == Street else '150'
         }
     }
+    sess = requests.Session()
     data, message_text = request.GET, ''
     search_by_descr, search_by_settlement, search_by_city = False, False, False
     objects_total_position, total_added_objects_count, total_edited_objects_count = 1, 0, 0
@@ -81,7 +82,7 @@ def update_np_catalogs(request, obj_type):
             objects_request_dict["methodProperties"]["Page"] = str(page)
             print(f'Запрос страницы сервера #{page}')
 
-            np_api_response = get_np_api_response(objects_request_dict)
+            np_api_response = get_np_api_response(objects_request_dict, sess)
             objects_response_data = np_api_response.data
             objects_response_errors = np_api_response.errors
             if objects_response_errors:
@@ -167,6 +168,7 @@ def update_np_catalogs(request, obj_type):
         if search_data:
             message_text += f'<p>добавлено {added_objects_count} улиц, изменено {edited_objects_count} улиц</p> <br>'
     print('=' * 80)
+    sess.close()
     total_info = f'На сервере просмотрено {objects_total_position - 1} элементов справочника.<br>Всего добавлено элементов' \
                  f' {total_added_objects_count}, всего изменено элементов {total_edited_objects_count} '
     messages.add_message(request, messages.SUCCESS, format_html(message_text))

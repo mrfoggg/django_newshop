@@ -29,13 +29,17 @@ function autoUpdateSelectActionButtons(selector, initFieldName=null, outerFieldS
             editButton.add(delButton).add(viewButton).hide();
         }
     });
+    function updateAddButtons() {
+        $(selector).each(function (){
+            let element_id = $(this).prop('id');
+            let addButton = $(`#add_${element_id}`);
+            addButton.prop('href', addButton.prop('href') + `&${initFieldName}=${$(outerFieldSelector).val()}`);
+        });
+    }
     if (initFieldName){
+        updateAddButtons();
         $(outerFieldSelector).change(function (){
-            $(selector).each(function (){
-                let element_id = $(this).prop('id');
-                let addButton = $(`#add_${element_id}`);
-                addButton.prop('href', addButton.prop('href') + `&${initFieldName}=${$(outerFieldSelector).val()}`);
-            });
+            updateAddButtons();
         });
     }
 }
