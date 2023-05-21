@@ -7,6 +7,7 @@ from django.db.models import OuterRef
 from django_select2.forms import ModelSelect2Widget
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
 from finance.admin import PriceTypePersonBuyerInline, PriceTypePersonSupplierInline
+from orders.admin_form import person_widget
 # from .services.telegram_servises import get_tg_username
 # from asgiref.sync import sync_to_async
 from orders.models import ByOneclick, SupplierOrder
@@ -144,6 +145,7 @@ class PersonAdmin(
 
     def changeform_view(self, request, obj_id, form_url, extra_context=None):
         if obj_id:
+            print('REQUEST', request.GET)
             this_person = Person.objects.get(id=obj_id)
             extra_context = {'init_main_phone_id': this_person.main_phone_id,
                              'init_delivery_phone_id': this_person.delivery_phone_id}
@@ -171,6 +173,20 @@ class PersonAdmin(
                     id=self._obj.id).values('id')[:1]
                 kwargs["queryset"] = Phone.objects.annotate(ptp=person_this_phone).filter(personphone__person=self._obj,
                                                                                           ptp__isnull=True)
+        if db_field.name == 'main_supplier_price_type':
+            if self._obj:
+                qs = PriceTypePersonSupplier.objects.filter(person__id=self._obj.id)
+            else:
+                qs = PriceTypePersonSupplier.objects.none()
+            kwargs["queryset"] = qs
+
+        if db_field.name == 'main_price_type':
+            if self._obj:
+                qs = PriceTypePersonBuyer.objects.filter(person__id=self._obj.id)
+            else:
+                qs = PriceTypePersonBuyer.objects.none()
+            kwargs["queryset"] = qs
+
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     baton_form_includes = [
@@ -213,30 +229,43 @@ class PersonAddressAdmin(admin.ModelAdmin):
     ]
 
 
+class ContactPersonAdminForm(forms.ModelForm):
+    class Meta:
+        model = ContactPerson
+        fields = '__all__'
+        widgets = {'person': person_widget}
+
+
 @admin.register(ContactPerson)
 class ContactPersonAdmin(admin.ModelAdmin):
-    pass
+    form = ContactPersonAdminForm
+    readonly_fields = ('full_name',)
+
+    class Media:
+        js = (
+            'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
+            'select2.min.js',
+            'jquery.maskedinput.min.js',
+            'notyf.min.js',
+            'js_functions_for_admin.js',
+            'admin/phone_field_select2_customization.js'
+        )
+        css = {'all': ('select2.min.css', 'notyf.min.css')}
+
+    baton_form_includes = [
+        ('root_app/phone_field_ajax_urls.html', 'phone', 'top',),
+    ]
 
 
 class PersonPhoneAdminForm(forms.ModelForm):
     class Meta:
-        model = Phone
+        model = PersonPhone
         fields = '__all__'
-        widgets = {
-            'person': ModelSelect2Widget(
-                model=Phone,
-                search_fields=('phone__number__contains',),
-                dependent_fields={'person': 'person'},
-                attrs={'data-placeholder': 'выберите телефон', 'style': 'width: 80%;',
-                       'data-minimum-input-length': '0'}
-            )
-        }
+        widgets = {'person': person_widget}
 
 
 @admin.register(PersonPhone)
 class PersonPhoneAdmin(admin.ModelAdmin):
-    # autocomplete_fields = ('person',)
-    # readonly_fields = ('person',)
     form = PersonPhoneAdminForm
 
     class Media:

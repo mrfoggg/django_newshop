@@ -439,10 +439,9 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
 
     def get_search_results(self, request, queryset, search_term):
         queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
-        # if 'model_name' in request.GET.keys():
-        #     if request.GET['model_name'] == 'productinorder':
-        #         queryset = queryset.filter(is_active=True, mark_to_delete=False)
-        queryset = queryset.filter(is_active=True)
+        if 'model_name' in request.GET.keys():
+            if request.GET['model_name'] == 'productinorder':
+                queryset = queryset.filter(is_active=True)
         return queryset, may_have_duplicates
 
 

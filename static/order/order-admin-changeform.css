@@ -45,3 +45,7 @@ span.person {
     font-size: .8rem;
     height: 2rem;
 }
+
+.field-drop_price input {
+    width: 9rem!important;
+}

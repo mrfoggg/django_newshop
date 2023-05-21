@@ -27,7 +27,7 @@ class PriceChangelist(Document):
 
     @property
     def date(self):
-        return self.created.strftime("%m/%d/%Y, (%H:%M)")
+        return self.applied.strftime("%m/%d/%Y, (%H:%M)") if self.applied else self.created.strftime("%m/%d/%Y, (%H:%M)")
 
 
 class SupplierPriceChangelist(Document):
@@ -37,7 +37,7 @@ class SupplierPriceChangelist(Document):
                                    verbose_name='Тип цен')
 
     def __str__(self):
-        return f'Установка цен №{self.id} {self.created.strftime("%d.%m.%Y")} ' \
+        return f'Установка цен №{self.id} {self.applied.strftime("%m/%d/%Y, (%H:%M)") if self.applied else self.created.strftime("%m/%d/%Y, (%H:%M)")} ' \
                f'/ {self.person.full_name}  ("{self.price_type.name}")'
 
     class Meta:
@@ -55,7 +55,7 @@ class GroupPriceChangelist(Document):
                                    verbose_name='Тип цен')
 
     def __str__(self):
-        return f'Установка цен №{self.id} {self.created.strftime("%d.%m.%Y")} ' \
+        return f'Установка цен №{self.id} {self.applied.strftime("%m/%d/%Y, (%H:%M)") if self.applied else self.created.strftime("%m/%d/%Y, (%H:%M)")} ' \
                f'/ {self.person.full_name}  ("{self.price_type.name}")'
 
     class Meta:

@@ -13,10 +13,10 @@ from django.utils.html import format_html_join
 from djmoney.models.fields import MoneyField
 from djmoney.money import Money
 
-from catalog.models import Product, ProductSupplierPriceInfo
+from catalog.models import Product, ProductSupplierPriceInfo, ProductGroupPrice
 from ROOTAPP.models import Person, Phone, PersonAddress, Supplier, Document, PriceTypePersonBuyer, ContactPerson, \
     PersonPhone
-from finance.models import PriceTypePersonSupplier
+from finance.models import PriceTypePersonSupplier, GroupPriceChangelist
 from finance.services import get_margin, get_margin_percent, get_profitability
 from site_settings.models import APIkeyIpInfo
 
@@ -119,7 +119,7 @@ class ClientOrder(Document):
     incoming_phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.CASCADE,
                                        verbose_name='Входящий номер')
     delivery_phone = models.ForeignKey(
-        PersonPhone, null=True, blank=True, on_delete=models.CASCADE, verbose_name='Номер телефона доставки',
+        PersonPhone, null=True, blank=True, on_delete=models.CASCADE, verbose_name='Телефон доставки',
         help_text='Оставить пустым если надо использовать номер телефона указаного контактного лица'
     )
 
@@ -215,6 +215,18 @@ class ProductInOrder(models.Model):
     @admin.display(description='Текущая РЦ')
     def full_current_price_info(self):
         return self.product.full_current_price_info
+
+    @property
+    @admin.display(description='Цена опт')
+    def group_price(self):
+        group_price = self.client_order.group_price_type
+        gp_qs = ProductGroupPrice.objects.filter(
+            price_changelist__price_type_id=group_price.id,
+            product=self.product
+        ).order_by('price_changelist__updated')
+        print('GPQS', gp_qs.exists())
+        return gp_qs.last().price if (group_price and gp_qs.exists()) else '-'
+        # return '333'
 
     @property
     @admin.display(description='Сумма продажи')

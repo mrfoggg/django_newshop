@@ -2,7 +2,7 @@ import nested_admin
 from django import forms
 from django.contrib import admin
 from django.db import models
-from djmoney.forms import MoneyWidget, MoneyField
+from djmoney.forms import MoneyField
 from ROOTAPP.models import Person, Phone
 from finance.admin_forms import money_widget_only_uah
 from .admin_form import ClientOrderAdminForm, ProductInClientOrderAdminInlineForm
@@ -28,7 +28,7 @@ class OneClickUserSectionCommentInline(admin.TabularInline):
 
 class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     form = ProductInClientOrderAdminInlineForm
-    fields = ('product', 'full_current_price_info', 'sale_price',
+    fields = ('product', 'full_current_price_info', 'group_price', 'sale_price',
               'drop_price',
               'quantity', 'sale_total', 'margin', 'margin_total',
               'margin_percent', 'profitability',
@@ -36,11 +36,11 @@ class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.Nested
               'purchase_price', 'client_order_position', 'purchase_total')
     readonly_fields = (
         'full_current_price_info', 'sale_total', 'purchase_total', 'margin', 'margin_total', 'margin_percent',
-        'profitability'
+        'profitability', 'group_price'
     )
     model = ProductInOrder
     extra = 0
-    autocomplete_fields = ('product', 'supplier_order')
+    # autocomplete_fields = ('product', 'supplier_order')
     sortable_field_name = 'client_order_position'
     verbose_name = 'Товар в заказе'
     verbose_name_plural = 'Товары в заказе'

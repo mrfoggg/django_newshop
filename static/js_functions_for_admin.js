@@ -5,6 +5,8 @@
             $(this).parents('.admin_ajax_section').toggleClass('visible');
             $(this).toggleClass('visible').parent().next().slideToggle();
         });
+        console.log('JS_FUNCTIONS_FOR_ADMIN');
+        autoUpdateSelectActionButtons('#id_person, #id_incoming_phone, #id_address, #id_contact_person, #id_delivery_phone, #id_phone', 'person', '#id_person');
     });
 })(jQuery, undefined)
 
@@ -16,7 +18,6 @@ function autoUpdateSelectActionButtons(selector, initFieldName=null, outerFieldS
         let delButton = $(`#delete_${element_id}`);
         let viewButton = $(`#view_${element_id}`);
         let value = $(this).val();
-        console.log('ALL ', editButton.add([delButton, viewButton]));
         if (value) {
             editButton.add(delButton).add(viewButton).show();
             if (editButton.length)
@@ -45,7 +46,7 @@ function autoUpdateSelectActionButtons(selector, initFieldName=null, outerFieldS
 }
 
 
-
+// finance.view ajax_get_product_price_and_suppliers_prices_variants
 function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOrderId=null, groupPriceType=null) {
     let priceVariantsSelect = row.find('.field-supplier_price_variants select');
     let initSelect = '<option value="" selected="">---------</option>'

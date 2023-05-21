@@ -1,6 +1,4 @@
 $(document).ready(function (){
-    console.log('URL -', $('#ajaxUrls').data('ajaxPhoneFieldSearchUrl'));
-    // $('#id_phone').select2();
     $('#id_incoming_phone, #id_phone').each(function (){
         let th = $(this);
         let thId = th.attr('id');

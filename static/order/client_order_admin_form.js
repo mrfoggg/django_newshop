@@ -14,6 +14,7 @@
             });
             $('table.inline-related').on('change', 'tbody.djn-item .field-supplier_price_variants select', function (){
                 // обновить закупочную цену в зависимости от выбраной установки цен поставщика
+                console.log('change field-supplier_price_variants');
                 ajaxUpdatePurchasePrice($(this));
             });
 
@@ -30,7 +31,8 @@
             $('#id_person').change(function (){
                 $('select#id_contact_person, select#id_address').empty();
             });
-        }, 300);
+        }, 700);
+        let notSelectedOption = '<option value="" selected="">---------</option>';
 
         // в работе, проверить
         $('select#id_person, select#id_incoming_phone').on('change', function (){
@@ -43,13 +45,15 @@
         });
         $('select#id_person').change(function () {
             getPersonPhones();
+             $('#id_group_price_type').html(notSelectedOption);
         });
 
-        autoUpdateSelectActionButtons('#id_person, #id_incoming_phone, #id_address, #id_contact_person, #id_delivery_phone', 'person', '#id_person');
+        // autoUpdateSelectActionButtons('#id_person, #id_incoming_phone, #id_address, #id_contact_person, #id_delivery_phone', 'person', '#id_person');
 
         getPersonPhones();
         $('#id_dropper').change(function (){
             getPersonInfoAjax($(this).val());
+             $('#id_group_price_type').html(notSelectedOption);
         });
 
         $('#id_incoming_phone').change(getPersonsByPhone);
@@ -276,8 +280,8 @@ function getPersonInfoAjax(person_id, buyerMode=false) {
         data: {'person_id': person_id},
         headers: {'X-CSRFToken': getCookie('csrftoken')},
         success: function (response) {
-            let notSelectedOption = '<option value="" selected="">---------</option>';
-            $('#id_group_price_type').html(notSelectedOption);
+            // let notSelectedOption = '<option value="" selected="">---------</option>';
+            // $('#id_group_price_type').html(notSelectedOption);
             if (buyerMode) {
                 $('#id_dropper').val('');
                 if (response['dropper_available']) {
@@ -310,10 +314,4 @@ function ajaxUpdatePurchasePrice(select) {
 }
 
 // обновить варианты закупочных цен в зависимости от выбраного заказа поставщику
-
-
-
-
-
-
 

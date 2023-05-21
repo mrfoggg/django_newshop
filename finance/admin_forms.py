@@ -17,3 +17,5 @@ class ProductPriceChangelistInlineAdminForm(forms.ModelForm):
             self.fields['supplier_price_variants'].queryset = self.instance.product.supplier_prices_last_items
         else:
             self.fields['supplier_price_variants'].queryset = ProductSupplierPrice.objects.none()
+
+

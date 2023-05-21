@@ -122,6 +122,7 @@ class Document(models.Model):
     mark_to_delete = models.BooleanField(default=False, verbose_name='Помечен на удаление')
     created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name='Добавлено')
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
+    applied = models.DateTimeField(verbose_name='Дата проведения', blank=True, null=True)
     comment = models.TextField('Комментарий', blank=True, null=True, default=None)
 
     class Meta:
@@ -296,8 +297,9 @@ class Supplier(Person):
 
 
 class PersonPhone(models.Model, PhoneInfoFieldsMixin):
-    person = models.ForeignKey(Person, null=True, blank=True, on_delete=models.CASCADE, related_name='phones')
-    phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.CASCADE)
+    person = models.ForeignKey(Person, null=True, blank=True, on_delete=models.CASCADE, related_name='phones',
+                               verbose_name='Контагент')
+    phone = models.ForeignKey(Phone, null=True, blank=True, on_delete=models.CASCADE, verbose_name='Телефон')
     is_nova_poshta = models.BooleanField('Привязан к новой почте', default=False)
 
     class Meta:

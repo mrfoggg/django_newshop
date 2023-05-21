@@ -3,6 +3,7 @@ from django.contrib import admin
 from djmoney.models.fields import MoneyField
 from dynamic_admin_forms.admin import DynamicModelAdminMixin
 
+from ROOTAPP.admin_forms import DocumentForm
 from ROOTAPP.models import PriceTypePersonBuyer
 # Register your models here.
 from catalog.models import ProductPrice, ProductSupplierPrice, ProductSupplierPriceInfo, ProductGroupPrice
@@ -76,7 +77,7 @@ class PriceTypePersonSupplierInline(nested_admin.SortableHiddenMixin, nested_adm
 
 @admin.register(PriceChangelist)
 class PriceChangelistAdmin(nested_admin.NestedModelAdmin, ):
-    fields = (('created', 'updated', 'is_active', 'mark_to_delete'), 'comment')
+    fields = (('created', 'updated', 'applied',  'is_active', 'mark_to_delete'), 'comment')
     readonly_fields = ('created', 'updated')
     list_display = ('__str__', 'is_active', 'comment')
     inlines = (ProductPricePriceChangelistInline,)
@@ -93,7 +94,7 @@ class PriceChangelistAdmin(nested_admin.NestedModelAdmin, ):
 
 @admin.register(SupplierPriceChangelist)
 class SupplierPriceChangelistAdmin(DynamicModelAdminMixin, nested_admin.NestedModelAdmin):
-    fields = (('created', 'updated', 'is_active', 'mark_to_delete'), ('person',), ('price_type',), 'comment')
+    fields = (('created', 'updated', 'applied', 'is_active', 'mark_to_delete'), ('person',), ('price_type',), 'comment')
 
     readonly_fields = ('created', 'updated')
     dynamic_fields = ('price_type',)
@@ -116,7 +117,8 @@ class SupplierPriceChangelistAdmin(DynamicModelAdminMixin, nested_admin.NestedMo
 
 @admin.register(GroupPriceChangelist)
 class GroupPriceChangelistAdmin(DynamicModelAdminMixin, nested_admin.NestedModelAdmin):
-    fields = (('created', 'updated', 'is_active', 'mark_to_delete'), ('person',), ('price_type',), 'comment')
+    form = DocumentForm
+    fields = (('created', 'updated', 'applied', 'is_active', 'mark_to_delete'), ('person',), ('price_type',), 'comment')
 
     readonly_fields = ('created', 'updated')
     dynamic_fields = ('price_type',)

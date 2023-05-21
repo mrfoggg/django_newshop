@@ -3,9 +3,9 @@ import json
 from django import forms
 from django.utils.html import format_html
 from django_select2.forms import ModelSelect2Widget, Select2AdminMixin
-from ROOTAPP.models import PersonAddress, ContactPerson, PersonPhone
+from ROOTAPP.models import PersonAddress, ContactPerson, PersonPhone, Person
 from catalog.models import ProductSupplierPrice, ProductSupplierPriceInfo
-from orders.models import ClientOrder
+from orders.models import ClientOrder, ProductInOrder
 
 # class Select2AdminWidget(ModelSelect2Widget, Select2AdminMixin):
 #     extra_attrs = {'placeholder': "номер для поиска или создания"}
@@ -61,6 +61,10 @@ class ClientOrderAdminForm(forms.ModelForm):
 class ProductInClientOrderAdminInlineForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['product'].widget.can_view_related = False
+        self.fields['product'].widget.can_add_related = False
+        self.fields['product'].widget.can_delete_related = False
+        self.fields['product'].widget.can_change_related = False
         if self.instance.id:
             if self.instance.supplier_order:
                 # self.fields['supplier_price_variants'].queryset = ProductSupplierPriceInfo.objects.filter(
@@ -74,3 +78,23 @@ class ProductInClientOrderAdminInlineForm(forms.ModelForm):
                 self.fields['supplier_price_variants'].queryset = self.instance.product.supplier_prices_last_items
         else:
             self.fields['supplier_price_variants'].queryset = ProductSupplierPriceInfo.objects.none()
+
+    class Meta:
+        model = ProductInOrder
+        fields = '__all__'
+        widgets = {
+            'product': ModelSelect2Widget(
+                model=ProductInOrder,
+                search_fields=('name__icontains',),
+                attrs={'data-placeholder': 'выберите товар', 'style': 'width: 100%;',
+                       'data-minimum-input-length': '0'}
+            )
+        }
+
+
+person_widget = ModelSelect2Widget(
+    model=Person,
+    search_fields=('phone__number__contains',),
+    attrs={'data-placeholder': 'выберите контрагента', 'style': 'width: 80%;',
+           'data-minimum-input-length': '0'}
+)
