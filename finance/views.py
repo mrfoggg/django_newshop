@@ -2,7 +2,7 @@ from django.shortcuts import render
 from djmoney.money import Money
 from jsonview.decorators import json_view
 
-from catalog.models import Product, ProductSupplierPrice
+from catalog.models import Product, ProductSupplierPrice, ProductGroupPrice
 from finance.models import GroupPriceChangelist
 from finance.services import get_margin, get_margin_percent, get_profitability
 from orders.models import SupplierOrder
@@ -18,11 +18,18 @@ def update_prices_ajax_for_order_admin(request):
 
 @json_view
 def ajax_get_product_price_and_suppliers_prices_variants(request):
+    print('groupPriceId - ', request.POST.get('groupPriceId'))
+    print('dropperId - ', request.POST.get('dropperId'))
     product = Product.objects.get(id=request.POST.get('productId'))
+    gp_qs = ProductGroupPrice.objects.filter(
+        price_changelist__price_type_id=(group_price_id := request.POST.get('groupPriceId')),
+        product=product
+    ).order_by('price_changelist__updated')
     response = {
         'current_price': product.full_current_price_info if product.current_price else '-',
         'current_price_amount': product.current_price.price.amount if product.current_price else None,
-        'group_price': 'group_price'
+        'group_price_info': gp_qs.last().price_full_info if (group_price_id and gp_qs.exists()) else '-',
+        'group_price_val': str(gp_qs.last().converted_price.amount) if (group_price_id and gp_qs.exists()) else None
     }
     if supplier_order_id := request.POST.get('supplierOrderId'):
 
@@ -71,7 +78,7 @@ def ajax_get_supplier_price_by_price_item_id(request):
     else:
         return {'price': f"{Money(0, 'UAH').amount:.2f}"}
 
+
 @json_view
 def ajax_get_supplier_price_item_by_supplier_price_id(request):
-
     return {'id', 'id'}

@@ -5,11 +5,13 @@
         setTimeout(function () {
             $('table.inline-related').on('change', 'tbody.djn-item .field-product select, tbody.djn-item .field-supplier_order select', function (){
                 let row = $(this).parents('.form-row');
+                console.log('this', $(this).parent().parent().hasClass('field-product'));
                 //при выборе товара или заказ поставшику обновить варинты закупочных цен. Если выбран и заказ опставщику то будет один вариант
                 ajaxUpdateSalePricesAndSupplierPriceVariants(
                     row,
                     row.find('.field-product select').val(),
-                    row.find('.field-supplier_order select').val()
+                    row.find('.field-supplier_order select').val(),
+                    $(this).parent().parent().hasClass('field-product')
                 );
             });
             $('table.inline-related').on('change', 'tbody.djn-item .field-supplier_price_variants select', function (){

@@ -28,15 +28,15 @@ class OneClickUserSectionCommentInline(admin.TabularInline):
 
 class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     form = ProductInClientOrderAdminInlineForm
-    fields = ('product', 'full_current_price_info', 'group_price', 'sale_price',
-              'drop_price',
+    fields = ('product', 'full_current_price_info', 'current_group_price', 'sale_price',
+              'group_price',
               'quantity', 'sale_total', 'margin', 'margin_total',
               'margin_percent', 'profitability',
               'supplier_order', 'supplier_price_variants',
               'purchase_price', 'client_order_position', 'purchase_total')
     readonly_fields = (
         'full_current_price_info', 'sale_total', 'purchase_total', 'margin', 'margin_total', 'margin_percent',
-        'profitability', 'group_price'
+        'profitability', 'current_group_price'
     )
     model = ProductInOrder
     extra = 0

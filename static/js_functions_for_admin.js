@@ -47,22 +47,28 @@ function autoUpdateSelectActionButtons(selector, initFieldName=null, outerFieldS
 
 
 // finance.view ajax_get_product_price_and_suppliers_prices_variants
-function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOrderId=null, groupPriceType=null) {
+function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOrderId=null, productChanged) {
     let priceVariantsSelect = row.find('.field-supplier_price_variants select');
     let initSelect = '<option value="" selected="">---------</option>'
     $.ajax({
         type: "POST",
         url: $('#ajaxUrls').data('getPriceAndProductSuppliersPricesUrl'),
-        data: {'productId': productId, 'supplierOrderId': supplierOrderId, 'groupPriceType': groupPriceType},
+        data: {
+            productId: productId, supplierOrderId: supplierOrderId, groupPriceId: $('#id_group_price_type').val(),
+            dropperId: $('#id_dropper').val()
+        },
         headers: {'X-CSRFToken': getCookie('csrftoken')},
         success: function (response) {
             priceVariantsSelect.html(initSelect);
             for (let spi of response['supplier_prices_last_items']){
                 priceVariantsSelect.children('option').last().after(`<option value="${spi['id']}">${spi['str_present']}</option>`);
             }
+            if (productChanged)
+                row.find('.field-sale_price input').val(response['current_price_amount']);
             row.find('.field-full_current_price_info p').text(response['current_price']);
-            row.find('.field-sale_price input').val(response['current_price_amount']);
-            if (response['supplier_prices_last_items'].length==1){
+            row.find('.field-current_group_price p').text(response['group_price_info']);
+            row.find('.field-group_price input').val(response['group_price_val']);
+            if (response['supplier_prices_last_items'].length===1){
                 priceVariantsSelect.children('option').last().prop('selected', true);
                 priceVariantsSelect.trigger('change');
             } else {

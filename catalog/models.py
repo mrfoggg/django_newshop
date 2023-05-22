@@ -26,8 +26,8 @@ def get_price_sq(outerref_field):
     return Subquery(ProductPrice.objects.filter(price_changelist__is_active=True,
                                                 product=OuterRef(outerref_field)).order_by(
         'price_changelist__created').values('price')[:1]), \
-           Subquery(Discount.objects.filter(product=OuterRef(outerref_field)).values('amount')[:1]), \
-           Subquery(Discount.objects.filter(product=OuterRef(outerref_field)).values('type_of_amount')[:1])
+        Subquery(Discount.objects.filter(product=OuterRef(outerref_field)).values('amount')[:1]), \
+        Subquery(Discount.objects.filter(product=OuterRef(outerref_field)).values('type_of_amount')[:1])
 
 
 def annotate_query_with_price(input_query, outerref_field):
@@ -264,12 +264,20 @@ class ProductGroupPrice(models.Model):
         verbose_name_plural = "Оптовые цены на товары"
         ordering = ['position']
 
+    @property
+    def converted_price(self):
+        return self.price if str(self.price.currency) == 'UAH' else convert_money(self.price, 'UAH')
+
+    @property
+    def price_full_info(self):
+        price_not_uah_str = '' if str(self.price.currency) == 'UAH' else f' ({self.price})'
+        return f'{self.converted_price} {price_not_uah_str}'
+
 
 class ProductSupplierPriceInfo(ProductSupplierPrice):
     def __str__(self):
         price_not_uah_str = '' if str(self.price.currency) == 'UAH' else f' ({self.price})'
         return f'{self.price_changelist} - {self.converted_price} {price_not_uah_str}'
-        # return str(self.price.currency)
 
     class Meta:
         proxy = True

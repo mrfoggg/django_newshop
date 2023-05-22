@@ -197,7 +197,7 @@ class ProductInOrder(models.Model):
     supplier_order_position = models.PositiveSmallIntegerField("Позиция в заказе постащику", blank=True, null=True,
                                                                db_index=True)
     sale_price = MoneyField('Цена продажи', max_digits=10, decimal_places=2, default_currency='UAH', default=0)
-    drop_price = MoneyField('Цена дроп', max_digits=10, decimal_places=2, default_currency='UAH', default=0)
+    group_price = MoneyField('Цена опт/дроп', max_digits=10, decimal_places=2, default_currency='UAH', default=0)
     supplier_price_variants = models.ForeignKey(ProductSupplierPriceInfo, blank=True, null=True,
                                                 on_delete=models.SET_NULL,
                                                 verbose_name='Цены поставщиков для расчета РЦ')
@@ -217,15 +217,15 @@ class ProductInOrder(models.Model):
         return self.product.full_current_price_info
 
     @property
-    @admin.display(description='Цена опт')
-    def group_price(self):
+    @admin.display(description='Текущая цена опт')
+    def current_group_price(self):
         group_price = self.client_order.group_price_type
         gp_qs = ProductGroupPrice.objects.filter(
             price_changelist__price_type_id=group_price.id,
             product=self.product
         ).order_by('price_changelist__updated')
         print('GPQS', gp_qs.exists())
-        return gp_qs.last().price if (group_price and gp_qs.exists()) else '-'
+        return gp_qs.last().price_full_info if (group_price and gp_qs.exists()) else '-'
         # return '333'
 
     @property
