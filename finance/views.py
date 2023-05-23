@@ -50,7 +50,8 @@ def ajax_get_product_price_and_suppliers_prices_variants(request):
 @json_view
 def ajax_get_calculated_finance_for_price_list(request):
     price = Money(request.POST.get('price'), 'UAH')
-    drop_price = Money(request.POST.get('drop_price'), 'UAH')
+    dp = request.POST.get('drop_price')
+    drop_price = Money(dp if dp != '' else 0, 'UAH')
     if request.POST.get('purchase_price'):
         purchase_price = Money(request.POST.get('purchase_price'), 'UAH')
     else:

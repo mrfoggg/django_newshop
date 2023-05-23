@@ -11,22 +11,25 @@
                     row,
                     row.find('.field-product select').val(),
                     row.find('.field-supplier_order select').val(),
-                    thisFieldSection.hasClass('field-product')
+                    thisFieldSection.hasClass('field-product'), true
                 );
             });
             $('#id_group_price_type, #id_dropper').change(function (){
                 $('table.inline-related tbody.djn-item').each(function (){
-                    console.log('ROW - ', $(this));
                     ajaxUpdateSalePricesAndSupplierPriceVariants(
                         $(this), $(this).find('.field-product select').val(),
-                        $(this).find('.field-supplier_order select').val(), true
+                        $(this).find('.field-supplier_order select').val(), true, true
                     );
                 });
-
+            });
+            $('table.inline-related tbody.djn-item').each(function (){
+                ajaxUpdateSalePricesAndSupplierPriceVariants(
+                    $(this), $(this).find('.field-product select').val(),
+                    $(this).find('.field-supplier_order select').val(), true, false
+                );
             });
             $('table.inline-related').on('change', 'tbody.djn-item .field-supplier_price_variants select', function (){
                 // обновить закупочную цену в зависимости от выбраной установки цен поставщика
-                console.log('change field-supplier_price_variants');
                 ajaxUpdatePurchasePrice($(this));
             });
 

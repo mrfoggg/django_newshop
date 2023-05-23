@@ -47,7 +47,7 @@ function autoUpdateSelectActionButtons(selector, initFieldName=null, outerFieldS
 
 
 // finance.view ajax_get_product_price_and_suppliers_prices_variants
-function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOrderId=null, updateSalePrices) {
+function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOrderId=null, updateSalePrices, updateDropPrices) {
     let priceVariantsSelect = row.find('.field-supplier_price_variants select');
     let initSelect = '<option value="" selected="">---------</option>'
     $.ajax({
@@ -73,10 +73,13 @@ function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOr
 
             row.find('.field-full_current_price_info p').text(response['current_price']);
             row.find('.field-current_group_price p').text(response['group_price_info']);
+            let dropPriceInput = row.find('.field-drop_price input');
             if ($('#id_dropper').val()) {
-                row.find('.field-drop_price input').val(response['group_price_val']).prop( "disabled", false );
+                dropPriceInput.prop( "disabled", false );
+                if (updateDropPrices)
+                    dropPriceInput.val(response['group_price_val']);
             } else {
-                row.find('.field-drop_price input').val('-').prop( "disabled", true );
+                dropPriceInput.val('-').prop( "disabled", true );
             }
 
             if (response['supplier_prices_last_items'].length===1){
