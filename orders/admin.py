@@ -29,7 +29,7 @@ class OneClickUserSectionCommentInline(admin.TabularInline):
 class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     form = ProductInClientOrderAdminInlineForm
     fields = ('product', 'full_current_price_info', 'current_group_price', 'sale_price',
-              'group_price',
+              'drop_price',
               'quantity', 'sale_total', 'margin', 'margin_total',
               'margin_percent', 'profitability',
               'supplier_order', 'supplier_price_variants',
@@ -49,7 +49,7 @@ class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.Nested
         # This method will turn all TextFields into giant TextFields
         if db_field.name == 'quantity':
             return forms.CharField(widget=forms.widgets.NumberInput(attrs={'size': 4, }), initial=1)
-        if db_field.name in ('sale_price', 'purchase_price'):
+        if db_field.name in ('sale_price', 'purchase_price', 'drop_price'):
             return MoneyField(widget=money_widget_only_uah)
         return super().formfield_for_dbfield(db_field, **kwargs)
 

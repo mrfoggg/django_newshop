@@ -5,14 +5,24 @@
         setTimeout(function () {
             $('table.inline-related').on('change', 'tbody.djn-item .field-product select, tbody.djn-item .field-supplier_order select', function (){
                 let row = $(this).parents('.form-row');
-                console.log('this', $(this).parent().parent().hasClass('field-product'));
                 //при выборе товара или заказ поставшику обновить варинты закупочных цен. Если выбран и заказ опставщику то будет один вариант
+                let thisFieldSection = $(this).parent().parent();
                 ajaxUpdateSalePricesAndSupplierPriceVariants(
                     row,
                     row.find('.field-product select').val(),
                     row.find('.field-supplier_order select').val(),
-                    $(this).parent().parent().hasClass('field-product')
+                    thisFieldSection.hasClass('field-product')
                 );
+            });
+            $('#id_group_price_type, #id_dropper').change(function (){
+                $('table.inline-related tbody.djn-item').each(function (){
+                    console.log('ROW - ', $(this));
+                    ajaxUpdateSalePricesAndSupplierPriceVariants(
+                        $(this), $(this).find('.field-product select').val(),
+                        $(this).find('.field-supplier_order select').val(), true
+                    );
+                });
+
             });
             $('table.inline-related').on('change', 'tbody.djn-item .field-supplier_price_variants select', function (){
                 // обновить закупочную цену в зависимости от выбраной установки цен поставщика
@@ -20,14 +30,15 @@
                 ajaxUpdatePurchasePrice($(this));
             });
 
-            $('table.inline-related').on('change', 'tbody.djn-item .field-sale_price input, tbody.djn-item .field-purchase_price input, tbody.djn-item .field-quantity input', function (){
+            $('table.inline-related').on('change', 'tbody.djn-item .field-sale_price input, tbody.djn-item .field-purchase_price input, tbody.djn-item .field-quantity input, tbody.djn-item .field-drop_price input', function (){
                 let row = $(this).parents('.form-row');
                 let price = row.find('.field-sale_price input').val();
                 let supplierPriceId = row.find('.field-supplier_price_variants select').val();
                 let quantity = row.find('.field-quantity input').val();
                 let purchasePrice = row.find('.field-purchase_price input').val();
+                let dropPrice = row.find('.field-drop_price input').val()==='-' ? 0 : row.find('.field-drop_price input').val();
                 if (price&&(supplierPriceId||purchasePrice))
-                    ajaxUpdateFinanceCalculated(row, price, supplierPriceId, quantity, purchasePrice);
+                    ajaxUpdateFinanceCalculated(row, price, supplierPriceId, quantity, purchasePrice, dropPrice);
             });
 
             $('#id_person').change(function (){

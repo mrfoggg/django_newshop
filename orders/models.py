@@ -197,7 +197,8 @@ class ProductInOrder(models.Model):
     supplier_order_position = models.PositiveSmallIntegerField("Позиция в заказе постащику", blank=True, null=True,
                                                                db_index=True)
     sale_price = MoneyField('Цена продажи', max_digits=10, decimal_places=2, default_currency='UAH', default=0)
-    group_price = MoneyField('Цена опт/дроп', max_digits=10, decimal_places=2, default_currency='UAH', default=0)
+    drop_price = MoneyField('Цена дроп', max_digits=10, decimal_places=2, default_currency='UAH', default=0,
+                            blank=True, null=True)
     supplier_price_variants = models.ForeignKey(ProductSupplierPriceInfo, blank=True, null=True,
                                                 on_delete=models.SET_NULL,
                                                 verbose_name='Цены поставщиков для расчета РЦ')
@@ -241,7 +242,7 @@ class ProductInOrder(models.Model):
     @property
     @admin.display(description='Маржа за шт.')
     def margin(self):
-        return get_margin(self.purchase_price, self.sale_price)
+        return get_margin(self.purchase_price, self.sale_price, self.drop_price)
 
     @property
     @admin.display(description='Маржа всего')

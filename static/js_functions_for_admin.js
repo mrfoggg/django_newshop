@@ -47,7 +47,7 @@ function autoUpdateSelectActionButtons(selector, initFieldName=null, outerFieldS
 
 
 // finance.view ajax_get_product_price_and_suppliers_prices_variants
-function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOrderId=null, productChanged) {
+function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOrderId=null, updateSalePrices) {
     let priceVariantsSelect = row.find('.field-supplier_price_variants select');
     let initSelect = '<option value="" selected="">---------</option>'
     $.ajax({
@@ -55,7 +55,7 @@ function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOr
         url: $('#ajaxUrls').data('getPriceAndProductSuppliersPricesUrl'),
         data: {
             productId: productId, supplierOrderId: supplierOrderId, groupPriceId: $('#id_group_price_type').val(),
-            dropperId: $('#id_dropper').val()
+            // dropperId: $('#id_dropper').val()
         },
         headers: {'X-CSRFToken': getCookie('csrftoken')},
         success: function (response) {
@@ -63,11 +63,22 @@ function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOr
             for (let spi of response['supplier_prices_last_items']){
                 priceVariantsSelect.children('option').last().after(`<option value="${spi['id']}">${spi['str_present']}</option>`);
             }
-            if (productChanged)
-                row.find('.field-sale_price input').val(response['current_price_amount']);
+            if (updateSalePrices) {
+                if (!$('#id_dropper').val() && response['group_price_val']) {
+                    row.find('.field-sale_price input').val(response['group_price_val']);
+                } else {
+                    row.find('.field-sale_price input').val(response['current_price_amount']);
+                }
+            }
+
             row.find('.field-full_current_price_info p').text(response['current_price']);
             row.find('.field-current_group_price p').text(response['group_price_info']);
-            row.find('.field-group_price input').val(response['group_price_val']);
+            if ($('#id_dropper').val()) {
+                row.find('.field-drop_price input').val(response['group_price_val']).prop( "disabled", false );
+            } else {
+                row.find('.field-drop_price input').val('-').prop( "disabled", true );
+            }
+
             if (response['supplier_prices_last_items'].length===1){
                 priceVariantsSelect.children('option').last().prop('selected', true);
                 priceVariantsSelect.trigger('change');
@@ -81,11 +92,12 @@ function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOr
 }
 
 
-function ajaxUpdateFinanceCalculated(row, price, supplierPriceId, quantity=null, purchasePrice=null) {
+function ajaxUpdateFinanceCalculated(row, price, supplierPriceId, quantity=null, purchasePrice=null, dropPrice) {
     $.ajax({
         type: "POST",
         url: $('#ajaxUrls').data('ajaxGetCalculatedFinanceForPriceListUrl'),
-        data: {'price': price, 'supplier_price_id': supplierPriceId, 'quantity': quantity, 'purchase_price': purchasePrice},
+        data: {price: price, supplier_price_id: supplierPriceId, quantity: quantity,
+            purchase_price: purchasePrice, drop_price: dropPrice},
         headers: {'X-CSRFToken': getCookie('csrftoken')},
         success: function (response) {
             row.find('.field-margin p').text(response['margin']);

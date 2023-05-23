@@ -18,18 +18,19 @@ def update_prices_ajax_for_order_admin(request):
 
 @json_view
 def ajax_get_product_price_and_suppliers_prices_variants(request):
-    print('groupPriceId - ', request.POST.get('groupPriceId'))
-    print('dropperId - ', request.POST.get('dropperId'))
+    # print('groupPriceId - ', request.POST.get('groupPriceId'))
+    # print('dropperId - ', request.POST.get('dropperId'))
     product = Product.objects.get(id=request.POST.get('productId'))
     gp_qs = ProductGroupPrice.objects.filter(
-        price_changelist__price_type_id=(group_price_id := request.POST.get('groupPriceId')),
+        price_changelist__price_type_id=group_price_id,
         product=product
-    ).order_by('price_changelist__updated')
+    ).order_by('price_changelist__updated') if (group_price_id := request.POST.get('groupPriceId')) else \
+        ProductGroupPrice.objects.none()
     response = {
         'current_price': product.full_current_price_info if product.current_price else '-',
         'current_price_amount': product.current_price.price.amount if product.current_price else None,
         'group_price_info': gp_qs.last().price_full_info if (group_price_id and gp_qs.exists()) else '-',
-        'group_price_val': str(gp_qs.last().converted_price.amount) if (group_price_id and gp_qs.exists()) else None
+        'group_price_val': f'{gp_qs.last().converted_price.amount:.2f}' if (group_price_id and gp_qs.exists()) else None
     }
     if supplier_order_id := request.POST.get('supplierOrderId'):
 
@@ -49,6 +50,7 @@ def ajax_get_product_price_and_suppliers_prices_variants(request):
 @json_view
 def ajax_get_calculated_finance_for_price_list(request):
     price = Money(request.POST.get('price'), 'UAH')
+    drop_price = Money(request.POST.get('drop_price'), 'UAH')
     if request.POST.get('purchase_price'):
         purchase_price = Money(request.POST.get('purchase_price'), 'UAH')
     else:
@@ -56,7 +58,7 @@ def ajax_get_calculated_finance_for_price_list(request):
             purchase_price = ProductSupplierPrice.objects.get(id=ps_id).converted_price
         else:
             purchase_price = 0
-    margin = get_margin(purchase_price, price)
+    margin = get_margin(purchase_price, price, drop_price)
     margin_percent = get_margin_percent(margin, purchase_price)
     profitability = get_profitability(margin, price)
     response = {'margin': str(margin), 'margin_percent': str(margin_percent), 'profitability': str(profitability)}

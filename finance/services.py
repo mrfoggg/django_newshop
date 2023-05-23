@@ -1,5 +1,8 @@
-def get_margin(purchase_price, sale_price):
-    return sale_price - purchase_price if purchase_price and sale_price else '-'
+def get_margin(purchase_price, sale_price, drop_price):
+    if drop_price:
+        return drop_price - purchase_price if purchase_price and drop_price else '-'
+    else:
+        return sale_price - purchase_price if purchase_price and sale_price else '-'
 
 
 def get_margin_percent(margin, purchase_price):
