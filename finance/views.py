@@ -8,8 +8,6 @@ from finance.services import get_margin, get_margin_percent, get_profitability
 from orders.models import SupplierOrder
 
 
-# Create your views here.
-
 # при выборе товара обновитть цены продажи и варинаты закупочных цен поставщиков
 @json_view
 def update_prices_ajax_for_order_admin(request):
@@ -18,19 +16,18 @@ def update_prices_ajax_for_order_admin(request):
 
 @json_view
 def ajax_get_product_price_and_suppliers_prices_variants(request):
-    # print('groupPriceId - ', request.POST.get('groupPriceId'))
-    # print('dropperId - ', request.POST.get('dropperId'))
     product = Product.objects.get(id=request.POST.get('productId'))
     gp_qs = ProductGroupPrice.objects.filter(
         price_changelist__price_type_id=group_price_id,
         product=product
     ).order_by('price_changelist__updated') if (group_price_id := request.POST.get('groupPriceId')) else \
         ProductGroupPrice.objects.none()
+    current_price_amount = product.current_price.price.amount if product.current_price else None
     response = {
         'current_price': product.full_current_price_info if product.current_price else '-',
-        'current_price_amount': product.current_price.price.amount if product.current_price else None,
+        'current_price_amount': current_price_amount,
         'group_price_info': gp_qs.last().price_full_info if (group_price_id and gp_qs.exists()) else '-',
-        'group_price_val': f'{gp_qs.last().converted_price.amount:.2f}' if (group_price_id and gp_qs.exists()) else None
+        'group_price_val': f'{gp_qs.last().converted_price.amount:.2f}' if (group_price_id and gp_qs.exists()) else current_price_amount
     }
     if supplier_order_id := request.POST.get('supplierOrderId'):
 
@@ -44,6 +41,7 @@ def ajax_get_product_price_and_suppliers_prices_variants(request):
     else:
         response['supplier_prices_last_items'] = [{'id': pi.id, 'str_present': pi.__str__()} for pi in
                                                   product.supplier_prices_last_items]
+    print('resp', response, sep='=')
     return response
 
 

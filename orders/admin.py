@@ -3,7 +3,8 @@ from django import forms
 from django.contrib import admin
 from django.db import models
 from djmoney.forms import MoneyField
-from ROOTAPP.models import Person, Phone
+from ROOTAPP.models import Person, Phone, PriceTypePersonBuyer
+from catalog.models import ProductSupplierPriceInfo
 from finance.admin_forms import money_widget_only_uah
 from .admin_form import ClientOrderAdminForm, ProductInClientOrderAdminInlineForm
 from .models import (BY_ONECLICK_STATUSES_CLIENT_DISPLAY, ByOneclick,
@@ -40,29 +41,22 @@ class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.Nested
     )
     model = ProductInOrder
     extra = 0
-    # autocomplete_fields = ('product', 'supplier_order')
     sortable_field_name = 'client_order_position'
     verbose_name = 'Товар в заказе'
     verbose_name_plural = 'Товары в заказе'
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super(ProductInClientOrder, self).get_formset(request, obj, **kwargs)
+        self.form.request = request
+        return formset
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         # This method will turn all TextFields into giant TextFields
         if db_field.name == 'quantity':
             return forms.CharField(widget=forms.widgets.NumberInput(attrs={'size': 4, }), initial=1)
         if db_field.name in ('sale_price', 'purchase_price', 'drop_price'):
-            return MoneyField(widget=money_widget_only_uah)
+            return MoneyField(required=False, widget=money_widget_only_uah)
         return super().formfield_for_dbfield(db_field, **kwargs)
-
-    # для отображения только активных товаров
-    # def get_search_results(self, request, queryset, search_term):
-    #     print('GET_SEARCH_RESULTS')
-    #     queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
-    #     print('search_term -', search_term)
-    #     if 'model_name' in request.GET.keys():
-    #         print('MODEL_NAME - ', request.GET['model_name'])
-    #         if request.GET['model_name'] == 'productinorder':
-    #             queryset = queryset.filter(is_active=True, mark_to_delete=False)
-    #     return queryset, may_have_duplicates
 
 
 class ProductInSupplierOrder(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
@@ -125,7 +119,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         (
             'Основное',
             {'fields': (
-                ('id', 'created', 'updated', 'is_active', 'mark_to_delete', ),
+                ('id', 'created', 'updated', 'is_active', 'mark_to_delete',),
                 ('status', 'extend_status'), ('source', 'payment_type'),
             )},
         ),
@@ -150,7 +144,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         (
             'Итого по заказу',
             {'fields': (
-                ('total_quantity', 'total_amount', 'total_purchase_amount','total_margin'),
+                ('total_quantity', 'total_amount', 'total_purchase_amount', 'total_margin'),
             )}
         ),
     )
@@ -162,8 +156,8 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     list_editable = ('status', 'is_active', 'mark_to_delete')
     autocomplete_fields = (
         # 'person',
-                           # 'incoming_phone'
-                           )
+        # 'incoming_phone'
+    )
     search_fields = ('person__full_name',)
     inlines = (ProductInClientOrder,)
 
@@ -190,19 +184,25 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         return queryset, may_have_duplicates
 
     def get_form(self, request, obj=None, **kwargs):
+        print('GET PARENT FORM')
         self._request_method = request.method
         self._curent_phone_ = obj.incoming_phone if obj else None
         self._curent_person_ = obj.person if obj else None
+        self._curent_dropper_ = obj.dropper if obj else None
         return super().get_form(request, obj, **kwargs)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if hasattr(self, '_request_method'):
             phone = self._curent_phone_ if hasattr(self, '_curent_phone_') else None
-            person = self._curent_person_ if hasattr(self, '_curent_person_') else None
+            person_id = self._curent_person_.id if hasattr(self, '_curent_person_') and self._curent_person_ else None
+            dropper_id = self._curent_dropper_.id if hasattr(self, '_curent_dropper_') and self._curent_dropper_ else None
             if db_field.name == "incoming_phone" and self._request_method == 'GET':
                 kwargs["queryset"] = Phone.objects.filter(id=phone.id) if phone else Phone.objects.none()
             if db_field.name == "person" and self._request_method == 'GET':
-                kwargs["queryset"] = Person.objects.filter(id=person.id) if person else Person.objects.none()
+                kwargs["queryset"] = Person.objects.filter(id=person_id) if person_id else Person.objects.none()
+            if db_field.name == "group_price_type" and self._request_method == 'GET':
+                kwargs["queryset"] = PriceTypePersonBuyer.objects.filter(person_id=dropper_id) if dropper_id\
+                    else PriceTypePersonBuyer.objects.filter(person_id=person_id)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     baton_form_includes = [

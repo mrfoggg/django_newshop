@@ -65,19 +65,18 @@ class ProductInClientOrderAdminInlineForm(forms.ModelForm):
         self.fields['product'].widget.can_add_related = False
         self.fields['product'].widget.can_delete_related = False
         self.fields['product'].widget.can_change_related = False
-        if self.instance.id:
-            if self.instance.supplier_order:
-                # self.fields['supplier_price_variants'].queryset = ProductSupplierPriceInfo.objects.filter(
-                #     id=self.instance.supplier_order.price_type.id)
-                self.fields[
-                    'supplier_price_variants'].queryset = self.instance.product.supplier_prices_last_items.filter(
-                    id=self.instance.supplier_order.price_type.id
-                )
+        if self.request.method == 'GET':
+            if self.instance.id:
+                if self.instance.supplier_order:
 
+                    self.fields[
+                        'supplier_price_variants'].queryset = self.instance.product.supplier_prices_last_items.filter(
+                        id=self.instance.supplier_order.price_type.id
+                    )
+                else:
+                    self.fields['supplier_price_variants'].queryset = self.instance.product.supplier_prices_last_items
             else:
-                self.fields['supplier_price_variants'].queryset = self.instance.product.supplier_prices_last_items
-        else:
-            self.fields['supplier_price_variants'].queryset = ProductSupplierPriceInfo.objects.none()
+                self.fields['supplier_price_variants'].queryset = ProductSupplierPriceInfo.objects.none()
 
     class Meta:
         model = ProductInOrder

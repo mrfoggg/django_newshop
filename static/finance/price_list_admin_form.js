@@ -3,6 +3,7 @@
     Baton.Dispatcher.register('onReady', function () {
         setTimeout(function () {
             $('table.inline-related').on('change', 'tbody.djn-item .field-product select',  function (){
+                console.log('CHANGE field-product');
                 ajaxUpdateSalePricesAndSupplierPriceVariants($(this));
             });
 

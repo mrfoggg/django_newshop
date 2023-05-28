@@ -5,12 +5,11 @@
             $(this).parents('.admin_ajax_section').toggleClass('visible');
             $(this).toggleClass('visible').parent().next().slideToggle();
         });
-        console.log('JS_FUNCTIONS_FOR_ADMIN');
         autoUpdateSelectActionButtons('#id_person, #id_incoming_phone, #id_address, #id_contact_person, #id_delivery_phone, #id_phone', 'person', '#id_person');
     });
 })(jQuery, undefined)
 
-
+let notSelectedOption = '<option value="" selected="">---------</option>';
 function autoUpdateSelectActionButtons(selector, initFieldName=null, outerFieldSelector=null) {
     $(selector).change(function (){
         let element_id = $(this).prop('id');
@@ -89,7 +88,6 @@ function ajaxUpdateSalePricesAndSupplierPriceVariants(row, productId, supplierOr
                 row.find('.field-margin p, .field-margin_percent p, .field-profitability p, .field-sale_total p, .field-margin_total p').text('-');
                 row.find('.field-purchase_price input').val('0');
             }
-
         }
     }, 200);
 }

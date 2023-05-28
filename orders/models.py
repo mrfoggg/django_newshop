@@ -151,20 +151,26 @@ class ClientOrder(Document):
     @property
     @admin.display(description='Всего товаров к закупке на сумму')
     def total_purchase_amount(self):
-        if self.products.exists():
+        products_to_purchase = self.products.filter(supplier_order__isnull=False)
+        if products_to_purchase.exists():
             return Money(
-                self.products.aggregate(total_purchase_amount=Sum(F('purchase_price') * F('quantity')))[
+                products_to_purchase.aggregate(total_purchase_amount=Sum(F('purchase_price') * F('quantity')))[
                     'total_purchase_amount'], 'UAH')
         else:
-            return 0
+            return Money(0, 'UAH')
 
     @property
     @admin.display(description='Итоговая маржа по заказу')
     def total_margin(self):
         if self.products.exists():
-            return Money(
-                self.products.aggregate(total_margin=Sum((F('sale_price') - F('purchase_price')) * F('quantity')))[
-                    'total_margin'], 'UAH')
+            if self.dropper:
+                return Money(
+                    self.products.aggregate(total_margin=Sum((F('drop_price') - F('purchase_price')) * F('quantity')))[
+                        'total_margin'], 'UAH')
+            else:
+                return Money(
+                    self.products.aggregate(total_margin=Sum((F('sale_price') - F('purchase_price')) * F('quantity')))[
+                        'total_margin'], 'UAH')
         return 0
 
 

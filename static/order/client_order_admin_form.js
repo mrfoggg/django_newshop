@@ -22,12 +22,12 @@
                     );
                 });
             });
-            $('table.inline-related tbody.djn-item').each(function (){
-                ajaxUpdateSalePricesAndSupplierPriceVariants(
-                    $(this), $(this).find('.field-product select').val(),
-                    $(this).find('.field-supplier_order select').val(), true, false
-                );
-            });
+            // $('table.inline-related tbody.djn-item').each(function (){
+                // ajaxUpdateSalePricesAndSupplierPriceVariants(
+                //     $(this), $(this).find('.field-product select').val(),
+                //     $(this).find('.field-supplier_order select').val(), false, false
+                // );
+            // });
             $('table.inline-related').on('change', 'tbody.djn-item .field-supplier_price_variants select', function (){
                 // обновить закупочную цену в зависимости от выбраной установки цен поставщика
                 ajaxUpdatePurchasePrice($(this));
@@ -47,6 +47,10 @@
             $('#id_person').change(function (){
                 $('select#id_contact_person, select#id_address').empty();
             });
+            // зачем?
+            // $('#id_dropper').trigger('change');
+            if (!$('#id_dropper').val())
+                $('.field-drop_price input').val('-').prop( "disabled", true );
         }, 700);
         let notSelectedOption = '<option value="" selected="">---------</option>';
 
@@ -61,7 +65,7 @@
         });
         $('select#id_person').change(function () {
             getPersonPhones();
-             $('#id_group_price_type').html(notSelectedOption);
+            $('#id_group_price_type').html(notSelectedOption);
         });
 
         // autoUpdateSelectActionButtons('#id_person, #id_incoming_phone, #id_address, #id_contact_person, #id_delivery_phone', 'person', '#id_person');
@@ -92,7 +96,6 @@
 })(jQuery, undefined)
 
 function copyTextButton(text){
-    console.log(text);
     navigator.clipboard.writeText(text).then();
 }
 
@@ -289,6 +292,7 @@ function getPersonPhones(){
 
 // провериь и установить доступность выбора дропера для заказов с этим контрагентом, обнвоить доступне оптовые цены
 // для контрагента или указаного дропера
+// order get_person_info_ajax
 function getPersonInfoAjax(person_id, buyerMode=false) {
     $.ajax({
         type: "POST",
@@ -296,16 +300,16 @@ function getPersonInfoAjax(person_id, buyerMode=false) {
         data: {'person_id': person_id},
         headers: {'X-CSRFToken': getCookie('csrftoken')},
         success: function (response) {
-            // let notSelectedOption = '<option value="" selected="">---------</option>';
-            // $('#id_group_price_type').html(notSelectedOption);
             if (buyerMode) {
-                $('#id_dropper').val('');
+                // $('#id_dropper').val('');
                 if (response['dropper_available']) {
                     $('#id_dropper').prop('disabled', false);
                 } else {
+                    // $('#id_dropper').prop('disabled', true);
                     $('#id_dropper').val('').prop('disabled', true);
                 }
             }
+            $('#id_group_price_type').html(notSelectedOption);
             for (let priceOption of response['group_price_types']) {
                 $('#id_group_price_type').children('option').last().after(`<option value="${priceOption['id']}">${priceOption['name']}</option>`);
             }

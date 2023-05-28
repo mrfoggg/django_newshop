@@ -94,7 +94,6 @@ def get_person_info_ajax(request):
     person = Person.objects.get(id=person_id) if person_id else Person.objects.none()
     dropper_available = not (person.is_dropper or person.is_group_buyer) if person_id else False
     group_price_types = list(person.pricetypepersonbuyer_set.values('id', 'name')) if person_id else []
-    # print('GET_PERSON_INFO_AJAX ', group_price_types)
     return {
         'dropper_available': dropper_available, 'group_price_types': group_price_types
     }
