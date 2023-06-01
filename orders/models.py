@@ -6,17 +6,20 @@ from unicodedata import decimal
 from django.contrib import admin
 # from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Sum, F
 from django.urls import reverse
 from django.utils.html import format_html_join
 from djmoney.models.fields import MoneyField
 from djmoney.money import Money
+from polymorphic.models import PolymorphicModel
 
 from catalog.models import Product, ProductSupplierPriceInfo, ProductGroupPrice
 from ROOTAPP.models import Person, Phone, PersonAddress, Supplier, Document, PriceTypePersonBuyer, ContactPerson, \
     PersonPhone
-from finance.models import PriceTypePersonSupplier, GroupPriceChangelist
+from finance.models import PriceTypePersonSupplier, GroupPriceChangelist, Stock
 from finance.services import get_margin, get_margin_percent, get_profitability
 from site_settings.models import APIkeyIpInfo
 
@@ -180,6 +183,8 @@ class SupplierOrder(Document):
     status = models.SmallIntegerField('Статус', choices=SUPPLIER_ORDER_STATUSES, default=1, db_index=True)
     price_type = models.ForeignKey(PriceTypePersonSupplier, null=True, on_delete=models.SET_NULL,
                                    verbose_name='Тип цен')
+    stock = models.ForeignKey(Stock, null=True, on_delete=models.SET_NULL, blank=True,
+                              verbose_name='Склад')
 
     class Meta:
         ordering = ('created',)
@@ -210,6 +215,8 @@ class ProductInOrder(models.Model):
                                                 verbose_name='Цены поставщиков для расчета РЦ')
     purchase_price = MoneyField('Закупочная цена', max_digits=10, decimal_places=2, default_currency='UAH',
                                 default=0)
+    realization_quantity = models.PositiveSmallIntegerField('отгружено', default=0)
+    arrive_quantity = models.PositiveSmallIntegerField('поступило', default=0)
 
     class Meta:
         verbose_name = 'Товар в заказах покупателю и поставщику'
@@ -264,18 +271,6 @@ class ProductInOrder(models.Model):
     @admin.display(description='Маржа, %')
     def profitability(self):
         return get_profitability(self.margin, self.sale_price)
-
-
-class Realization(Document):
-    status = models.SmallIntegerField('Статус', choices=REALISATION_STATUSES, default=1, db_index=True)
-
-    class Meta:
-        ordering = ('created',)
-        verbose_name = "Реализация"
-        verbose_name_plural = "Реализация"
-
-    def __str__(self):
-        return f'{self.created.strftime("%d-%m-%Y %H:%M")}'
 
 
 class ByOneclick(models.Model):
@@ -378,4 +373,71 @@ class Basket(models.Model):
     customer = models.ForeignKey(Person, verbose_name="Пользователь", on_delete=models.SET_NULL, null=True)
     # customer = models.ForeignKey(get_user_model(), verbose_name="Пользователь", on_delete=models.SET_NULL, null=True)
 
+
 # В заказе должно быть поле тип заказа: на сайте, ванклик или по телефону
+
+# Arrival
+class FinanceDocument(Document, PolymorphicModel):
+    balance_before = MoneyField(max_digits=14, decimal_places=2, default_currency='UAH', default=0,
+                                verbose_name='Баланс до')
+    amount = MoneyField(max_digits=14, decimal_places=2, default_currency='UAH', default=0,
+                        verbose_name='Сумма документа')
+    balance_after = MoneyField(max_digits=14, decimal_places=2, default_currency='UAH', default=0,
+                               verbose_name='Баланс после')
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return f'Документ №{self.id} {self.applied.strftime("%m/%d/%Y, (%H:%M)") if self.applied else self.created.strftime("%m/%d/%Y, (%H:%M)")} - '
+
+    class Meta:
+        verbose_name = "Финансовый документ"
+        verbose_name_plural = "Финансовые документы"
+        ordering = ['applied']
+
+
+
+
+class Realization(FinanceDocument):
+    status = models.SmallIntegerField('Статус', choices=REALISATION_STATUSES, default=1, db_index=True)
+
+    class Meta:
+        ordering = ('created',)
+        verbose_name = "Реализация"
+        verbose_name_plural = "Реализация"
+
+    def __str__(self):
+        return f'{self.created.strftime("%d-%m-%Y %H:%M")}'
+
+
+class Arrival(FinanceDocument):
+    order = models.ForeignKey(SupplierOrder, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ('created',)
+        verbose_name = "Поступление товаров"
+        verbose_name_plural = "Поступления товаров"
+
+    def __str__(self):
+        return f'Созданое {self.created.strftime("%m/%d/%Y, (%H:%M)")} поступление товаров'
+
+    def save(self, *args, **kwargs):
+
+        self.amount = self.order.products.aggregate(Sum('purchase_price'))['purchase_price__sum']
+        self.balance_after = self.balance_before + self.amount
+        super().save(*args, **kwargs)
+
+
+class ProductMoveItem(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
+    document = models.ForeignKey(FinanceDocument, on_delete=models.CASCADE, null=True, blank=True)
+    price = MoneyField('Цена продажи', max_digits=10, decimal_places=2, default_currency='UAH', default=0)
+    quantity = models.SmallIntegerField('Количество', default=1)
+
+    def __str__(self):
+        return self.product.name
+
+    class Meta:
+        verbose_name = "Товар"
+        verbose_name_plural = "Товары"

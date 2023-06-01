@@ -147,3 +147,4 @@ class GroupPriceChangelistAdmin(DynamicModelAdminMixin, nested_admin.NestedModel
 admin.site.register(PriceTypePersonBuyer)
 admin.site.register(PriceTypePersonSupplier)
 admin.site.register(Stock)
+# admin.site.register(Arrival)

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     # 'django_select2',
     # "debug_toolbar",
     'baton',
+    'polymorphic',
     'dynamic_admin_forms',
     'django.contrib.admin',
     'django.contrib.auth',

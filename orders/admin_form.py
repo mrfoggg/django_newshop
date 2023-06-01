@@ -1,6 +1,8 @@
 import json
 
 from django import forms
+from django.core.exceptions import ValidationError
+from django.db.models import Sum
 from django.utils.html import format_html
 from django_select2.forms import ModelSelect2Widget, Select2AdminMixin
 from ROOTAPP.models import PersonAddress, ContactPerson, PersonPhone, Person
@@ -97,3 +99,33 @@ person_widget = ModelSelect2Widget(
     attrs={'data-placeholder': 'выберите контрагента', 'style': 'width: 80%;',
            'data-minimum-input-length': '0'}
 )
+
+class ProductMoveItemInlineFormset(forms.models.BaseInlineFormSet):
+    def clean(self):
+        super(ProductMoveItemInlineFormset, self).clean()
+        # print('INST - ', self.instance.order.products.all())
+        products_in_order_qs = self.instance.order.products
+        total_quantity = dict()
+        for form in self.forms:
+            product = form.cleaned_data['product']
+            quantity = form.cleaned_data['quantity']
+
+            if product in total_quantity.keys():
+                total_quantity[product]['quantity'] += quantity
+            else:
+                quantity_in_order = products_in_order_qs.filter(product=product).aggregate(Sum('quantity'))[
+                    'quantity__sum']
+                total_quantity[product] = {
+                    'quantity': quantity,
+                    'quantity_in_order': quantity_in_order
+                }
+        for q in total_quantity.items():
+            # print('Q -', q)
+            if q[1]['quantity'] > q[1]['quantity_in_order']:
+                raise ValidationError(f"Не возможно получить {q[1]['quantity']} шт {q[0]}, "
+                                      f"в заказе всего {q[1]['quantity_in_order']} шт")
+            else:
+                pass
+        # print('total_quantity -', total_quantity)
+
+

@@ -1,15 +1,27 @@
 import nested_admin
+from djmoney.money import Money
+# import rprint as rprint
+from rich import print as rprint
 from django import forms
 from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db import models
 from djmoney.forms import MoneyField
+from polymorphic.admin import StackedPolymorphicInline, PolymorphicInlineSupportMixin
+
 from ROOTAPP.models import Person, Phone, PriceTypePersonBuyer
 from catalog.models import ProductSupplierPriceInfo
 from finance.admin_forms import money_widget_only_uah
-from .admin_form import ClientOrderAdminForm, ProductInClientOrderAdminInlineForm
+from .admin_form import ClientOrderAdminForm, ProductInClientOrderAdminInlineForm, ProductMoveItemInlineFormset
 from .models import (BY_ONECLICK_STATUSES_CLIENT_DISPLAY, ByOneclick,
                      ByOneclickPersonalComment, OneClickUserSectionComment, ClientOrder, SupplierOrder, Realization,
-                     ProductInOrder)
+                     ProductInOrder, FinanceDocument, Arrival, ProductMoveItem)
+
+
+class ProductMoveItemInline(nested_admin.NestedTabularInline):
+    formset = ProductMoveItemInlineFormset
+    model = ProductMoveItem
+    extra = 0
 
 
 class ByOneclickCommentAdminInline(admin.TabularInline):
@@ -61,13 +73,28 @@ class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.Nested
 
 class ProductInSupplierOrder(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     # adminsortable2 требует fields именно списком
-    fields = ('product', 'purchase_price', 'quantity', 'client_order', 'supplier_order_position')
+    fields = ('product', 'purchase_price', 'quantity', 'client_order', 'supplier_order_position', 'arrive_quantity')
+    readonly_fields = ('arrive_quantity',)
+
     model = ProductInOrder
     extra = 2
     autocomplete_fields = ('product', 'client_order')
     sortable_field_name = 'supplier_order_position'
     verbose_name = 'Товар в заказе'
     verbose_name_plural = 'Товары в заказе'
+    extra = 0
+
+
+class ArrivalInline(nested_admin.NestedTabularInline):
+    model = Arrival
+    exclude = ('comment', )
+    extra = 0
+    # sortable_field_name = 'comment'
+    inlines = [ProductMoveItemInline, ]
+    readonly_fields = ('balance_before', 'amount', 'balance_after')
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 class ByOneclickAdminForm(forms.ModelForm):
@@ -113,6 +140,7 @@ class ByOneclickAdmin(admin.ModelAdmin):
 
 
 @admin.register(ClientOrder)
+# class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
 class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     form = ClientOrderAdminForm
     fieldsets = (
@@ -195,13 +223,14 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         if hasattr(self, '_request_method'):
             phone = self._curent_phone_ if hasattr(self, '_curent_phone_') else None
             person_id = self._curent_person_.id if hasattr(self, '_curent_person_') and self._curent_person_ else None
-            dropper_id = self._curent_dropper_.id if hasattr(self, '_curent_dropper_') and self._curent_dropper_ else None
+            dropper_id = self._curent_dropper_.id if hasattr(self,
+                                                             '_curent_dropper_') and self._curent_dropper_ else None
             if db_field.name == "incoming_phone" and self._request_method == 'GET':
                 kwargs["queryset"] = Phone.objects.filter(id=phone.id) if phone else Phone.objects.none()
             if db_field.name == "person" and self._request_method == 'GET':
                 kwargs["queryset"] = Person.objects.filter(id=person_id) if person_id else Person.objects.none()
             if db_field.name == "group_price_type" and self._request_method == 'GET':
-                kwargs["queryset"] = PriceTypePersonBuyer.objects.filter(person_id=dropper_id) if dropper_id\
+                kwargs["queryset"] = PriceTypePersonBuyer.objects.filter(person_id=dropper_id) if dropper_id \
                     else PriceTypePersonBuyer.objects.filter(person_id=person_id)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
@@ -214,9 +243,9 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
 
 
 @admin.register(SupplierOrder)
-class SupplierOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
+class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
     fields = (
-        ('id', 'is_active', 'mark_to_delete', 'status',),
+        ('id', 'is_active', 'mark_to_delete', 'status', 'stock'),
         ('person', 'price_type'), 'comment'
     )
     readonly_fields = ('id', 'created', 'updated')
@@ -224,7 +253,11 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     list_display_links = ('__str__',)
     list_editable = ('status', 'is_active', 'mark_to_delete')
     search_fields = ('person__last_name',)
-    inlines = (ProductInSupplierOrder,)
+    inlines = (
+        ProductInSupplierOrder,
+        ArrivalInline
+    )
+    change_form_template = "supplier_order_changeform.html"
 
     class Media:
         js = ('admin/textarea-autoheight.js',)
@@ -238,13 +271,79 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_search_results(self, request, queryset, search_term):
-        print('GET_SEARCH_RESULTS')
         queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term, )
         if 'model_name' in request.GET.keys():
             if request.GET['model_name'] == 'productinorder':
                 queryset = queryset.filter(is_active=True, mark_to_delete=False)
         return queryset, may_have_duplicates
 
+    def response_change(self, request, obj):
+        if "_create_arrival" in request.POST:
+            new_arrival = Arrival(order=obj)
+            products_to_create = []
+            quantity_dict = dict()
+            for pr in obj.products.all():
+                if pr.product_id in quantity_dict.keys():
+                    if pr.purchase_price.amount in quantity_dict[pr.product_id].keys():
+                        quantity_dict[pr.product_id][pr.purchase_price.amount] += pr.quantity
+                    else:
+                        quantity_dict[pr.product_id][pr.purchase_price.amount] = pr.quantity
+                else:
+                    quantity_dict[pr.product_id] = {pr.purchase_price.amount: pr.quantity}
+
+            rprint(f'{quantity_dict=}')
+
+            # узанть сколько товаров уже поступило и отнять их
+            for ar in Arrival.objects.filter(order=obj):
+                for p in ar.productmoveitem_set.all():
+                    if p.product_id in quantity_dict.keys():
+                        while p.quantity:
+                            if p.price.amount in quantity_dict[p.product_id].keys():
+                                quantity_in_order = quantity_dict[p.product_id][p.price.amount]
+                                if p.quantity >= quantity_in_order:
+                                    quantity_dict[p.product_id].pop(p.price.amount)
+                                    if not quantity_dict[p.product_id]:
+                                        quantity_dict.pop(p.product_id)
+                                        p.quantity = 0
+                                        quantity_in_order = 0
+                                    if p.quantity > quantity_in_order:
+                                        new_price_amount = list(quantity_dict[p.product_id].keys())[0]
+                                        p.price.amount = new_price_amount
+                                    p.quantity -= quantity_in_order
+                                else:
+                                    quantity_dict[p.product_id][p.price.amount] = quantity_in_order - p.quantity
+                                    p.quantity = 0
+                            else:
+                                new_price_amount = list(quantity_dict[p.product_id].keys())[0]
+                                p.price.amount = new_price_amount
+            rprint('NEW quantity_dict = ', quantity_dict)
+
+                # создаем поступление для еще не поступивших товаров
+            for pr_with_all_prices in quantity_dict.items():
+                print('PR_WITH_ALL_PRICES - ', pr_with_all_prices)
+                for pr in pr_with_all_prices[1].items():
+                    products_to_create.append(
+                        ProductMoveItem(
+                            product_id=pr_with_all_prices[0], price=Money(pr[0], 'UAH'), quantity=pr[1],
+                            document=new_arrival
+                        )
+                    )
+            if len(products_to_create):
+                new_arrival.save()
+                ProductMoveItem.objects.bulk_create(products_to_create)
+
+                # mot_arrived_quantity = pr.quantity - pr.arrive_quantity
+            #     if mot_arrived_quantity:
+            #         products_to_create.append(ProductMoveItem(
+            #             product=pr.product, document=new_arrival, quantity=mot_arrived_quantity
+            #         ))
+            #         pr.arrive_quantity = mot_arrived_quantity
+            #         pr.save()
+            # if len(products_to_create):
+            #     new_arrival.save()
+            #     ProductMoveItem.objects.bulk_create(products_to_create)
+            obj.save()
+        return super().response_change(request, obj)
 
 @admin.register(Realization)
 class RealizationAdmin(admin.ModelAdmin):
@@ -255,3 +354,11 @@ class RealizationAdmin(admin.ModelAdmin):
     list_display = ('id', 'is_active', 'mark_to_delete', 'status', '__str__')
     list_display_links = ('__str__',)
     list_editable = ('status', 'is_active', 'mark_to_delete')
+
+
+@admin.register(Arrival)
+class ArrivalAdmin(nested_admin.NestedModelAdmin):
+    inlines = (ProductMoveItemInline,)
+
+
+admin.site.register(FinanceDocument)

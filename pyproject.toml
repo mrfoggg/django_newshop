@@ -31,6 +31,9 @@ deepdiff = "^6.3.0"
 ipinfo = "^4.4.2"
 setuptools = "^67.7.2"
 ai-django-core = "^7.0.0"
+django-polymorphic = "^3.1.0"
+rich = "^13.4.1"
+rprint = "^0.0.8"
 
 
 [tool.poetry.group.dev.dependencies]

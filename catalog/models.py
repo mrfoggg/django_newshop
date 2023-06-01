@@ -840,3 +840,5 @@ class Discount(models.Model):
         val = f'{round(self.amount, 2)} %' if self.type_of_amount == 1 else str(Money(self.amount, 'UAH'))
         # return f'{self.product} - {val}'
         return val
+
+

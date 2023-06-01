@@ -8,12 +8,6 @@ from finance.services import get_margin, get_margin_percent, get_profitability
 from orders.models import SupplierOrder
 
 
-# при выборе товара обновитть цены продажи и варинаты закупочных цен поставщиков
-@json_view
-def update_prices_ajax_for_order_admin(request):
-    return {'price': 'info'}
-
-
 @json_view
 def ajax_get_product_price_and_suppliers_prices_variants(request):
     product = Product.objects.get(id=request.POST.get('productId'))
@@ -80,6 +74,3 @@ def ajax_get_supplier_price_by_price_item_id(request):
         return {'price': f"{Money(0, 'UAH').amount:.2f}"}
 
 
-@json_view
-def ajax_get_supplier_price_item_by_supplier_price_id(request):
-    return {'id', 'id'}

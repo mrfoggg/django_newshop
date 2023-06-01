@@ -27,7 +27,8 @@ class PriceChangelist(Document):
 
     @property
     def date(self):
-        return self.applied.strftime("%m/%d/%Y, (%H:%M)") if self.applied else self.created.strftime("%m/%d/%Y, (%H:%M)")
+        return self.applied.strftime("%m/%d/%Y, (%H:%M)") if self.applied else self.created.strftime(
+            "%m/%d/%Y, (%H:%M)")
 
 
 class SupplierPriceChangelist(Document):
@@ -61,4 +62,7 @@ class GroupPriceChangelist(Document):
     class Meta:
         verbose_name = "Установка индивидуальных оптовых цен номенклатуры"
         verbose_name_plural = "Установки индивидуальных оптовых цен номенклатуры"
-        ordering = ['created']
+        ordering = ['applied']
+
+
+
