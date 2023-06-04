@@ -128,6 +128,18 @@ class Document(models.Model):
     class Meta:
         abstract = True
 
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.__old_is_active = self.is_active
+
+    # def save(self, *args, **kwargs):
+    #     print('SAVE DOCUMENT')
+    #     if self.is_active:
+    #         pass
+    #     else:
+    #         self.applied = None
+    #     super().save(*args, **kwargs)
+
 
 class Messenger(models.Model):
     type = models.SmallIntegerField(

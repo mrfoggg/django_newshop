@@ -1,15 +1,21 @@
+from datetime import datetime
+
 import nested_admin
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.utils import timezone
 from djmoney.money import Money
 # import rprint as rprint
 from rich import print as rprint
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db import models
 from djmoney.forms import MoneyField
 from polymorphic.admin import StackedPolymorphicInline, PolymorphicInlineSupportMixin
 
 from ROOTAPP.models import Person, Phone, PriceTypePersonBuyer
+from Shop_DJ import settings
 from catalog.models import ProductSupplierPriceInfo
 from finance.admin_forms import money_widget_only_uah
 from .admin_form import ClientOrderAdminForm, ProductInClientOrderAdminInlineForm, ProductMoveItemInlineFormset
@@ -87,7 +93,7 @@ class ProductInSupplierOrder(nested_admin.SortableHiddenMixin, nested_admin.Nest
 
 class ArrivalInline(nested_admin.NestedTabularInline):
     model = Arrival
-    exclude = ('comment', )
+    exclude = ('comment',)
     extra = 0
     # sortable_field_name = 'comment'
     inlines = [ProductMoveItemInline, ]
@@ -246,12 +252,13 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
 class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
     fields = (
         ('id', 'is_active', 'mark_to_delete', 'status', 'stock'),
+        ('created', 'updated', 'applied'),
         ('person', 'price_type'), 'comment'
     )
-    readonly_fields = ('id', 'created', 'updated')
+    readonly_fields = ('id', 'created', 'updated', 'applied', 'is_active', 'mark_to_delete')
     list_display = ('id', 'is_active', 'mark_to_delete', 'status', '__str__')
     list_display_links = ('__str__',)
-    list_editable = ('status', 'is_active', 'mark_to_delete')
+    list_editable = ('status', )
     search_fields = ('person__last_name',)
     inlines = (
         ProductInSupplierOrder,
@@ -260,9 +267,16 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
     change_form_template = "supplier_order_changeform.html"
 
     class Media:
-        js = ('admin/textarea-autoheight.js',)
+        js = ('admin/textarea-autoheight.js',
+              # 'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
+              # jquery.js от datetimepicker
+              # 'jquery.js',
+              'magnific_popup/jquery.magnific-popup.min.js',
+              'jquery.datetimepicker.full.min.js',
+              'admin/apply_documents.js')
         css = {
-            "all": ('admin/order-admin-changeform.css',)
+            "all": ('admin/order-admin-changeform.css', 'magnific_popup/magnific-popup.css',
+                    'jquery.datetimepicker.min.css')
         }
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -278,6 +292,7 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
         return queryset, may_have_duplicates
 
     def response_change(self, request, obj):
+        rprint('POST - ', request.POST.get('apply_date'))
         if "_create_arrival" in request.POST:
             new_arrival = Arrival(order=obj)
             products_to_create = []
@@ -318,7 +333,7 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
                                 p.price.amount = new_price_amount
             rprint('NEW quantity_dict = ', quantity_dict)
 
-                # создаем поступление для еще не поступивших товаров
+            # создаем поступление для еще не поступивших товаров
             for pr_with_all_prices in quantity_dict.items():
                 print('PR_WITH_ALL_PRICES - ', pr_with_all_prices)
                 for pr in pr_with_all_prices[1].items():
@@ -331,19 +346,61 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
             if len(products_to_create):
                 new_arrival.save()
                 ProductMoveItem.objects.bulk_create(products_to_create)
-
-                # mot_arrived_quantity = pr.quantity - pr.arrive_quantity
-            #     if mot_arrived_quantity:
-            #         products_to_create.append(ProductMoveItem(
-            #             product=pr.product, document=new_arrival, quantity=mot_arrived_quantity
-            #         ))
-            #         pr.arrive_quantity = mot_arrived_quantity
-            #         pr.save()
-            # if len(products_to_create):
-            #     new_arrival.save()
-            #     ProductMoveItem.objects.bulk_create(products_to_create)
             obj.save()
+            # return super().response_change(request, obj)
+            return HttpResponseRedirect(reverse('admin:orders_arrival_change', args=(new_arrival.id,)))
+
+        if "_activate" in request.POST or "_reactivate" in request.POST:
+            msg = 'Проведен датой создания' if "_activate" in request.POST else 'Перепроведен'
+            self.message_user(request, msg, messages.SUCCESS)
+            obj.is_active = True
+            if "_activate" in request.POST:
+                obj.applied = obj.created
+            obj.save()
+            return HttpResponseRedirect(request.path)
+
+        if "_activate_now" in request.POST or "_reactivate_now" in request.POST:
+            msg = 'Проведен текущей датой' if "_activate_now" in request.POST else 'Перепроведен текущей датой'
+            self.message_user(request, msg, messages.SUCCESS)
+            obj.is_active = True
+            obj.applied = obj.updated
+            obj.save()
+            return HttpResponseRedirect(request.path)
+
+        if "_deactivate" in request.POST:
+            msg = 'Проведение документа отмененно'
+            self.message_user(request, msg, messages.SUCCESS)
+            obj.is_active = False
+            obj.applied = None
+            obj.save()
+            return HttpResponseRedirect(request.path)
+
+        if "_un_mark_to_delete" in request.POST:
+            obj.mark_to_delete = False
+            obj.save()
+            return HttpResponseRedirect(request.path)
+
+        if "_mark_to_delete" in request.POST:
+            msg = f'Документ {obj} помечен на удаление'
+            self.message_user(request, msg, messages.SUCCESS)
+            obj.is_active = False
+            obj.mark_to_delete = True
+            obj.applied = None
+            obj.save()
+
+        if 'apply_date' in request.POST:
+            str_date = request.POST.get('apply_date')
+            msg = f'Документ {obj} проведен датой {str_date}'
+            self.message_user(request, msg, messages.SUCCESS)
+            obj.is_active = True
+            date = datetime.strptime(str_date, "%d/%m/%Y %H:%M")
+            obj.applied = timezone.make_aware(date)
+            obj.save()
+            return HttpResponseRedirect(request.path)
+
         return super().response_change(request, obj)
+
+
 
 @admin.register(Realization)
 class RealizationAdmin(admin.ModelAdmin):
@@ -358,6 +415,7 @@ class RealizationAdmin(admin.ModelAdmin):
 
 @admin.register(Arrival)
 class ArrivalAdmin(nested_admin.NestedModelAdmin):
+    readonly_fields = ('created', 'updated')
     inlines = (ProductMoveItemInline,)
 
 

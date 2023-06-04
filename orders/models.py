@@ -397,8 +397,6 @@ class FinanceDocument(Document, PolymorphicModel):
         ordering = ['applied']
 
 
-
-
 class Realization(FinanceDocument):
     status = models.SmallIntegerField('Статус', choices=REALISATION_STATUSES, default=1, db_index=True)
 
@@ -420,12 +418,21 @@ class Arrival(FinanceDocument):
         verbose_name_plural = "Поступления товаров"
 
     def __str__(self):
-        return f'Созданое {self.created.strftime("%m/%d/%Y, (%H:%M)")} поступление товаров'
+        date, applied = None, None
+        if self.is_active:
+            date = self.applied
+            applied = 'проведен'
+        else:
+            date = self.created
+            applied = 'не проведен'
+        return f'{date.strftime("%m/%d/%Y, (%H:%M)")} поступление товаров ({applied})'
 
     def save(self, *args, **kwargs):
-
-        self.amount = self.order.products.aggregate(Sum('purchase_price'))['purchase_price__sum']
-        self.balance_after = self.balance_before + self.amount
+        if self.id:
+            self.amount = self.productmoveitem_set.annotate(full_amount=F('quantity')*F('price')).aggregate(
+                Sum('full_amount')
+            )['full_amount__sum']
+            self.balance_after = self.balance_before + self.amount
         super().save(*args, **kwargs)
 
 

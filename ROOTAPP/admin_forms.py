@@ -16,21 +16,8 @@ from orders.models import ClientOrder
 class DocumentForm(forms.ModelForm):
     def clean(self):
         super(DocumentForm, self).clean()
-        if self.has_changed():
-            if 'is_active' in self.changed_data:
-                if self.cleaned_data['is_active'] and self.cleaned_data['mark_to_delete']:
-                    raise forms.ValidationError('Помеченый на удаление документ не может быть проведен')
-            if 'applied' in self.changed_data and self.cleaned_data['applied']:
-                print('cleaned_data - ', self.cleaned_data['applied'])
-                print('now - ', datetime.now(pytz.timezone(settings.TIME_ZONE)))
-                if self.cleaned_data['applied'] > datetime.now(pytz.timezone('US/Pacific')):
-                    raise forms.ValidationError('Дата проведения не может быть позже текущей')
-
-            if not self.cleaned_data['applied']:
-                print('НЕ УКАЗАНА ДАТА  ПРОВЕДЕРИЯ')
-                self.cleaned_data['applied'] = datetime.now(pytz.timezone('US/Pacific'))
-
-            return self.cleaned_data
+        print('cleanDocumentForm')
+        return self.cleaned_data
 
 class FullAddressForm(forms.ModelForm):
     class Meta:
