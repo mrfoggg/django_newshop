@@ -15,6 +15,7 @@ from djmoney.forms import MoneyField
 from polymorphic.admin import StackedPolymorphicInline, PolymorphicInlineSupportMixin
 
 from ROOTAPP.models import Person, Phone, PriceTypePersonBuyer
+from ROOTAPP.services.functions import apply_documents
 from Shop_DJ import settings
 from catalog.models import ProductSupplierPriceInfo
 from finance.admin_forms import money_widget_only_uah
@@ -153,7 +154,8 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         (
             'Основное',
             {'fields': (
-                ('id', 'created', 'updated', 'is_active', 'mark_to_delete',),
+                ('id', 'created', 'updated', 'applied'),
+                ('is_active', 'mark_to_delete'),
                 ('status', 'extend_status'), ('source', 'payment_type'),
             )},
         ),
@@ -183,11 +185,11 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         ),
     )
     readonly_fields = ('id', 'created', 'updated', 'total_quantity', 'total_amount', 'total_purchase_amount',
-                       'total_margin')
+                       'total_margin', 'is_active', 'mark_to_delete', 'applied')
     list_display = ('id', 'is_active', 'mark_to_delete', 'status', 'payment_type', 'source', '__str__',
                     'contact_person', 'dropper')
     list_display_links = ('__str__',)
-    list_editable = ('status', 'is_active', 'mark_to_delete')
+    list_editable = ('status', )
     autocomplete_fields = (
         # 'person',
         # 'incoming_phone'
@@ -195,16 +197,22 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     search_fields = ('person__full_name',)
     inlines = (ProductInClientOrder,)
 
+    change_form_template = "client_order_changeform.html"
+
     class Media:
         js = (
             'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
             # "https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js",
             #   'select2.min.js',
+            'magnific_popup/jquery.magnific-popup.min.js',
+            'jquery.datetimepicker.full.min.js',
             'notyf.min.js',
             'js_functions_for_admin.js', 'order/client_order_admin_form.js',
-            'admin/phone_field_select2_customization.js', 'admin/person_field_select2_customization.js')
+            'admin/phone_field_select2_customization.js', 'admin/person_field_select2_customization.js',
+            'admin/apply_documents.js')
         css = {'all': ('admin/price_field.css', 'admin/admin-changeform.css', 'select2.min.css', 'notyf.min.css',
-                       'order/order-admin-changeform.css')}
+                       'order/order-admin-changeform.css', 'magnific_popup/magnific-popup.css',
+                    'jquery.datetimepicker.min.css')}
 
     # для отображения только активных товаров
     def get_search_results(self, request, queryset, search_term):
@@ -239,6 +247,14 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
                 kwargs["queryset"] = PriceTypePersonBuyer.objects.filter(person_id=dropper_id) if dropper_id \
                     else PriceTypePersonBuyer.objects.filter(person_id=person_id)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def response_change(self, request, obj):
+        apply_result = apply_documents(self, request, obj)
+        if apply_result:
+            return apply_result
+
+        return super().response_change(request, obj)
+
 
     baton_form_includes = [
         ('order/admin_order_ajax_urls.html', 'id', 'top',),
@@ -349,54 +365,9 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
             obj.save()
             # return super().response_change(request, obj)
             return HttpResponseRedirect(reverse('admin:orders_arrival_change', args=(new_arrival.id,)))
-
-        if "_activate" in request.POST or "_reactivate" in request.POST:
-            msg = 'Проведен датой создания' if "_activate" in request.POST else 'Перепроведен'
-            self.message_user(request, msg, messages.SUCCESS)
-            obj.is_active = True
-            if "_activate" in request.POST:
-                obj.applied = obj.created
-            obj.save()
-            return HttpResponseRedirect(request.path)
-
-        if "_activate_now" in request.POST or "_reactivate_now" in request.POST:
-            msg = 'Проведен текущей датой' if "_activate_now" in request.POST else 'Перепроведен текущей датой'
-            self.message_user(request, msg, messages.SUCCESS)
-            obj.is_active = True
-            obj.applied = obj.updated
-            obj.save()
-            return HttpResponseRedirect(request.path)
-
-        if "_deactivate" in request.POST:
-            msg = 'Проведение документа отмененно'
-            self.message_user(request, msg, messages.SUCCESS)
-            obj.is_active = False
-            obj.applied = None
-            obj.save()
-            return HttpResponseRedirect(request.path)
-
-        if "_un_mark_to_delete" in request.POST:
-            obj.mark_to_delete = False
-            obj.save()
-            return HttpResponseRedirect(request.path)
-
-        if "_mark_to_delete" in request.POST:
-            msg = f'Документ {obj} помечен на удаление'
-            self.message_user(request, msg, messages.SUCCESS)
-            obj.is_active = False
-            obj.mark_to_delete = True
-            obj.applied = None
-            obj.save()
-
-        if 'apply_date' in request.POST:
-            str_date = request.POST.get('apply_date')
-            msg = f'Документ {obj} проведен датой {str_date}'
-            self.message_user(request, msg, messages.SUCCESS)
-            obj.is_active = True
-            date = datetime.strptime(str_date, "%d/%m/%Y %H:%M")
-            obj.applied = timezone.make_aware(date)
-            obj.save()
-            return HttpResponseRedirect(request.path)
+        apply_result = apply_documents(self, request, obj)
+        if apply_result:
+            return apply_result
 
         return super().response_change(request, obj)
 

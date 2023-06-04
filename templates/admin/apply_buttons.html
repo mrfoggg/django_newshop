@@ -1,0 +1,56 @@
+{% extends 'admin/change_form.html' %}
+
+{% block submit_buttons_bottom %}
+{#    {{ block.super }}#}
+    {% if not original.is_active and not original.mark_to_delete %}
+        {{ block.super }}
+    {% endif %}
+    <div class="submit-row">
+        {% if original.mark_to_delete %}
+            <input type="submit" value="Снять пометку на удаление" name="_un_mark_to_delete">
+        {% else %}
+            {% if original.is_active %}
+                <input type="submit" value="Перепровести" name="_reactivate">
+                <input type="submit" value="Перепровести сейчас" name="_reactivate_now">
+                <input type="submit" value="Перепровести датой" name="choose_date">
+                <input type="submit" value="Отмена проведения" name="_deactivate" style="background: #4d4d4d">
+            {% else %}
+                <input type="submit" value="Провести" name="_activate">
+                <input type="submit" value="Провести сейчас" name="_activate_now">
+                <input type="submit" value="Провести датой" name="choose_date">
+            {% endif %}
+
+            <input type="submit" value="Пр" name="_activate_set_date" id="_activate_set_date" style="display: none">
+
+            <a id="selectDate" style="display: none" href="#datePopup">open POPUP</a>
+            <div id="datePopup" class="choose_date-popup mfp-hide">
+                <H2>Выберети дату проведения</H2>
+                <input id="datetimepicker" type="text" >
+                <input type="submit" value="Провести" name="activate_set_date" id="activateSetDate" style="display: none">
+            </div>
+            <input type="submit" value="Пометить на удаление" name="_mark_to_delete" style="background: #DE728E">
+        {% endif %}
+    </div>
+    {% if original.is_active %}
+        <div class="submit-row">
+        {% block addict_buttons %}
+            <h3>addict_buttons</h3>
+        {% endblock %}
+
+        </div>
+    {% endif %}
+
+    <style>
+        .choose_date-popup {
+            position: relative;
+            background: #FFF;
+            padding: 3rem;
+            width: auto;
+            max-width: 60rem;
+            margin: 3rem auto;
+            border-radius: 2rem;
+            text-align: center;
+            {#border: 3px solid pink;#}
+        }
+    </style>
+{% endblock %}
