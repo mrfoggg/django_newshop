@@ -142,7 +142,7 @@ class ByOneclickAdmin(admin.ModelAdmin):
     class Media:
         js = ('admin/textarea-autoheight.js',)
         css = {
-            "all": ('admin/order-admin-changeform.css',)
+            "all": ('admin/admin-changeform.css',)
         }
 
 
@@ -203,7 +203,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         js = (
             'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
             # "https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js",
-            #   'select2.min.js',
+              'select2.min.js',
             'magnific_popup/jquery.magnific-popup.min.js',
             'jquery.datetimepicker.full.min.js',
             'notyf.min.js',
@@ -291,7 +291,7 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
               'jquery.datetimepicker.full.min.js',
               'admin/apply_documents.js')
         css = {
-            "all": ('admin/order-admin-changeform.css', 'magnific_popup/magnific-popup.css',
+            "all": ('admin/admin-changeform.css', 'magnific_popup/magnific-popup.css',
                     'jquery.datetimepicker.min.css')
         }
 

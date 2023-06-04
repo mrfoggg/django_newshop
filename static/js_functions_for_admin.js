@@ -1,3 +1,7 @@
+if (!$) {
+    $ = django.jQuery;
+}
+
 (function ($, undefined) {
     // init listeners
     Baton.Dispatcher.register('onReady', function () {

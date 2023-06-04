@@ -1,6 +1,7 @@
 if (!$) {
     $ = django.jQuery;
 }
+console.log('APPLY doc');
 Baton.Dispatcher.register('onReady', function () {
     $('.submit-row input[name="choose_date"]').click(function (e){
         $.datetimepicker.setLocale('ru');
@@ -20,7 +21,7 @@ Baton.Dispatcher.register('onReady', function () {
     });
     $('#activateSetDate').click(() => {
         console.log('PPPRRR - ', $('#datetimepicker').val());
-        $('#supplierorder_form').append(`<input type="text" name='apply_date' id="dateValue" style="display: none">`);
+        $('#content-main form').append(`<input type="text" name='apply_date' id="dateValue" style="display: none">`);
         $('#dateValue').val($('#datetimepicker').val());
         console.log('DATE - ', $('input[name="apply_date"]').prop('value'));
         $('#_activate_set_date').trigger('click');

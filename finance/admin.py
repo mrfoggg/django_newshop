@@ -5,6 +5,7 @@ from dynamic_admin_forms.admin import DynamicModelAdminMixin
 
 from ROOTAPP.admin_forms import DocumentForm
 from ROOTAPP.models import PriceTypePersonBuyer
+from ROOTAPP.services.functions import apply_documents
 # Register your models here.
 from catalog.models import ProductPrice, ProductSupplierPrice, ProductSupplierPriceInfo, ProductGroupPrice
 from finance.admin_forms import money_widget_only_uah, ProductPriceChangelistInlineAdminForm
@@ -77,15 +78,30 @@ class PriceTypePersonSupplierInline(nested_admin.SortableHiddenMixin, nested_adm
 
 @admin.register(PriceChangelist)
 class PriceChangelistAdmin(nested_admin.NestedModelAdmin, ):
-    fields = (('created', 'updated', 'applied',  'is_active', 'mark_to_delete'), 'comment')
-    readonly_fields = ('created', 'updated')
-    list_display = ('__str__', 'is_active', 'comment')
+    fields = (('created', 'updated', 'applied'), ('is_active', 'mark_to_delete'), 'comment')
+    readonly_fields = ('created', 'updated', 'applied', 'is_active', 'mark_to_delete')
+    list_display = ('__str__', 'is_active', 'mark_to_delete', 'comment')
     inlines = (ProductPricePriceChangelistInline,)
 
+    change_form_template = 'admin/apply_buttons.html'
+
     class Media:
-        css = {"all": ('admin/order-admin-changeform.css',)}
-        js = ('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js', 'notyf.min.js',
-              'js_functions_for_admin.js', 'finance/price_list_admin_form.js', 'admin/textarea-autoheight.js')
+        css = {"all": (
+            'admin/admin-changeform.css',
+            'magnific_popup/magnific-popup.css',
+            'jquery.datetimepicker.min.css')}
+        js = (
+            'notyf.min.js',
+            'magnific_popup/jquery.magnific-popup.min.js',
+            'jquery.datetimepicker.full.min.js', 'admin/apply_documents.js',
+            'js_functions_for_admin.js', 'finance/price_list_admin_form.js',
+            'admin/textarea-autoheight.js')
+
+    def response_change(self, request, obj):
+        apply_result = apply_documents(self, request, obj)
+        if apply_result:
+            return apply_result
+        return super().response_change(request, obj)
 
     baton_form_includes = [
         ('finance/admin_pricelist_ajax_urls.html', 'created', 'top',),
@@ -94,12 +110,30 @@ class PriceChangelistAdmin(nested_admin.NestedModelAdmin, ):
 
 @admin.register(SupplierPriceChangelist)
 class SupplierPriceChangelistAdmin(DynamicModelAdminMixin, nested_admin.NestedModelAdmin):
-    fields = (('created', 'updated', 'applied', 'is_active', 'mark_to_delete'), ('person',), ('price_type',), 'comment')
-
-    readonly_fields = ('created', 'updated')
+    fields = (('created', 'updated', 'applied'), ('is_active', 'mark_to_delete'), ('person',), ('price_type',), 'comment')
+    readonly_fields = ('created', 'updated', 'applied', 'is_active', 'mark_to_delete')
     dynamic_fields = ('price_type',)
     list_display = ('created', '__str__', 'is_active', 'comment')
     inlines = (ProductSupplierPriceChangelistInline,)
+
+    change_form_template = 'admin/apply_buttons.html'
+
+    class Media:
+        css = {"all": (
+            'admin/admin-changeform.css',
+            'magnific_popup/magnific-popup.css',
+            'jquery.datetimepicker.min.css')}
+        js = (
+            'admin/jq.js',
+            'magnific_popup/jquery.magnific-popup.min.js',
+            'jquery.datetimepicker.full.min.js', 'admin/apply_documents.js',
+            'admin/textarea-autoheight.js')
+
+    def response_change(self, request, obj):
+        apply_result = apply_documents(self, request, obj)
+        if apply_result:
+            return apply_result
+        return super().response_change(request, obj)
 
     def get_dynamic_price_type_field(self, data):
         # automatically choose first city that matches first letter of name
@@ -118,13 +152,32 @@ class SupplierPriceChangelistAdmin(DynamicModelAdminMixin, nested_admin.NestedMo
 @admin.register(GroupPriceChangelist)
 class GroupPriceChangelistAdmin(DynamicModelAdminMixin, nested_admin.NestedModelAdmin):
     form = DocumentForm
-    fields = (('created', 'updated', 'applied', 'is_active', 'mark_to_delete'), ('person',), ('price_type',), 'comment')
+    fields = (('created', 'updated', 'applied'), ('is_active', 'mark_to_delete'), ('person',), ('price_type',), 'comment')
 
-    readonly_fields = ('created', 'updated')
+    readonly_fields = ('created', 'updated', 'applied', 'is_active', 'mark_to_delete')
     dynamic_fields = ('price_type',)
     list_display = ('created', '__str__', 'is_active', 'comment')
 
     inlines = (ProductGroupPriceChangelistInline,)
+
+    change_form_template = 'admin/apply_buttons.html'
+
+    class Media:
+        css = {"all": (
+            'admin/admin-changeform.css',
+            'magnific_popup/magnific-popup.css',
+            'jquery.datetimepicker.min.css')}
+        js = (
+            'admin/jq.js',
+            'magnific_popup/jquery.magnific-popup.min.js',
+            'jquery.datetimepicker.full.min.js', 'admin/apply_documents.js',
+            'admin/textarea-autoheight.js')
+
+    def response_change(self, request, obj):
+        apply_result = apply_documents(self, request, obj)
+        if apply_result:
+            return apply_result
+        return super().response_change(request, obj)
 
     def get_dynamic_price_type_field(self, data):
         # automatically choose first city that matches first letter of name
@@ -138,10 +191,6 @@ class GroupPriceChangelistAdmin(DynamicModelAdminMixin, nested_admin.NestedModel
             value = data.get("price_type")
         hidden = not queryset.exists()
         return queryset, value, hidden
-
-    class Media:
-        css = {"all": ('admin/order-admin-changeform.css',)}
-        js = ('admin/textarea-autoheight.js',)
 
 
 admin.site.register(PriceTypePersonBuyer)
