@@ -1,3 +1,7 @@
+if (!$) {
+    $ = django.jQuery;
+}
+
 $(document).ready(function (){
     const commentInputs = document.querySelectorAll('textarea');
     commentInputs.forEach(function (item){

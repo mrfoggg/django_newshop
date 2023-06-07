@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import nested_admin
+from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
@@ -29,6 +30,16 @@ class ProductMoveItemInline(nested_admin.NestedTabularInline):
     formset = ProductMoveItemInlineFormset
     model = ProductMoveItem
     extra = 0
+
+class ProductMoveItemInlineReadonly(nested_admin.NestedTabularInline):
+    model = ProductMoveItem
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 
 class ByOneclickCommentAdminInline(admin.TabularInline):
@@ -94,11 +105,16 @@ class ProductInSupplierOrder(nested_admin.SortableHiddenMixin, nested_admin.Nest
 
 class ArrivalInline(nested_admin.NestedTabularInline):
     model = Arrival
-    exclude = ('comment',)
+    fields = ('is_active', 'mark_to_delete', 'applied', 'comment',
+              'balance_before', 'amount', 'balance_after')
     extra = 0
+    readonly_fields = ('balance_before',)
     # sortable_field_name = 'comment'
-    inlines = [ProductMoveItemInline, ]
-    readonly_fields = ('balance_before', 'amount', 'balance_after')
+    inlines = [ProductMoveItemInlineReadonly, ]
+    show_change_link = True
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -189,7 +205,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
     list_display = ('id', 'is_active', 'mark_to_delete', 'status', 'payment_type', 'source', '__str__',
                     'contact_person', 'dropper')
     list_display_links = ('__str__',)
-    list_editable = ('status', )
+    list_editable = ('status',)
     autocomplete_fields = (
         # 'person',
         # 'incoming_phone'
@@ -203,7 +219,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         js = (
             'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js',
             # "https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js",
-              'select2.min.js',
+            'select2.min.js',
             'magnific_popup/jquery.magnific-popup.min.js',
             'jquery.datetimepicker.full.min.js',
             'notyf.min.js',
@@ -212,7 +228,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
             'admin/apply_documents.js')
         css = {'all': ('admin/price_field.css', 'admin/admin-changeform.css', 'select2.min.css', 'notyf.min.css',
                        'order/order-admin-changeform.css', 'magnific_popup/magnific-popup.css',
-                    'jquery.datetimepicker.min.css')}
+                       'jquery.datetimepicker.min.css')}
 
     # для отображения только активных товаров
     def get_search_results(self, request, queryset, search_term):
@@ -252,9 +268,7 @@ class ClientOrderAdmin(nested_admin.NestedModelAdmin, admin.ModelAdmin):
         apply_result = apply_documents(self, request, obj)
         if apply_result:
             return apply_result
-
         return super().response_change(request, obj)
-
 
     baton_form_includes = [
         ('order/admin_order_ajax_urls.html', 'id', 'top',),
@@ -274,7 +288,7 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
     readonly_fields = ('id', 'created', 'updated', 'applied', 'is_active', 'mark_to_delete')
     list_display = ('id', 'is_active', 'mark_to_delete', 'status', '__str__')
     list_display_links = ('__str__',)
-    list_editable = ('status', )
+    list_editable = ('status',)
     search_fields = ('person__last_name',)
     inlines = (
         ProductInSupplierOrder,
@@ -310,67 +324,77 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
     def response_change(self, request, obj):
         rprint('POST - ', request.POST.get('apply_date'))
         if "_create_arrival" in request.POST:
-            new_arrival = Arrival(order=obj)
-            products_to_create = []
-            quantity_dict = dict()
-            for pr in obj.products.all():
-                if pr.product_id in quantity_dict.keys():
-                    if pr.purchase_price.amount in quantity_dict[pr.product_id].keys():
-                        quantity_dict[pr.product_id][pr.purchase_price.amount] += pr.quantity
+            if not obj.stock:
+                msg = 'Товары не получены. Не указан склад'
+                self.message_user(request, msg, messages.ERROR)
+            else:
+                new_arrival = Arrival(order=obj, person=obj.person)
+                products_to_create = []
+                quantity_dict = dict()
+                for pr in obj.products.all():
+                    if pr.product_id in quantity_dict.keys():
+                        if pr.purchase_price.amount in quantity_dict[pr.product_id].keys():
+                            quantity_dict[pr.product_id][pr.purchase_price.amount] += pr.quantity
+                        else:
+                            quantity_dict[pr.product_id][pr.purchase_price.amount] = pr.quantity
                     else:
-                        quantity_dict[pr.product_id][pr.purchase_price.amount] = pr.quantity
-                else:
-                    quantity_dict[pr.product_id] = {pr.purchase_price.amount: pr.quantity}
+                        quantity_dict[pr.product_id] = {pr.purchase_price.amount: pr.quantity}
 
-            rprint(f'{quantity_dict=}')
+                rprint(f'{quantity_dict=}')
 
-            # узанть сколько товаров уже поступило и отнять их
-            for ar in Arrival.objects.filter(order=obj):
-                for p in ar.productmoveitem_set.all():
-                    if p.product_id in quantity_dict.keys():
-                        while p.quantity:
-                            if p.price.amount in quantity_dict[p.product_id].keys():
-                                quantity_in_order = quantity_dict[p.product_id][p.price.amount]
-                                if p.quantity >= quantity_in_order:
-                                    quantity_dict[p.product_id].pop(p.price.amount)
-                                    if not quantity_dict[p.product_id]:
-                                        quantity_dict.pop(p.product_id)
+                # узанть сколько товаров уже поступило и отнять их.
+                for ar in Arrival.objects.filter(order=obj):
+                    for p in ar.productmoveitem_set.all():
+                        if p.product_id in quantity_dict.keys():
+                            while p.quantity:
+                                if p.price.amount in quantity_dict[p.product_id].keys():
+                                    quantity_in_order = quantity_dict[p.product_id][p.price.amount]
+                                    if p.quantity >= quantity_in_order:
+                                        quantity_dict[p.product_id].pop(p.price.amount)
+                                        if not quantity_dict[p.product_id]:
+                                            quantity_dict.pop(p.product_id)
+                                            p.quantity = 0
+                                            quantity_in_order = 0
+                                        if p.quantity > quantity_in_order:
+                                            new_price_amount = list(quantity_dict[p.product_id].keys())[0]
+                                            p.price.amount = new_price_amount
+                                        p.quantity -= quantity_in_order
+                                    else:
+                                        quantity_dict[p.product_id][p.price.amount] = quantity_in_order - p.quantity
                                         p.quantity = 0
-                                        quantity_in_order = 0
-                                    if p.quantity > quantity_in_order:
-                                        new_price_amount = list(quantity_dict[p.product_id].keys())[0]
-                                        p.price.amount = new_price_amount
-                                    p.quantity -= quantity_in_order
                                 else:
-                                    quantity_dict[p.product_id][p.price.amount] = quantity_in_order - p.quantity
-                                    p.quantity = 0
-                            else:
-                                new_price_amount = list(quantity_dict[p.product_id].keys())[0]
-                                p.price.amount = new_price_amount
-            rprint('NEW quantity_dict = ', quantity_dict)
+                                    new_price_amount = list(quantity_dict[p.product_id].keys())[0]
+                                    p.price.amount = new_price_amount
+                rprint('NEW quantity_dict = ', quantity_dict)
 
-            # создаем поступление для еще не поступивших товаров
-            for pr_with_all_prices in quantity_dict.items():
-                print('PR_WITH_ALL_PRICES - ', pr_with_all_prices)
-                for pr in pr_with_all_prices[1].items():
-                    products_to_create.append(
-                        ProductMoveItem(
-                            product_id=pr_with_all_prices[0], price=Money(pr[0], 'UAH'), quantity=pr[1],
-                            document=new_arrival
+                # создаем поступление для еще не поступивших товаров
+                total_amount = Money(0, 'UAH')
+                for pr_with_all_prices in quantity_dict.items():
+                    print('PR_WITH_ALL_PRICES - ', pr_with_all_prices)
+                    for pr in pr_with_all_prices[1].items():
+                        total_amount += (price := Money(pr[0], 'UAH')) * (quantity := pr[1])
+                        print('PRICE', price)
+                        print('quantity', quantity)
+                        products_to_create.append(
+                            ProductMoveItem(
+                                product_id=pr_with_all_prices[0], price=price, quantity=quantity,
+                                document=new_arrival
+                            )
                         )
-                    )
-            if len(products_to_create):
-                new_arrival.save()
-                ProductMoveItem.objects.bulk_create(products_to_create)
-            obj.save()
-            # return super().response_change(request, obj)
-            return HttpResponseRedirect(reverse('admin:orders_arrival_change', args=(new_arrival.id,)))
+                if len(products_to_create):
+                    new_arrival.amount = total_amount
+                    new_arrival.save()
+                    ProductMoveItem.objects.bulk_create(products_to_create)
+                obj.save()
+                # return super().response_change(request, obj)
+                msg = 'Товары получены на склад - ' + obj.stock.__str__()
+                self.message_user(request, msg, messages.SUCCESS)
+                return HttpResponseRedirect(reverse('admin:orders_arrival_change', args=(new_arrival.id,)))
         apply_result = apply_documents(self, request, obj)
         if apply_result:
             return apply_result
 
         return super().response_change(request, obj)
-
 
 
 @admin.register(Realization)
@@ -386,8 +410,36 @@ class RealizationAdmin(admin.ModelAdmin):
 
 @admin.register(Arrival)
 class ArrivalAdmin(nested_admin.NestedModelAdmin):
-    readonly_fields = ('created', 'updated')
+    fields = ('id', 'person', 'order', ( 'is_active', 'mark_to_delete'),
+              ('created', 'updated', 'applied'), ('balance_before', 'amount', 'balance_after'))
+    readonly_fields = ('created', 'updated', 'applied', 'is_active', 'mark_to_delete', 'balance_before', 'amount',
+                       'balance_after', 'id')
+    list_display = ('id', 'applied', 'person', 'is_active', 'mark_to_delete', 'balance_before', 'amount',
+                       'balance_after')
+    autocomplete_fields = ('person',)
     inlines = (ProductMoveItemInline,)
+
+    change_form_template = 'admin/apply_buttons.html'
+
+    def response_change(self, request, obj):
+        apply_result = apply_documents(self, request, obj)
+        if apply_result:
+            return apply_result
+        return super().response_change(request, obj)
+
+    class Media:
+        css = {"all": (
+            'admin/admin-changeform.css',
+            'magnific_popup/magnific-popup.css',
+            'jquery.datetimepicker.min.css')}
+        js = (
+
+            'admin/jq.js',
+            'magnific_popup/jquery.magnific-popup.min.js',
+            'jquery.datetimepicker.full.min.js',
+            'admin/apply_documents.js', 'admin/textarea-autoheight.js',
+        )
 
 
 admin.site.register(FinanceDocument)
+

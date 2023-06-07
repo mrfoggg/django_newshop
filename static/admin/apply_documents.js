@@ -1,8 +1,11 @@
 if (!$) {
     $ = django.jQuery;
 }
-console.log('APPLY doc');
+console.log('APPLY doc', $.datetimepicker, $);
 Baton.Dispatcher.register('onReady', function () {
+    if (!$) {
+        var $ = django.jQuery;
+    }
     $('.submit-row input[name="choose_date"]').click(function (e){
         $.datetimepicker.setLocale('ru');
         $('#datetimepicker').datetimepicker({
@@ -27,6 +30,8 @@ Baton.Dispatcher.register('onReady', function () {
         $('#_activate_set_date').trigger('click');
     });
 });
+
+
 
 
 

@@ -10,8 +10,14 @@ from phonenumber_field.modelfields import PhoneNumberField
 from phonenumbers import carrier, geocoder
 from phonenumbers.phonenumberutil import region_code_for_number
 
-from ROOTAPP.services.functions import get_full_name
 from nova_poshta.models import Settlement, SettlementArea, Warehouse, City, Street
+
+
+def get_full_name(self):
+    last_name = self.last_name if self.last_name else ''
+    first_name = self.first_name if self.first_name else ''
+    middle_name = self.middle_name if self.middle_name else ''
+    return last_name + ' ' + first_name + ' ' + middle_name
 
 TYPES_OF_PHONE = (
     (1, "Viber"),
@@ -122,23 +128,20 @@ class Document(models.Model):
     mark_to_delete = models.BooleanField(default=False, verbose_name='Помечен на удаление')
     created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name='Добавлено')
     updated = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name='Изменено')
-    applied = models.DateTimeField(verbose_name='Дата проведения', blank=True, null=True)
+    applied = models.DateTimeField(verbose_name='Дата документа', blank=True, null=True)
     comment = models.TextField('Комментарий', blank=True, null=True, default=None)
 
     class Meta:
         abstract = True
 
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     self.__old_is_active = self.is_active
-
-    # def save(self, *args, **kwargs):
-    #     print('SAVE DOCUMENT')
-    #     if self.is_active:
-    #         pass
-    #     else:
-    #         self.applied = None
-    #     super().save(*args, **kwargs)
+    def __str__(self):
+        dt = self.applied if self.applied else self.created
+        is_active = 'проведен' if self.is_active else 'непроведен'
+        return f'Документ №{self.id} {dt.strftime("%d/%m/%Y, (%H:%M)")} - {is_active}'
+    def save(self, *args, **kwargs):
+        if not self.applied:
+            self.applied = self.created
+        super().save(*args, **kwargs)
 
 
 class Messenger(models.Model):

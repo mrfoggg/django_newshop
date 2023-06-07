@@ -1,5 +1,6 @@
 # import ipinfo
 # import requests
+from datetime import datetime
 from decimal import Decimal
 from unicodedata import decimal
 
@@ -11,6 +12,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Sum, F
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import format_html_join
 from djmoney.models.fields import MoneyField
 from djmoney.money import Money
@@ -378,18 +380,21 @@ class Basket(models.Model):
 
 # Arrival
 class FinanceDocument(Document, PolymorphicModel):
-    balance_before = MoneyField(max_digits=14, decimal_places=2, default_currency='UAH', default=0,
-                                verbose_name='Баланс до')
+    person = models.ForeignKey(Person, blank=True, null=True, on_delete=models.CASCADE, verbose_name='Контрагент')
     amount = MoneyField(max_digits=14, decimal_places=2, default_currency='UAH', default=0,
                         verbose_name='Сумма документа')
     balance_after = MoneyField(max_digits=14, decimal_places=2, default_currency='UAH', default=0,
                                verbose_name='Баланс после')
 
+    @property
+    @admin.display(description='Баланс до')
+    def balance_before(self):
+        date_now = self.applied if self.applied else timezone.make_aware(datetime.now())
+        before_documents = FinanceDocument.objects.filter(person=self.person, applied__lt=date_now, is_active=True)
+        return before_documents.last().balance_after if before_documents.exists() else Money(0, 'UAH')
+
     class Meta:
         abstract = True
-
-    def __str__(self):
-        return f'Документ №{self.id} {self.applied.strftime("%m/%d/%Y, (%H:%M)") if self.applied else self.created.strftime("%m/%d/%Y, (%H:%M)")} - '
 
     class Meta:
         verbose_name = "Финансовый документ"
@@ -410,29 +415,23 @@ class Realization(FinanceDocument):
 
 
 class Arrival(FinanceDocument):
-    order = models.ForeignKey(SupplierOrder, on_delete=models.CASCADE)
+    order = models.ForeignKey(SupplierOrder, on_delete=models.CASCADE, blank=True, null=True)
 
     class Meta:
-        ordering = ('created',)
+        ordering = ('applied',)
         verbose_name = "Поступление товаров"
         verbose_name_plural = "Поступления товаров"
 
-    def __str__(self):
-        date, applied = None, None
-        if self.is_active:
-            date = self.applied
-            applied = 'проведен'
-        else:
-            date = self.created
-            applied = 'не проведен'
-        return f'{date.strftime("%m/%d/%Y, (%H:%M)")} поступление товаров ({applied})'
-
     def save(self, *args, **kwargs):
         if self.id:
-            self.amount = self.productmoveitem_set.annotate(full_amount=F('quantity')*F('price')).aggregate(
-                Sum('full_amount')
-            )['full_amount__sum']
-            self.balance_after = self.balance_before + self.amount
+            if self.productmoveitem_set.exists():
+                self.amount = self.productmoveitem_set.annotate(full_amount=F('quantity')*F('price')).aggregate(
+                    Sum('full_amount')
+                )['full_amount__sum']
+            else:
+                self.amount = Money(0, 'UAH')
+
+        self.balance_after = self.balance_before + self.amount if self.is_active else Money(0, 'UAH')
         super().save(*args, **kwargs)
 
 
@@ -443,7 +442,8 @@ class ProductMoveItem(models.Model):
     quantity = models.SmallIntegerField('Количество', default=1)
 
     def __str__(self):
-        return self.product.name
+        return self.product.name if self.product else ''
+        # return 'self.product.name if self.product else self.id'
 
     class Meta:
         verbose_name = "Товар"
