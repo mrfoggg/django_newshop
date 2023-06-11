@@ -110,16 +110,18 @@ class MovementOfGoods(View):
 
         finance_documents = FinanceDocument.objects.filter(is_active=True)
         if start:
-            finance_documents = finance_documents.filter(applied__gte=datetime.strptime(start, "%d.%m.%Y"))
+            finance_documents = finance_documents.filter(applied__date__gte=datetime.strptime(start, "%d.%m.%Y"))
         if end:
-            finance_documents = finance_documents.filter(applied__lte=datetime.strptime(end, "%d.%m.%Y"))
+            finance_documents = finance_documents.filter(applied__date__lte=datetime.strptime(end, "%d.%m.%Y"))
         if category_id:
             finance_documents = finance_documents.filter(productmoveitem__product__admin_category=category_id).distinct()
         if product_id:
             finance_documents = finance_documents.filter(productmoveitem__product=product_id).distinct()
-        data = {'before': 0, 'arrived': 0, 'sent': 0, 'stocks': []}
+        data = {'before': 0, 'arrived': 0, 'sent': 0, 'after': 0, 'stocks': []}
         for stock in Stock.objects.filter(financedocument__in=finance_documents).distinct():
-            products_this_stock = Product.objects.filter(productmoveitem__document__stock=stock).distinct()
+            products_this_stock = Product.objects.filter(
+                productmoveitem__document__stock=stock, productmoveitem__document__in=finance_documents
+            ).distinct()
             if category_id:
                 products_this_stock = products_this_stock.filter(admin_category=category_id)
             print('PRODUCT - ', product_id)
@@ -135,10 +137,13 @@ class MovementOfGoods(View):
                 for doc in documents:
                     move_items = ProductMoveItem.objects.filter(product=product, document=doc)
                     doc_quantity_arrived = move_items.aggregate(quantity=Sum('quantity'))['quantity']
+                    doc_quantity_after = move_items.last().quantity_after
+                    print('doc_quantity_after - ', doc_quantity_after)
                     product_data['arrived'] += doc_quantity_arrived
                     document_data = {
                         'name': doc.__str__(), 'before': 0,
-                        'arrived': doc_quantity_arrived, 'sent': 0, 'after': 0
+                        'arrived': doc_quantity_arrived, 'sent': 0,
+                        'after': doc_quantity_after[str(stock.id)] if str(stock.id) in doc_quantity_after.keys() else 0
                     }
                     product_data['documents'].append(document_data)
                 stock_data['arrived'] += product_data['arrived']

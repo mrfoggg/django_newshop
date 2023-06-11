@@ -1,3 +1,9 @@
+h2 {
+    background: #807373;
+    text-align: center;
+    padding: 1rem;
+}
+
 .filter_fields {
     display: flex;
     align-items: center;

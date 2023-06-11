@@ -38,10 +38,14 @@ function fill_table(response) {
                 $('#reportTable').append(documentRow);
             }
         }
-
-
-
-        console.log('LAST ROW - ', $('#reportTable tr').last());
-
     }
+    $('#reportTable').append(
+        `<tr>
+            <td class="">ИТОГО</td>
+            <td class="">${response.data.before}</td>
+            <td class="">${response.data.arrived}</td>
+            <td class="">${response.data.sent}</td>
+            <td class="">${response.data.after}</td>
+       </tr>`
+    );
 }
