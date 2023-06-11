@@ -16,20 +16,20 @@ from djmoney.forms import MoneyField
 from polymorphic.admin import StackedPolymorphicInline, PolymorphicInlineSupportMixin
 
 from ROOTAPP.models import Person, Phone, PriceTypePersonBuyer
-from ROOTAPP.services.functions import apply_documents
 from Shop_DJ import settings
 from catalog.models import ProductSupplierPriceInfo
 from finance.admin_forms import money_widget_only_uah
 from .admin_form import ClientOrderAdminForm, ProductInClientOrderAdminInlineForm, ProductMoveItemInlineFormset
 from .models import (BY_ONECLICK_STATUSES_CLIENT_DISPLAY, ByOneclick,
                      ByOneclickPersonalComment, OneClickUserSectionComment, ClientOrder, SupplierOrder, Realization,
-                     ProductInOrder, FinanceDocument, Arrival, ProductMoveItem)
+                     ProductInOrder, FinanceDocument, Arrival, ProductMoveItem, apply_documents)
 
 
 class ProductMoveItemInline(nested_admin.NestedTabularInline):
     formset = ProductMoveItemInlineFormset
     model = ProductMoveItem
     extra = 0
+
 
 class ProductMoveItemInlineReadonly(nested_admin.NestedTabularInline):
     model = ProductMoveItem
@@ -39,7 +39,6 @@ class ProductMoveItemInlineReadonly(nested_admin.NestedTabularInline):
 
     def has_add_permission(self, request, obj=None):
         return False
-
 
 
 class ByOneclickCommentAdminInline(admin.TabularInline):
@@ -328,17 +327,21 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
                 msg = 'Товары не получены. Не указан склад'
                 self.message_user(request, msg, messages.ERROR)
             else:
-                new_arrival = Arrival(order=obj, person=obj.person)
+                new_arrival = Arrival(order=obj, person=obj.person, stock=obj.stock, is_active=True)
                 products_to_create = []
                 quantity_dict = dict()
                 for pr in obj.products.all():
                     if pr.product_id in quantity_dict.keys():
+                        # quantity_dict[pr.product_id]['total'] += pr.quantity
                         if pr.purchase_price.amount in quantity_dict[pr.product_id].keys():
                             quantity_dict[pr.product_id][pr.purchase_price.amount] += pr.quantity
                         else:
                             quantity_dict[pr.product_id][pr.purchase_price.amount] = pr.quantity
                     else:
-                        quantity_dict[pr.product_id] = {pr.purchase_price.amount: pr.quantity}
+                        quantity_dict[pr.product_id] = {
+                            pr.purchase_price.amount: pr.quantity,
+                            # 'total': pr.quantity
+                        }
 
                 rprint(f'{quantity_dict=}')
 
@@ -369,18 +372,30 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
 
                 # создаем поступление для еще не поступивших товаров
                 total_amount = Money(0, 'UAH')
+                quantity_after_dict = dict()
                 for pr_with_all_prices in quantity_dict.items():
                     print('PR_WITH_ALL_PRICES - ', pr_with_all_prices)
                     for pr in pr_with_all_prices[1].items():
+                        item_before = ProductMoveItem.objects.filter(
+                            product_id=(pr_id := pr_with_all_prices[0]), quantity_after__has_key=str(obj.stock_id)
+                        )
+                        quantity_before = quantity_after_dict[pr_id] \
+                            if pr_id in quantity_after_dict.keys() \
+                            else item_before.order_by('document__applied').last().quantity_after[str(obj.stock_id)] \
+                            if item_before.exists() else 0
+
                         total_amount += (price := Money(pr[0], 'UAH')) * (quantity := pr[1])
+
+                        quantity_after = quantity_before + quantity
+                        quantity_after_dict[pr_id] = quantity_after
                         print('PRICE', price)
                         print('quantity', quantity)
-                        products_to_create.append(
-                            ProductMoveItem(
+                        new_product_move_item = ProductMoveItem(
                                 product_id=pr_with_all_prices[0], price=price, quantity=quantity,
                                 document=new_arrival
                             )
-                        )
+                        new_product_move_item.quantity_after[obj.stock_id] = quantity_after
+                        products_to_create.append(new_product_move_item)
                 if len(products_to_create):
                     new_arrival.amount = total_amount
                     new_arrival.save()
@@ -410,12 +425,13 @@ class RealizationAdmin(admin.ModelAdmin):
 
 @admin.register(Arrival)
 class ArrivalAdmin(nested_admin.NestedModelAdmin):
-    fields = ('id', 'person', 'order', ( 'is_active', 'mark_to_delete'),
+    fields = ('id', 'person', ('order', 'stock'), ('is_active', 'mark_to_delete'),
               ('created', 'updated', 'applied'), ('balance_before', 'amount', 'balance_after'))
     readonly_fields = ('created', 'updated', 'applied', 'is_active', 'mark_to_delete', 'balance_before', 'amount',
                        'balance_after', 'id')
-    list_display = ('id', 'applied', 'person', 'is_active', 'mark_to_delete', 'balance_before', 'amount',
-                       'balance_after')
+    list_display = ('id', 'applied', 'person', 'stock', 'is_active', 'mark_to_delete', 'balance_before', 'amount',
+                    'balance_after')
+    list_filter = ('stock',)
     autocomplete_fields = ('person',)
     inlines = (ProductMoveItemInline,)
 
@@ -442,4 +458,3 @@ class ArrivalAdmin(nested_admin.NestedModelAdmin):
 
 
 admin.site.register(FinanceDocument)
-

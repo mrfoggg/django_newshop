@@ -11,6 +11,7 @@ from phonenumbers import carrier, geocoder
 from phonenumbers.phonenumberutil import region_code_for_number
 
 from nova_poshta.models import Settlement, SettlementArea, Warehouse, City, Street
+# from orders.models import FinanceDocument
 
 
 def get_full_name(self):
@@ -260,6 +261,14 @@ class Person(AbstractUser):
     @property
     def admin_url(self):
         return reverse('admin:ROOTAPP_person_change', args=[self.id])
+
+    @property
+    @admin.display(description='Баланс контрагента')
+    def balance(self):
+        self.financedocument_set.last().balance_after
+        return self.financedocument_set.filter(is_active=True).last().balance_after
+        # FinanceDocument.objects.filter(person=self).last().balance_after
+
 
 
 class ContactPerson(models.Model, PhoneInfoFieldsMixin):

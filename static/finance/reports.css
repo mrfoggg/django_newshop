@@ -1,0 +1,53 @@
+.filter_fields {
+    display: flex;
+    align-items: center;
+}
+
+form p {
+    margin-right: 2rem;
+}
+
+#id_start, #id_end {
+    width: 5rem;
+}
+
+table {
+    margin-top: 2rem;
+}
+
+td, th {
+    border: 1px solid #0b0b0b;
+}
+
+th {
+    background: #e0ce92;
+    padding: 1rem 2rem;
+}
+
+td {
+    padding: .5rem 1rem;
+    text-align: center;
+}
+td.document {
+    text-align: left;
+}
+
+td.product, td.stock {
+    text-align: left;
+    padding-left: 4rem;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+td.stock {
+    text-align: right;
+    font-size: 1.4rem;
+}
+
+td.product, td.product_total {
+    background: #92c6d7;
+}
+td.stock, td.stock_total {
+    background: #eaa33b;
+    font-weight: 600;
+}

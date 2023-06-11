@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 
 import django_stubs_ext
+from django.urls import reverse, reverse_lazy
 
 django_stubs_ext.monkeypatch()
 
@@ -370,6 +371,19 @@ BATON = {
                 },
 
             )
+        },
+        {
+            'type': 'free',
+            'label': 'Отчеты',
+            'icon': 'fa fa-sitemap',
+            'default_open': True,
+            'children': [
+                {
+                    'type': 'free',
+                    'label': 'Движения товаров',
+                    'url': reverse_lazy('finance:movement_of_goods')
+                }
+            ]
         },
 
     ),

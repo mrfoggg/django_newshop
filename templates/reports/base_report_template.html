@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ua">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="robots" content="index, follow">
+    <meta name="google" content="notranslate">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="description" content="">
+    <title>
+    {% block title %}
+        Some title
+    {% endblock title %}
+    </title>
+    {% load static %}
+    <link href={% static "jquery.datetimepicker.min.css" %} rel="stylesheet">
+    <link href={% static "finance/reports.css" %} rel="stylesheet">
+
+    {% block other_css %}
+        block other_css
+    {% endblock other_css %}
+
+
+</head>
+<body>
+    <h2>Отчеты SnipSnop</h2>
+    <div class="preloader slow">
+        <div class="loader"></div>
+    </div>
+
+    {% block main_content %}
+    {% endblock main_content %}
+
+
+    <script src={% static "jquery-3.6.1.min.js" %}></script>
+    <script src={% static "jquery.datetimepicker.full.min.js" %}></script>
+    {% block other_js %}
+    {% endblock other_js %}
+    <script src={% static "finance/reports_js_func.js" %}></script>
+
+
+
+
+
+</body>
+</html>

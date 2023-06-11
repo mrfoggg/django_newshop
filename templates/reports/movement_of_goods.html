@@ -1,0 +1,43 @@
+{% extends 'reports/base_report_template.html' %}
+
+{% block title %}
+    Отчет - "Движения товаров"
+{% endblock title %}
+
+{% block other_css %}
+    {{ filter_form.media.css }}
+{% endblock other_css %}
+
+{% block main_content %}
+    <h3>Отчет - "Движения товаров"</h3>
+    <form action="">
+        {% csrf_token %}
+        <div class="filter_fields">
+            {{ filter_form.as_p }}
+        </div>
+        <button type="submit">вывести отчет</button>
+    </form>
+    <table>
+        <caption><h3>Отчет не сформирован</h3></caption>
+        <thead>
+            <tr>
+                <th>Документ движения</th>
+                <th>Начальный остаток, шт</th>
+                <th>Приход, шт</th>
+                <th>Расход, шт</th>
+                <th>Конечный остаток, шт</th>
+            </tr>
+        </thead>
+        <tbody id="reportTable">
+        </tbody>
+    </table>
+
+
+{% endblock main_content %}
+
+{% block other_js %}
+    {{ filter_form.media.js }}
+    {% load static %}
+     <script src={% static "finance/movement_of_goods.js" %}></script>
+{% endblock other_js %}
+

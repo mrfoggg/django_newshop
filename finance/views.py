@@ -1,11 +1,18 @@
+from datetime import datetime
+
+from django.db.models import Sum
+from django.http import JsonResponse
 from django.shortcuts import render
+from django.views import View
 from djmoney.money import Money
 from jsonview.decorators import json_view
 
-from catalog.models import Product, ProductSupplierPrice, ProductGroupPrice
-from finance.models import GroupPriceChangelist
+from catalog.models import Product, ProductSupplierPrice, ProductGroupPrice, Category
+from finance.admin_forms import MovementOfGoodsFilterForm
+from finance.models import GroupPriceChangelist, Stock
 from finance.services import get_margin, get_margin_percent, get_profitability
-from orders.models import SupplierOrder
+from orders.models import SupplierOrder, ProductMoveItem, FinanceDocument
+from rich import print as rprint
 
 
 @json_view
@@ -21,7 +28,8 @@ def ajax_get_product_price_and_suppliers_prices_variants(request):
         'current_price': product.full_current_price_info if product.current_price else '-',
         'current_price_amount': current_price_amount,
         'group_price_info': gp_qs.last().price_full_info if (group_price_id and gp_qs.exists()) else '-',
-        'group_price_val': f'{gp_qs.last().converted_price.amount:.2f}' if (group_price_id and gp_qs.exists()) else current_price_amount
+        'group_price_val': f'{gp_qs.last().converted_price.amount:.2f}' if (
+                group_price_id and gp_qs.exists()) else current_price_amount
     }
     if supplier_order_id := request.POST.get('supplierOrderId'):
 
@@ -74,3 +82,72 @@ def ajax_get_supplier_price_by_price_item_id(request):
         return {'price': f"{Money(0, 'UAH').amount:.2f}"}
 
 
+class MovementOfGoods(View):
+    template_name = 'reports/movement_of_goods.html'
+    filter_form = MovementOfGoodsFilterForm
+
+    def get(self, request):
+        return render(request, self.template_name, {'filter_form': self.filter_form()})
+
+    def post(self, request):
+        print('POST - ', request.POST)
+        start, end = request.POST.get('start'), request.POST.get('end')
+        product_id, category_id = request.POST.get('product'), request.POST.get('product_category')
+        if not any((start, end)):
+            caption = 'Движение товаров за весь период. '
+        else:
+            caption = 'Движение товаров за период '
+            if start:
+                caption += f'с {start}'
+            if end:
+                caption += f' до {end}. '
+            else:
+                caption += f'. '
+        if category_id:
+            caption += f'Категория товаров {Category.objects.get(id=category_id)}. '
+        if product_id:
+            caption += f'Товар {Product.objects.get(id=product_id)}'
+
+        finance_documents = FinanceDocument.objects.filter(is_active=True)
+        if start:
+            finance_documents = finance_documents.filter(applied__gte=datetime.strptime(start, "%d.%m.%Y"))
+        if end:
+            finance_documents = finance_documents.filter(applied__lte=datetime.strptime(end, "%d.%m.%Y"))
+        if category_id:
+            finance_documents = finance_documents.filter(productmoveitem__product__admin_category=category_id).distinct()
+        if product_id:
+            finance_documents = finance_documents.filter(productmoveitem__product=product_id).distinct()
+        data = {'before': 0, 'arrived': 0, 'sent': 0, 'stocks': []}
+        for stock in Stock.objects.filter(financedocument__in=finance_documents).distinct():
+            products_this_stock = Product.objects.filter(productmoveitem__document__stock=stock).distinct()
+            if category_id:
+                products_this_stock = products_this_stock.filter(admin_category=category_id)
+            print('PRODUCT - ', product_id)
+            if product_id:
+                products_this_stock = products_this_stock.filter(id=product_id)
+            stock_data = {'name': stock.name, 'before': 0, 'arrived': 0, 'sent': 0, 'after': 0, 'products': []}
+            print('STOCK - ', stock)
+            for product in products_this_stock:
+                product_data = {'name': product.name, 'before': 0, 'arrived': 0, 'sent': 0, 'after': 0, 'documents': []}
+                print('product - ', product)
+                documents = finance_documents.filter(stock=stock, productmoveitem__product=product).distinct()
+                print('documents - ', documents)
+                for doc in documents:
+                    move_items = ProductMoveItem.objects.filter(product=product, document=doc)
+                    doc_quantity_arrived = move_items.aggregate(quantity=Sum('quantity'))['quantity']
+                    product_data['arrived'] += doc_quantity_arrived
+                    document_data = {
+                        'name': doc.__str__(), 'before': 0,
+                        'arrived': doc_quantity_arrived, 'sent': 0, 'after': 0
+                    }
+                    product_data['documents'].append(document_data)
+                stock_data['arrived'] += product_data['arrived']
+                stock_data['products'].append(product_data)
+            data['arrived'] += stock_data['arrived']
+            data['stocks'].append(stock_data)
+
+            print('='*40)
+
+        rprint('TOTAL_DATA - ', data)
+
+        return JsonResponse({'caption': caption, 'data': data})

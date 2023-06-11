@@ -322,7 +322,7 @@ class BrandListFilter(MultipleChoiceListFilter):
 class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     form = ProductForm
     # fields = ['name', 'slug', 'admin_category', 'characteristics', 'combination_of_categories']
-    list_display = ('name', 'category_placement')
+    list_display = ('name', 'category_placement', 'admin_category')
     prepopulated_fields = {"slug": ("name",)}
     save_on_top = True
     inlines = (ProductPlacementInlineForProduct, PricesOtherShopInline, ProductImageInline, ProductPriceProductInline,
@@ -333,7 +333,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
     search_fields = ('name', 'sku', 'admin_category__name')
     ordering = ('name',)
     readonly_fields = ('get_sorted_groups', 'combination_of_categories', 'full_current_price_info',
-                       'supplier_prices_str', 'rate')
+                       'supplier_prices_str', 'rate', 'quantity')
     summernote_fields = ('description',)
     change_form_template = "product_changeform.html"
     actions = [export_as_json]
@@ -343,7 +343,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin, SummernoteModelAdmin):
         ("Основное", {
             'fields': (
                 ('name', 'sku', 'sku_manufacturer', 'rating', 'is_active'),
-                ('full_current_price_info', 'rate',), ('supplier_prices_str', 'main_supplier'),
+                ('full_current_price_info', 'rate', 'quantity'), ('supplier_prices_str', 'main_supplier'),
                 ('slug', 'admin_category'),
                 ('brand', 'country_of_manufacture',),
                 ('series', 'url'),

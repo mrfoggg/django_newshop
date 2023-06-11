@@ -366,6 +366,18 @@ class Product(models.Model):
         return reverse('main_page:category_and_product', args=(self.slug,))
 
     @property
+    @admin.display(description='Наличие')
+    def quantity(self):
+        qs = self.productmoveitem_set.filter(document__is_active=True).distinct('document__stock').values(
+            'document__stock__name', 'document__stock_id', 'quantity_after'
+        )
+        return format_html_join(
+            '', '<li>{} - {}, шт</li>',
+            ((stock['document__stock__name'], stock['quantity_after'][str(stock['document__stock_id'])])
+             for stock in qs)
+        )
+
+    @property
     @admin.display(description='Содержится в категориях')
     def category_placement(self):
         return tuple(self.categories.values_list('name', flat=True))
@@ -840,5 +852,3 @@ class Discount(models.Model):
         val = f'{round(self.amount, 2)} %' if self.type_of_amount == 1 else str(Money(self.amount, 'UAH'))
         # return f'{self.product} - {val}'
         return val
-
-

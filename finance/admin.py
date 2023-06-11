@@ -5,7 +5,6 @@ from dynamic_admin_forms.admin import DynamicModelAdminMixin
 
 from ROOTAPP.admin_forms import DocumentForm
 from ROOTAPP.models import PriceTypePersonBuyer
-from ROOTAPP.services.functions import apply_documents
 # Register your models here.
 from catalog.models import ProductPrice, ProductSupplierPrice, ProductSupplierPriceInfo, ProductGroupPrice
 from finance.admin_forms import money_widget_only_uah, ProductPriceChangelistInlineAdminForm

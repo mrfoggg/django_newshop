@@ -11,6 +11,7 @@ from ROOTAPP.views import (ByNowView, CheckoutView, ProductActionsView,
                            update_user_personal, update_user_phones,
                            verify_sms_token, get_settlement_info, ajax_updates_person_phones_info, ajax_phone_field,
                            ajax_person_field, ajax_change_phone_parameters)
+from finance.views import MovementOfGoods
 
 app_name = 'root_app'
 urlpatterns = [

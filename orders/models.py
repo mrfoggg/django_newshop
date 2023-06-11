@@ -4,13 +4,14 @@ from datetime import datetime
 from decimal import Decimal
 from unicodedata import decimal
 
-from django.contrib import admin
+from django.contrib import admin, messages
 # from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Sum, F
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html_join
@@ -385,6 +386,8 @@ class FinanceDocument(Document, PolymorphicModel):
                         verbose_name='Сумма документа')
     balance_after = MoneyField(max_digits=14, decimal_places=2, default_currency='UAH', default=0,
                                verbose_name='Баланс после')
+    stock = models.ForeignKey(Stock, null=True, on_delete=models.SET_NULL, blank=True,
+                              verbose_name='Склад')
 
     @property
     @admin.display(description='Баланс до')
@@ -400,6 +403,76 @@ class FinanceDocument(Document, PolymorphicModel):
         verbose_name = "Финансовый документ"
         verbose_name_plural = "Финансовые документы"
         ordering = ['applied']
+
+def reapply_all_after(obj):
+    documents_after = FinanceDocument.objects.filter(person=obj.person, applied__gt=obj.applied, is_active=True)
+    print('DOCUMENTS_AFTER - ', documents_after)
+    before = obj.balance_after
+    docs_to_update = []
+    for doc in documents_after:
+        doc.balance_after = before + doc.amount
+        docs_to_update.append(doc)
+        before = doc.balance_after
+    FinanceDocument.objects.bulk_update(docs_to_update, ['balance_after'])
+
+
+def apply_documents(self, request, obj):
+    print('APPLY')
+    if "_activate" in request.POST or "_reactivate" in request.POST:
+        print('_activate')
+        msg = 'Проведен датой создания' if "_activate" in request.POST else 'Перепроведен'
+        self.message_user(request, msg, messages.SUCCESS)
+        obj.is_active = True
+        if "_activate" in request.POST:
+            obj.applied = timezone.make_aware(datetime.now())
+        obj.save()
+        if type(obj).__name__ in ('Arrival',):
+            reapply_all_after(obj)
+        return HttpResponseRedirect(request.path)
+
+    if "_activate_now" in request.POST or "_reactivate_now" in request.POST:
+        msg = 'Проведен текущей датой' if "_activate_now" in request.POST else 'Перепроведен текущей датой'
+        self.message_user(request, msg, messages.SUCCESS)
+        obj.is_active = True
+        obj.applied = obj.updated
+        obj.save()
+        if type(obj).__name__ in ('Arrival',):
+            reapply_all_after(obj)
+        return HttpResponseRedirect(request.path)
+
+    if "_deactivate" in request.POST:
+        msg = 'Проведение документа отмененно'
+        self.message_user(request, msg, messages.SUCCESS)
+        obj.is_active = False
+        obj.balance_after = Money(0, 'UAH')
+        if type(obj).__name__ in ('Arrival',):
+            reapply_all_after(obj)
+        obj.save()
+        return HttpResponseRedirect(request.path)
+
+    if "_un_mark_to_delete" in request.POST:
+        obj.mark_to_delete = False
+        obj.save()
+        return HttpResponseRedirect(request.path)
+
+    if "_mark_to_delete" in request.POST:
+        msg = f'Документ {obj} помечен на удаление'
+        self.message_user(request, msg, messages.SUCCESS)
+        obj.is_active = False
+        obj.mark_to_delete = True
+        obj.save()
+
+    if 'apply_date' in request.POST:
+        str_date = request.POST.get('apply_date')
+        msg = f'Документ {obj} проведен датой {str_date}'
+        self.message_user(request, msg, messages.SUCCESS)
+        obj.is_active = True
+        date = datetime.strptime(str_date, "%d/%m/%Y %H:%M")
+        obj.applied = timezone.make_aware(date)
+        obj.save()
+        if type(obj).__name__ in ('Arrival',):
+            reapply_all_after(obj)
+        return HttpResponseRedirect(request.path)
 
 
 class Realization(FinanceDocument):
@@ -423,16 +496,20 @@ class Arrival(FinanceDocument):
         verbose_name_plural = "Поступления товаров"
 
     def save(self, *args, **kwargs):
-        if self.id:
-            if self.productmoveitem_set.exists():
-                self.amount = self.productmoveitem_set.annotate(full_amount=F('quantity')*F('price')).aggregate(
-                    Sum('full_amount')
-                )['full_amount__sum']
-            else:
-                self.amount = Money(0, 'UAH')
+        # if self.id:
+        #     if self.productmoveitem_set.exists():
+        #         self.amount = self.productmoveitem_set.annotate(full_amount=F('quantity')*F('price')).aggregate(
+        #             Sum('full_amount')
+        #         )['full_amount__sum']
+        #     else:
+        #         self.amount = Money(0, 'UAH')
 
         self.balance_after = self.balance_before + self.amount if self.is_active else Money(0, 'UAH')
         super().save(*args, **kwargs)
+
+    def delete_model(self, request, obj):
+        reapply_all_after(obj)
+        obj.delete()
 
 
 class ProductMoveItem(models.Model):
@@ -440,6 +517,8 @@ class ProductMoveItem(models.Model):
     document = models.ForeignKey(FinanceDocument, on_delete=models.CASCADE, null=True, blank=True)
     price = MoneyField('Цена продажи', max_digits=10, decimal_places=2, default_currency='UAH', default=0)
     quantity = models.SmallIntegerField('Количество', default=1)
+    quantity_after = models.JSONField('Остаток', default=dict, blank=True, db_index=True)
+
 
     def __str__(self):
         return self.product.name if self.product else ''

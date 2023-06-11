@@ -96,7 +96,7 @@ class PersonAdmin(
     fieldsets = (
         ('Основные данные пользователя', {
             'fields': (('last_name', 'first_name', 'middle_name',),
-                       ('full_name', 'date_joined', 'last_login', 'source_type', 'source_person'), ('comment', 'id')),
+                       ('full_name', 'balance'), ('date_joined', 'last_login', 'source_type', 'source_person'), ('comment', 'id')),
             'classes': ('tab-fs-none',),
         }),
         ('Роли пользователя', {
@@ -127,7 +127,7 @@ class PersonAdmin(
                PriceTypePersonBuyerInline, PriceTypePersonSupplierInline)
     list_display = ('__str__', 'email', 'main_phone', 'is_buyer', 'is_supplier', 'is_dropper')
     list_filter = ('is_buyer', 'is_supplier', 'is_dropper')
-    readonly_fields = ('full_name', 'date_joined', 'last_login', 'id', 'source_type', 'source_person')
+    readonly_fields = ('full_name', 'date_joined', 'last_login', 'id', 'source_type', 'source_person', 'balance')
 
     class Media:
         css = {"all": ("root_app/person_form.css", 'admin/order-admin-changeform.css')}
