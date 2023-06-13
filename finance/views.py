@@ -137,13 +137,15 @@ class MovementOfGoods(View):
                 for doc in documents:
                     move_items = ProductMoveItem.objects.filter(product=product, document=doc)
                     doc_quantity_arrived = move_items.aggregate(quantity=Sum('quantity'))['quantity']
+                    doc_quantity_before = move_items.first().quantity_before
                     doc_quantity_after = move_items.last().quantity_after
                     print('doc_quantity_after - ', doc_quantity_after)
                     product_data['arrived'] += doc_quantity_arrived
                     document_data = {
                         'name': doc.__str__(), 'before': 0,
                         'arrived': doc_quantity_arrived, 'sent': 0,
-                        'after': doc_quantity_after[str(stock.id)] if str(stock.id) in doc_quantity_after.keys() else 0
+                        'after': doc_quantity_after[str(stock.id)] if str(stock.id) in doc_quantity_after.keys() else 0,
+                        'before': doc_quantity_before[str(stock.id)] if str(stock.id) in doc_quantity_after.keys() else 0
                     }
                     product_data['documents'].append(document_data)
                 stock_data['arrived'] += product_data['arrived']

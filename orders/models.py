@@ -195,8 +195,11 @@ class SupplierOrder(Document):
         verbose_name_plural = "Заказы поставщику"
 
     def __str__(self):
-        comment = f'({self.comment})' if self.comment else ''
-        return f'{self.created.strftime("%d-%m-%Y %H:%M")} / {self.person} {comment}'
+        return 'Заказ поставщику' + super().__str__()
+
+    # def __str__(self):
+    #     comment = f'({self.comment})' if self.comment else ''
+    #     return f'{self.created.strftime("%d-%m-%Y %H:%M")} / {self.person} {comment}'
 
 
 class ProductInOrder(models.Model):
@@ -220,6 +223,7 @@ class ProductInOrder(models.Model):
                                 default=0)
     realization_quantity = models.PositiveSmallIntegerField('отгружено', default=0)
     arrive_quantity = models.PositiveSmallIntegerField('поступило', default=0)
+    drop_realization = models.BooleanField('Отгрузить по дропу', default=False)
 
     class Meta:
         verbose_name = 'Товар в заказах покупателю и поставщику'
@@ -404,8 +408,9 @@ class FinanceDocument(Document, PolymorphicModel):
         verbose_name_plural = "Финансовые документы"
         ordering = ['applied']
 
-def reapply_all_after(obj):
-    documents_after = FinanceDocument.objects.filter(person=obj.person, applied__gt=obj.applied, is_active=True)
+
+def reapply_all_after(obj, reapply_date):
+    documents_after = FinanceDocument.objects.filter(person=obj.person, applied__gt=reapply_date, is_active=True)
     print('DOCUMENTS_AFTER - ', documents_after)
     before = obj.balance_after
     docs_to_update = []
@@ -427,7 +432,7 @@ def apply_documents(self, request, obj):
             obj.applied = timezone.make_aware(datetime.now())
         obj.save()
         if type(obj).__name__ in ('Arrival',):
-            reapply_all_after(obj)
+            reapply_all_after(obj, obj.applied)
         return HttpResponseRedirect(request.path)
 
     if "_activate_now" in request.POST or "_reactivate_now" in request.POST:
@@ -437,7 +442,7 @@ def apply_documents(self, request, obj):
         obj.applied = obj.updated
         obj.save()
         if type(obj).__name__ in ('Arrival',):
-            reapply_all_after(obj)
+            reapply_all_after(obj, obj.applied)
         return HttpResponseRedirect(request.path)
 
     if "_deactivate" in request.POST:
@@ -446,7 +451,7 @@ def apply_documents(self, request, obj):
         obj.is_active = False
         obj.balance_after = Money(0, 'UAH')
         if type(obj).__name__ in ('Arrival',):
-            reapply_all_after(obj)
+            reapply_all_after(obj, obj.applied)
         obj.save()
         return HttpResponseRedirect(request.path)
 
@@ -458,20 +463,26 @@ def apply_documents(self, request, obj):
     if "_mark_to_delete" in request.POST:
         msg = f'Документ {obj} помечен на удаление'
         self.message_user(request, msg, messages.SUCCESS)
+        if type(obj).__name__ in ('Arrival',):
+            reapply_all_after(obj, obj.applied)
         obj.is_active = False
         obj.mark_to_delete = True
         obj.save()
 
     if 'apply_date' in request.POST:
         str_date = request.POST.get('apply_date')
+
         msg = f'Документ {obj} проведен датой {str_date}'
         self.message_user(request, msg, messages.SUCCESS)
         obj.is_active = True
-        date = datetime.strptime(str_date, "%d/%m/%Y %H:%M")
-        obj.applied = timezone.make_aware(date)
+        # new_date = timezone.make_aware(datetime.strptime(str_date, "%d/%m/%Y %H:%M"))
+        new_date = datetime.strptime(str_date, "%d/%m/%Y %H:%M")
+        old_date = obj.applied
+        reapply_date = min(old_date, new_date)
+        obj.applied = timezone.make_aware(new_date)
         obj.save()
         if type(obj).__name__ in ('Arrival',):
-            reapply_all_after(obj)
+            reapply_all_after(obj, reapply_date)
         return HttpResponseRedirect(request.path)
 
 
@@ -507,6 +518,9 @@ class Arrival(FinanceDocument):
         self.balance_after = self.balance_before + self.amount if self.is_active else Money(0, 'UAH')
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return 'Поступление товаров и услуг' + super().__str__()
+
     def delete_model(self, request, obj):
         reapply_all_after(obj)
         obj.delete()
@@ -517,8 +531,8 @@ class ProductMoveItem(models.Model):
     document = models.ForeignKey(FinanceDocument, on_delete=models.CASCADE, null=True, blank=True)
     price = MoneyField('Цена продажи', max_digits=10, decimal_places=2, default_currency='UAH', default=0)
     quantity = models.SmallIntegerField('Количество', default=1)
+    quantity_before = models.JSONField('Начальный остаток', default=dict, blank=True, db_index=True)
     quantity_after = models.JSONField('Остаток', default=dict, blank=True, db_index=True)
-
 
     def __str__(self):
         return self.product.name if self.product else ''

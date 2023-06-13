@@ -11,3 +11,8 @@ def get_margin_percent(margin, purchase_price):
 
 def get_profitability(margin, sale_price):
     return '-' if margin == '-' else f'{margin.amount / sale_price.amount * 100:.2f} %'
+
+
+# in ArrivalAdmin save_related
+def recalculate_all_after_product_move_items(product_move_item):
+    pass

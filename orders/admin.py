@@ -22,11 +22,12 @@ from finance.admin_forms import money_widget_only_uah
 from .admin_form import ClientOrderAdminForm, ProductInClientOrderAdminInlineForm, ProductMoveItemInlineFormset
 from .models import (BY_ONECLICK_STATUSES_CLIENT_DISPLAY, ByOneclick,
                      ByOneclickPersonalComment, OneClickUserSectionComment, ClientOrder, SupplierOrder, Realization,
-                     ProductInOrder, FinanceDocument, Arrival, ProductMoveItem, apply_documents)
+                     ProductInOrder, FinanceDocument, Arrival, ProductMoveItem, apply_documents, reapply_all_after)
 
 
 class ProductMoveItemInline(nested_admin.NestedTabularInline):
     formset = ProductMoveItemInlineFormset
+    readonly_fields = ('quantity_before', 'quantity_after')
     model = ProductMoveItem
     extra = 0
 
@@ -58,7 +59,7 @@ class OneClickUserSectionCommentInline(admin.TabularInline):
 
 class ProductInClientOrder(nested_admin.SortableHiddenMixin, nested_admin.NestedTabularInline):
     form = ProductInClientOrderAdminInlineForm
-    fields = ('product', 'full_current_price_info', 'current_group_price', 'sale_price',
+    fields = ('product', 'drop_realization', 'full_current_price_info', 'current_group_price', 'sale_price',
               'drop_price',
               'quantity', 'sale_total', 'margin', 'margin_total',
               'margin_percent', 'profitability',
@@ -320,6 +321,11 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
                 queryset = queryset.filter(is_active=True, mark_to_delete=False)
         return queryset, may_have_duplicates
 
+    # def save_related(self, request, form, formsets, change):
+    #     for form in formsets[0]:
+    #         print('FORM - ', form)
+    #     formsets[0].save()
+
     def response_change(self, request, obj):
         rprint('POST - ', request.POST.get('apply_date'))
         if "_create_arrival" in request.POST:
@@ -327,7 +333,10 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
                 msg = 'Товары не получены. Не указан склад'
                 self.message_user(request, msg, messages.ERROR)
             else:
-                new_arrival = Arrival(order=obj, person=obj.person, stock=obj.stock, is_active=True)
+                new_arrival = Arrival(
+                    order=obj, person=obj.person, stock=obj.stock, is_active=True,
+                    applied=timezone.make_aware(datetime.now())
+                )
                 products_to_create = []
                 quantity_dict = dict()
                 for pr in obj.products.all():
@@ -391,10 +400,11 @@ class SupplierOrderAdmin(nested_admin.NestedModelAdmin):
                         print('PRICE', price)
                         print('quantity', quantity)
                         new_product_move_item = ProductMoveItem(
-                                product_id=pr_with_all_prices[0], price=price, quantity=quantity,
-                                document=new_arrival
-                            )
+                            product_id=pr_with_all_prices[0], price=price, quantity=quantity,
+                            document=new_arrival
+                        )
                         new_product_move_item.quantity_after[obj.stock_id] = quantity_after
+                        new_product_move_item.quantity_before[obj.stock_id] = quantity_before
                         products_to_create.append(new_product_move_item)
                 if len(products_to_create):
                     new_arrival.amount = total_amount
@@ -436,6 +446,53 @@ class ArrivalAdmin(nested_admin.NestedModelAdmin):
     inlines = (ProductMoveItemInline,)
 
     change_form_template = 'admin/apply_buttons.html'
+
+    def save_related(self, request, form, formsets, change):
+        # print('form changed_data - ', form.changed_data)
+        # print('form cleaned_data - ', form.cleaned_data)
+        formset = formsets[0]
+        new_amount = 0
+        is_changed_total_amount = False
+        print('OBJ - ', form.instance)
+        total_amount = 0
+        for formset_form in formset.forms:
+            print('formset_form changed_data - ', formset_form.changed_data)
+            print('formset_form cleaned_data - ', formset_form.cleaned_data)
+            # print('formset_form data - ', formset_form.data)
+            print('=' * 40)
+
+            if formset.can_delete and formset._should_delete_form(formset_form):
+                pass
+                # пересчитать айтемы после
+                # пересчитать сумму документа
+                is_changed_total_amount = True
+
+            else:
+                total_amount += formset_form.cleaned_data['quantity'] * formset_form.cleaned_data['price']
+                changed_data = formset_form.changed_data
+                if 'product' in formset_form.changed_data or 'quantity' in formset_form.changed_data or 'stock' in form.changed_data:
+                    pass
+                    # пересчитать этот айтем
+                    if form.instance.is_active:
+                        pass
+                        # пересчитать айтемы после
+                if 'is_active' in form.changed_data:
+                    pass
+                    # пересчитать айтемы после
+                if 'arrived' in form.changed_data:
+                    pass
+                    # пересчитать айтемы после с учетом более ранней даты
+                if 'quantity' in formset_form.changed_data or 'price' in formset_form.changed_data:
+                    pass
+                    # пересчитать сумму документа
+                    is_changed_total_amount = True
+        print('is_changed_total_amount - ', is_changed_total_amount)
+        if is_changed_total_amount:
+            print('RESET TOTALAMOUNT', total_amount)
+            form.instance.amount = total_amount
+            reapply_all_after(form.instance, form.instance.applied)
+
+        formsets[0].save()
 
     def response_change(self, request, obj):
         apply_result = apply_documents(self, request, obj)

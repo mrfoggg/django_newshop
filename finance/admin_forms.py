@@ -41,5 +41,16 @@ class MovementOfGoodsFilterForm(forms.Form):
         )
     )
 
+    show_products_without_move = forms.BooleanField(
+        label='Показывать товары без движения',
+        required=False,
+
+    )
+
+    stock_detail = forms.BooleanField(
+        label='В разрезе по складам',
+        required=False,
+    )
+
 
 

@@ -128,6 +128,10 @@ class ProductMoveItemInlineFormset(forms.models.BaseInlineFormSet):
                                               f"в заказе всего {q[1]['quantity_in_order']} шт")
                     else:
                         pass
+                #     установить начальніе остатки
+                # for form in self.forms:
+                #     print('ProductMoveItemInlineFormset cleaned_data - ', form.cleaned_data)
+                #     form.cleaned_data['quantity_before'] = {'111': 333}
         # print('total_quantity -', total_quantity)
 
 

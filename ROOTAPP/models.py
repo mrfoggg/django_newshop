@@ -138,7 +138,7 @@ class Document(models.Model):
     def __str__(self):
         dt = self.applied if self.applied else self.created
         is_active = 'проведен' if self.is_active else 'непроведен'
-        return f'Документ №{self.id} {dt.strftime("%d/%m/%Y, (%H:%M)")} - {is_active}'
+        return f' №{self.id} {dt.strftime("%d/%m/%Y, (%H:%M)")} - {is_active}'
     def save(self, *args, **kwargs):
         if not self.applied:
             self.applied = self.created
