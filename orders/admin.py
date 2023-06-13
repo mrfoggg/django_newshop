@@ -492,6 +492,9 @@ class ArrivalAdmin(nested_admin.NestedModelAdmin):
             form.instance.amount = total_amount
             reapply_all_after(form.instance, form.instance.applied)
 
+        if 'person' in form.changed_data:
+            reapply_all_after(form.instance, form.instance.applied)
+
         formsets[0].save()
 
     def response_change(self, request, obj):
